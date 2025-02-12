@@ -1,0 +1,5 @@
+command:
+  response: 'Deine Nachricht: **${ text }**'
+  description: Sendet deine Nachricht als Bot
+  options:
+    text.description: Die Nachricht, die gesendet werden soll

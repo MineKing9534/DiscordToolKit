@@ -1,0 +1,36 @@
+name: Beta test and deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "master" ]
+    paths:
+      - "src/**"
+      - "build.gradle.kts"
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - "src/**"
+      - "build.gradle.kts"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Publish with Gradle
+        run: chmod +x gradlew && ./gradlew test publish
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_NAME }}
+          MAVEN_SECRET: ${{ secrets.MAVEN_SECRET }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+          RELEASE: false

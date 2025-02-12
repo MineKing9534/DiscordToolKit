@@ -1,0 +1,21 @@
+command:
+  description: Opens a localized menu
+
+menu.test:
+  button.label: Press Me! (${ a })
+  label.label: Localized Label
+
+  menu1:
+    label: Menu with inherited localization
+    back.label: Back (Inherited)
+  menu2:
+    label: Menu with extern localization
+
+abc: Custom localization path
+
+test.embed:
+  title: Title
+  description: '**Current Value:** ${ a }'
+  color: ${ Color.GREEN }
+
+test.content: Content

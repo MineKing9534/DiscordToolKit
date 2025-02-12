@@ -1,0 +1,28 @@
+name: Release deployment
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Publish with Gradle
+        run: chmod +x gradlew && ./gradlew test publish
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_NAME }}
+          MAVEN_SECRET: ${{ secrets.MAVEN_SECRET }}
+          RELEASE: true

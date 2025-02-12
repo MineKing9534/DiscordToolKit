@@ -1,0 +1,85 @@
+import com.adarshr.gradle.testlogger.theme.ThemeType
+
+plugins {
+    kotlin("jvm") version "2.0.20"
+    kotlin("plugin.serialization") version "2.1.0"
+
+    id("com.adarshr.test-logger") version "4.0.0"
+
+    id("maven-publish")
+}
+
+group = "de.mineking"
+version = "1.0.0"
+
+val jvmVersion = 21
+val release = System.getenv("RELEASE") == "true"
+
+repositories {
+    mavenCentral()
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    implementation("com.github.MineKing9534:JDA:09e8fee922466eb8d6fde6502e11153acadd023a")
+
+    implementation(kotlin("reflect"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.3")
+
+    implementation("me.carleslc.Simple-YAML:Simple-Yaml:1.8.4")
+    compileOnly("org.kodein.emoji:emoji-kt:2.0.1")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-common")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm")
+    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host")
+
+    implementation("io.github.microutils:kotlin-logging-jvm:2.0.11")
+    testImplementation("ch.qos.logback:logback-classic:1.5.15")
+
+    testImplementation(kotlin("test"))
+    testImplementation("org.kodein.emoji:emoji-kt:2.0.1")
+}
+
+testlogger {
+    theme = ThemeType.MOCHA
+    showStackTraces = false
+}
+
+publishing {
+    repositories {
+        maven {
+            url = uri("https://maven.mineking.dev/" + (if (release) "releases" else "snapshots"))
+            credentials {
+                username = System.getenv("MAVEN_USERNAME")
+                password = System.getenv("MAVEN_SECRET")
+            }
+        }
+    }
+
+    publications {
+        register<MavenPublication>("maven") {
+            from(components["java"])
+
+            groupId = "de.mineking"
+            artifactId = "DiscordToolKit"
+            version = if (release) "${ project.version }" else System.getenv("BRANCH")
+        }
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(jvmVersion)
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(jvmVersion)
+    targetCompatibility = JavaVersion.toVersion(jvmVersion)
+
+    withJavadocJar()
+    withSourcesJar()
+}

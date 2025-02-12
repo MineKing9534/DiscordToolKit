@@ -1,0 +1,21 @@
+command:
+  description: Öffnet ein menu
+
+menu.test:
+  button.label: Klick mich! (${ a })
+  label.label: Label
+
+  menu1:
+    label: Menü mit geerbter Lokalisierung
+    back.label: Zurück (Geerbt)
+  menu2:
+    label: Menü mit externer Lokalisierung
+
+abc: Eigener Pfad
+
+test.embed:
+  title: Titel
+  description: '**Aktueller Wert:** ${ a }'
+  color: ${ Color.GREEN }
+
+test.content: Nachricht

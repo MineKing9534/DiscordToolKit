@@ -1,0 +1,74 @@
+package de.mineking.discord.ui.builder.components
+
+import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.*
+import de.mineking.discord.ui.builder.TextElement
+import de.mineking.discord.ui.builder.paginate
+import de.mineking.discord.ui.builder.text
+import net.dv8tion.jda.api.entities.emoji.Emoji
+import java.lang.Integer.max
+import java.lang.Integer.min
+
+fun MessageMenuConfig<*, *>.pageSelector(
+    name: String,
+    max: Int,
+    ref: State<Int>,
+    modal: Boolean = true,
+    title: String = DEFAULT_LABEL,
+    label: String = DEFAULT_LABEL,
+    localization: LocalizationFile? = null
+): MessageComponent {
+    var page by ref
+
+    return createMessageComponent(
+        button("$name-first", emoji = Emoji.fromUnicode("⏪")) { page = 1 }.disabled(page == 1),
+        button("$name-back", emoji = Emoji.fromUnicode("⬅\uFE0F")) { page-- }.disabled(page <= 1),
+        if (modal)
+            modalButton(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max", title = title, localization = localization,
+                component = intInput("page", label = label, localization = localization, value = page, placeholder = "$page").transformResult { it ?: terminateRender() }
+            ) { page = clamp(it, 1, max) }
+        else label(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max"),
+        button("$name-next", emoji = Emoji.fromUnicode("➡\uFE0F")) { page++ }.disabled(page >= max),
+        button("$name-last", emoji = Emoji.fromUnicode("⏩")) { page = max }.disabled(page == max),
+    )
+}
+
+fun pageFocusSelector(
+    name: String,
+    max: Int,
+    ref: State<Int>
+): MessageComponent {
+    var page by ref
+
+    val pages = if (page > 2) min(page - 2, max - 4) .. min(page + 2, max) else max(1, page - 2) .. max(page + 2, 5)
+
+    return createMessageComponent(pages.map {
+        button("$name-$it", label = "$it") { page = it }.disabled(it == page)
+    })
+}
+
+data class PaginationResult(val text: TextElement, val component: MessageComponent)
+
+fun <T> MessageMenuConfig<*, *>.pagination(
+    name: String,
+    entries: List<T>,
+    display: T.(index: Int) -> TextElement = { index -> text("$index. ") + text(this) },
+    perPage: Int = 20,
+    ref: State<Int>,
+    pageFocusSelector: Boolean = false,
+    modal: Boolean = true,
+    title: String = DEFAULT_LABEL,
+    label: String = DEFAULT_LABEL,
+    localization: LocalizationFile? = null
+): PaginationResult {
+    val page by ref
+
+    val max = (entries.size - 1) / perPage + 1
+    val component = pageSelector(name, max, ref, modal, title, label, localization)
+
+    return PaginationResult(
+        paginate(entries, page, perPage, display),
+        if (pageFocusSelector) createMessageComponent(component, pageFocusSelector(name, max, ref)) else component
+    )
+}
+
