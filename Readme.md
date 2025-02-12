@@ -610,8 +610,9 @@ registerMenu<Unit>("paginate", defer = DeferMode.UNLESS_PREVENTED) {
     +pageSelector("page", max = 2, ref = pageRef)
 }
 ```
+The result will be:
+![](assets/paginate1.gif)
 
-this will result in ![](assets/paginate1.gif)
 The button in the middle displays the current page and the page count. Clicking it opens a modal that allows to enter a page.
 You can set the modal title and input label with the `title` and `label` parameters. To make this work, you have to set the defer mode to anything except `DeferMode.ALWAYS` because otherwise it would be impossible to reply with a modal.
 
