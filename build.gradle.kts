@@ -26,7 +26,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.3")
 
-    implementation("me.carleslc.Simple-YAML:Simple-Yaml:1.8.4")
+    compileOnly("me.carleslc.Simple-YAML:Simple-Yaml:1.8.4")
     compileOnly("org.kodein.emoji:emoji-kt:2.0.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
