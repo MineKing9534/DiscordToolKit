@@ -73,6 +73,13 @@ fun <T> sinkState(value: T? = null) = object : State<T?> {
     override fun set(context: StateContext<*>?, value: T?) {}
 }
 
+fun <T> dynamicState(value: () -> T, setter: (value: T) -> Unit) = object : State<T> {
+    override val id: Int = -1
+
+    override fun get(context: StateContext<*>?) = value()
+    override fun set(context: StateContext<*>?, value: T) = setter(value)
+}
+
 interface StateAccessor {
     fun currentState(): Int
 
