@@ -202,6 +202,8 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                 val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                     var currentSetup = 0
 
+                    override fun render(handler: IMessage.() -> Unit) {}
+
                     override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
                         if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
                         return super.localizedSubmenu(name, defer, localization, detach, init)
@@ -239,6 +241,8 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
             try {
                 val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                     var currentSetup = 0
+
+                    override fun render(handler: IMessage.() -> Unit) {}
 
                     override fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
                         if (this@registerLocalizedModal.menuInfo.name.menuName() == name) end(init)
