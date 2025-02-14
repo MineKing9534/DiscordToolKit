@@ -469,9 +469,9 @@ Additionally, you can also provide a handler that is called when the select opti
 
 ```kt
 stringSelect("select", min = 1, max = 2, options = listOf(
-    selectOption("A") { println("Option Handler A") }, //Option Handlers are called fist
-    selectOption("B") { println("Option Handler B") },
-    selectOption("C") //You don't have to provide an option handler
+    selectOption("A", label = "A") { println("Option Handler A") }, //Option Handlers are called fist
+    selectOption("B", label = "B") { println("Option Handler B") },
+    selectOption("C", label = "C") //You don't have to provide an option handler
 )) { //You can add a handler to the entire select (not required)
     println("Select Handler: " + event.values)
 }

@@ -96,7 +96,7 @@ fun main() {
                     +statefulSingleStringSelect(
                         "step",
                         placeholder = "Select Step Size",
-                        options = (1..10).map { selectOption("$it", it, emoji = Emoji.listKeycap()[2 + it % 11].jda()) },
+                        options = (1..10).map { selectOption(it, label = "$it", emoji = Emoji.listKeycap()[2 + it % 11].jda()) },
                         ref = stepRef.transform({ "$it" }, { it.toInt() }) //Transform the int state for step to the required string state
                     )
                 }

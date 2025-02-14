@@ -20,15 +20,15 @@ fun main() {
                 content("**Selected**: $selected")
 
                 +statefulSingleStringSelect("stateful", options = listOf(
-                    selectOption("A"),
-                    selectOption("B"),
-                    selectOption("C")
+                    selectOption("A", label = "A"),
+                    selectOption("B", label = "B"),
+                    selectOption("C", label = "C")
                 ), ref = selectedRef)
 
                 +stringSelect("select", min = 1, max = 2, options = listOf(
-                    selectOption("A") { println("Option Handler A") }, //Option Handlers are called fist
-                    selectOption("B") { println("Option Handler B") },
-                    selectOption("C") //You don't have to provide an option handler
+                    selectOption("A", label = "A") { println("Option Handler A") }, //Option Handlers are called fist
+                    selectOption("B", label = "B") { println("Option Handler B") },
+                    selectOption("C", label = "C") //You don't have to provide an option handler
                 )) { //You can add a handler to the entire select (not required)
                     println("Select Handler: " + event.values)
                 }

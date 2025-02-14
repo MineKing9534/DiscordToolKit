@@ -21,8 +21,8 @@ typealias JDASelectOption = net.dv8tion.jda.api.interactions.components.selectio
 typealias StringSelectElement = MessageElement<StringSelectMenu, StringSelectInteractionEvent>
 
 data class SelectOption(
-    val label: String,
     val value: String,
+    val label: String,
     val description: String?,
     val default: Boolean,
     val emoji: Emoji?,
@@ -40,14 +40,14 @@ data class SelectOption(
 }
 
 fun selectOption(
+    value: Any,
     label: String,
-    value: Any = label,
     description: String? = null,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     handler: StringSelectHandler? = null
-) = SelectOption(label, value.toString(), description, default, emoji, localization, true, handler)
+) = SelectOption(value.toString(), label, description, default, emoji, localization, true, handler)
 
 fun stringSelect(
     name: String,
