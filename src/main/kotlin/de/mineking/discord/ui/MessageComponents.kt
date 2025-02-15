@@ -65,6 +65,8 @@ interface IMessageComponent {
 
     fun hide(hide: Boolean = true) = transform { if (hide) null else it }
     fun show(show: Boolean = true) = hide(!show)
+
+    fun format() = children().toString()
 }
 
 abstract class MessageElement<C : ActionComponent, E : GenericComponentInteractionCreateEvent>(override val name: String, override val localization: LocalizationFile?) : Element, IMessageComponent {

@@ -22,7 +22,14 @@ fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities
 const val MAX_COMPONENTS = 5
 
 @Suppress("UNCHECKED_CAST")
-fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>) = config.components.flatMap { it.render(config.menuInfo.menu as MessageMenu, id) }
+fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>) = config.components
+    .flatMap {
+        try {
+            it.render(config.menuInfo.menu as MessageMenu, id)
+        } catch (e: Exception) {
+            throw RuntimeException("Error rendering component ${it.format()}", e)
+        }
+    }
     .mapNotNull { (component, element) -> (element as MessageElement<ActionComponent, *>).finalize(component)?.let { element to it } }
     .map { (element, component) -> config.menuInfo.manager.localization.localize(config, element, component) }
 
