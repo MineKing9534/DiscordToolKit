@@ -2,16 +2,17 @@ package de.mineking.discord.ui
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.serializer
+import kotlin.collections.toByteArray
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
+import kotlin.text.map
 
 typealias StateGetter<T> = StateContext<*>.() -> T
 typealias StateSetter<T> = StateContext<*>.(value: T) -> Unit
 typealias StateHandler<T> = (old: T, new: T) -> Unit
-
-const val STATE_DELIMITER = "\uFFFF"
 
 interface IState {
     val id: Int
@@ -128,18 +129,22 @@ data class StateData(val data: MutableList<String>) {
         override fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T> = getState(type, currentState++, handler)
     }
 
-    fun encode() = data.joinToString(STATE_DELIMITER)
+    fun encode() = encode(typeOf<List<String>>(), data)
 
     companion object {
-        fun decode(data: String) = StateData(if (data.isEmpty()) mutableListOf() else data.split(STATE_DELIMITER).toMutableList())
+        @OptIn(ExperimentalSerializationApi::class)
+        internal fun encode(type: KType, value: Any?) = Cbor.encodeToByteArray(Cbor.serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
+
+        @OptIn(ExperimentalSerializationApi::class)
+        internal fun decode(type: KType, data: String) = Cbor.decodeFromByteArray(Cbor.serializersModule.serializer(type), data.map { it.code.toByte() }.toByteArray())
+
+        @Suppress("UNCHECKED_CAST")
+        fun decode(data: String) = StateData(if (data.isEmpty()) mutableListOf() else (decode(typeOf<List<String>>(), data) as List<String>).toMutableList())
 
         fun createInitial(states: List<InternalState<*>>) = StateData(states.map { encodeSingle(it.type, it.initial) }.toMutableList())
 
-        @OptIn(ExperimentalSerializationApi::class)
-        fun encodeSingle(type: KType, value: Any?): String = Cbor.encodeToByteArray(Cbor.serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
-
-        @OptIn(ExperimentalSerializationApi::class)
-        fun decodeSingle(type: KType, value: String): Any? = Cbor.decodeFromByteArray(Cbor.serializersModule.serializer(type), value.map { it.code.toByte() }.toByteArray())
+        fun encodeSingle(type: KType, value: Any?): String = encode(type, value)
+        fun decodeSingle(type: KType, value: String): Any? = decode(type, value)
     }
 }
 
