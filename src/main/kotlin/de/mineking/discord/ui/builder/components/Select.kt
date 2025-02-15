@@ -58,16 +58,19 @@ fun stringSelect(
     localization: LocalizationFile? = null,
     handler: StringSelectHandler = {}
 ) = element<StringSelectMenu, StringSelectInteractionEvent>(name, localization, { _, id ->
-    StringSelectMenu.create(id)
+    val select = StringSelectMenu.create(id)
         .setPlaceholder(placeholder)
         .setMinValues(min)
         .setMaxValues(max)
         .addOptions(options.map { it.build() })
-        .build()
+
+    if (options.isEmpty()) select.addOption("---", "---").setDisabled(true)
+
+    select.build()
 }, {
     options.filter { it.value in event.values }.forEach { it.handler?.invoke(this) }
     handler()
-}) { this?.apply { if (isDisabled && options.isEmpty()) createCopy().addOption("---", "---").build() } }
+})
 
 fun stringSelect(
     name: String,
@@ -186,6 +189,7 @@ fun entitySelect(
     name: String,
     vararg targets: SelectTarget,
     channelTypes: Collection<ChannelType> = emptyList(),
+    default: Collection<EntitySelectMenu.DefaultValue> = emptyList(),
     placeholder: String? = null,
     min: Int = 1,
     max: Int = 1,
@@ -197,5 +201,6 @@ fun entitySelect(
         .setMinValues(min)
         .setMaxValues(max)
         .setChannelTypes(channelTypes)
+        .setDefaultValues(default)
         .build()
 }, handler)
