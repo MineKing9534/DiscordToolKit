@@ -78,7 +78,7 @@ class DefaultMenuLocalizationHandler(val prefix: String) : IDefaultMenuLocalizat
             val config = menu.localizationConfig ?: error("You have to configure the localization context for a localized menu (e.g. call localize(DiscordLocale) in the menu builder)")
 
             val locale = config.locale.takeIf { it in menu.menuInfo.manager.manager.localizationManager.locales } ?: menu.menuInfo.manager.manager.localizationManager.defaultLocale
-            val key = if (base == DEFAULT_LABEL) "${this.prefix.takeIf { it.isNotBlank() }?.let { "$it." } ?: ""}${prefix.takeIf { it.isNotEmpty() }?.let { "$it." } ?: ""}${menu.menuInfo.name}${element?.name?.let { ".$it" } ?: ""}.$name" else base.substring(LOCALIZATION_PREFIX.length)
+            val key = if (base == DEFAULT_LABEL) "${this.prefix.takeIf { it.isNotBlank() }?.let { "$it." } ?: ""}${menu.menuInfo.name}${prefix.takeIf { it.isNotEmpty() }?.let { ".$it" } ?: ""}${element?.name?.let { ".$it" } ?: ""}.$name" else base.substring(LOCALIZATION_PREFIX.length)
 
             file.register(key, config.args.mapValues { it.value.second }, typeOf<String>())
             file.readString(key, locale, config.args.mapValues { it.value.first })
