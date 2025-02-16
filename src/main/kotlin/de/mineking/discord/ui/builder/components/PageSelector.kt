@@ -5,6 +5,7 @@ import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.TextElement
 import de.mineking.discord.ui.builder.paginate
 import de.mineking.discord.ui.builder.text
+import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -21,15 +22,15 @@ fun MessageMenuConfig<*, *>.pageSelector(
     var page by ref
 
     return createMessageComponent(
-        button("$name-first", emoji = Emoji.fromUnicode("⏪")) { page = 1 }.disabled(page == 1),
-        button("$name-back", emoji = Emoji.fromUnicode("⬅\uFE0F")) { page-- }.disabled(page <= 1),
+        button("$name-first", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏪")) { page = 1 }.disabled(page == 1),
+        button("$name-back", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⬅\uFE0F")) { page-- }.disabled(page <= 1),
         if (modal)
             modalButton(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max", title = title, localization = localization,
                 component = intInput("page", label = label, localization = localization, value = page, placeholder = "$page").transformResult { it ?: terminateRender() }
             ) { page = clamp(it, 1, max) }
         else label(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max"),
-        button("$name-next", emoji = Emoji.fromUnicode("➡\uFE0F")) { page++ }.disabled(page >= max),
-        button("$name-last", emoji = Emoji.fromUnicode("⏩")) { page = max }.disabled(page == max),
+        button("$name-next", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("➡\uFE0F")) { page++ }.disabled(page >= max),
+        button("$name-last", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏩")) { page = max }.disabled(page == max),
     )
 }
 
