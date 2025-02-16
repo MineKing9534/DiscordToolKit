@@ -2,12 +2,8 @@ package de.mineking.discord.ui.builder.components
 
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
-import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import sun.jvm.hotspot.oops.CellTypeState
-import sun.jvm.hotspot.oops.CellTypeState.ref
-import kotlin.invoke
 
 fun <T> typedTextInput(
     name: String,

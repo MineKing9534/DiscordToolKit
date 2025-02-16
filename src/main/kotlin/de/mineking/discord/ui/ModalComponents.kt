@@ -3,7 +3,6 @@ package de.mineking.discord.ui
 import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
-import net.dv8tion.jda.api.interactions.components.ActionComponent
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 
 typealias ModalResult<M, T> = ModalContext<M>.() -> T

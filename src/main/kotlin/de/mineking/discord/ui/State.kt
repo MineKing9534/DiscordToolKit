@@ -2,13 +2,10 @@ package de.mineking.discord.ui
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.serializer
-import kotlin.collections.toByteArray
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
-import kotlin.text.map
 
 typealias StateGetter<T> = StateContext<*>.() -> T
 typealias StateSetter<T> = StateContext<*>.(value: T) -> Unit
