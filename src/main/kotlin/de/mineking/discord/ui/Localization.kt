@@ -39,7 +39,7 @@ interface IDefaultMenuLocalizationHandler : MenuLocalizationHandler {
         .withLabel(readString(menu, element, "label", button.label)?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE)
 
     fun localizeSelect(menu: MenuConfigImpl<*, *>, element: Element?, select: SelectMenu) = select.createCopy()
-        .setPlaceholder(readString(menu, element, "placeholder", select.placeholder))
+        .setPlaceholder(readString(menu, element, "placeholder", select.placeholder).takeIf { it != " " })
         .build()
 
     fun localizeSelectOption(menu: MenuConfigImpl<*, *>, element: Element?, option: SelectOption) = option.copy(

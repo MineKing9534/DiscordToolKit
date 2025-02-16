@@ -25,7 +25,7 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
     private fun prepareLocalization(config: MenuConfigData) {
         val id = IdGenerator("")
         when (config) {
-            is MessageMenuConfigImpl<*, *> -> renderMessageComponents(id, config)
+            is MessageMenuConfigImpl<*, *> -> renderMessageComponents(id, config, force = true)
             is ModalConfigImpl<*, *> -> renderModalComponents(id, config)
         }
     }

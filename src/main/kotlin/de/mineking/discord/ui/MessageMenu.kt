@@ -22,7 +22,8 @@ fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities
 const val MAX_COMPONENTS = 5
 
 @Suppress("UNCHECKED_CAST")
-fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>) = config.components
+fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>, force: Boolean = false) = config.components
+    .map { if (force) it.show() else it }
     .flatMap {
         try {
             it.render(config.menuInfo.menu as MessageMenu, id)

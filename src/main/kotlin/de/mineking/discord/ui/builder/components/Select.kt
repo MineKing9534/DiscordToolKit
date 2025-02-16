@@ -2,6 +2,7 @@ package de.mineking.discord.ui.builder.components
 
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.ComponentHandler
+import de.mineking.discord.ui.DEFAULT_LABEL
 import de.mineking.discord.ui.MessageElement
 import de.mineking.discord.ui.State
 import de.mineking.discord.ui.element
@@ -41,7 +42,7 @@ data class SelectOption(
 
 fun selectOption(
     value: Any,
-    label: String,
+    label: String = DEFAULT_LABEL,
     description: String? = null,
     default: Boolean = false,
     emoji: Emoji? = null,
@@ -75,7 +76,7 @@ fun stringSelect(
 fun stringSelect(
     name: String,
     vararg options: SelectOption,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -85,7 +86,7 @@ fun stringSelect(
 fun statefulMultiStringSelect(
     name: String,
     options: List<SelectOption>,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     min: Int = 1,
     max: Int = 1,
     ref: State<List<String>>,
@@ -98,7 +99,7 @@ fun statefulMultiStringSelect(
 fun statefulMultiStringSelect(
     name: String,
     vararg options: SelectOption,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     min: Int = 1,
     max: Int = 1,
     ref: State<List<String>>,
@@ -109,7 +110,7 @@ internal fun String?.toList() = if (this == null) emptyList() else listOf(this)
 fun statefulOptionalSingleStringSelect(
     name: String,
     options: List<SelectOption>,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     ref: State<String?>,
     handler: StringSelectHandler = {}
 ) = statefulMultiStringSelect(name, options, placeholder, min = 0, max = 1, ref = ref.transform({ it.toList() }, { it.firstOrNull() }), handler = handler)
@@ -117,7 +118,7 @@ fun statefulOptionalSingleStringSelect(
 fun statefulOptionalSingleStringSelect(
     name: String,
     vararg options: SelectOption,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     ref: State<String?>,
     handler: StringSelectHandler = {}
 ) = statefulOptionalSingleStringSelect(name, options.toList(), placeholder, ref, handler)
@@ -125,7 +126,7 @@ fun statefulOptionalSingleStringSelect(
 fun statefulSingleStringSelect(
     name: String,
     options: List<SelectOption>,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     ref: State<String>,
     handler: StringSelectHandler = {}
 ) = statefulMultiStringSelect(name, options, placeholder, min = 1, max = 1, ref = ref.transform({ it.toList() }, { it.first() }), handler = handler)
@@ -133,14 +134,14 @@ fun statefulSingleStringSelect(
 fun statefulSingleStringSelect(
     name: String,
     vararg options: SelectOption,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     ref: State<String>,
     handler: StringSelectHandler = {}
 ) = statefulSingleStringSelect(name, options.toList(), placeholder, ref, handler)
 
 inline fun <reified E : Enum<E>> enumSelect(
     name: String,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -150,7 +151,7 @@ inline fun <reified E : Enum<E>> enumSelect(
 
 inline fun <reified E : Enum<E>> statefulMultiEnumSelect(
     name: String,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -169,7 +170,7 @@ inline fun <reified E : Enum<E>> statefulMultiEnumSelect(
 inline fun <reified E : Enum<E>> E?.toEnumSet(): EnumSet<E> = if (this == null) EnumSet.noneOf(E::class.java) else EnumSet.of(this)
 inline fun <reified E : Enum<E>> statefulOptionalSingleEnumSelect(
     name: String,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     label: (id: String, enum: E) -> SelectOption = { id, e -> selectOption(e.toString(), id, localization = localization) },
     ref: State<E?>,
@@ -178,7 +179,7 @@ inline fun <reified E : Enum<E>> statefulOptionalSingleEnumSelect(
 
 inline fun <reified E : Enum<E>> statefulSingleEnumSelect(
     name: String,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     label: (id: String, enum: E) -> SelectOption = { id, e -> selectOption(e.toString(), id, localization = localization) },
     ref: State<E>,
@@ -190,7 +191,7 @@ fun entitySelect(
     vararg targets: SelectTarget,
     channelTypes: Collection<ChannelType> = emptyList(),
     default: Collection<EntitySelectMenu.DefaultValue> = emptyList(),
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,

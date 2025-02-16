@@ -5,10 +5,13 @@ import de.mineking.discord.ui.*
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
+import sun.jvm.hotspot.oops.CellTypeState
+import sun.jvm.hotspot.oops.CellTypeState.ref
+import kotlin.invoke
 
 fun <T> typedTextInput(
     name: String,
-    label: String = ZERO_WIDTH_SPACE,
+    label: String = DEFAULT_LABEL,
     placeholder: String? = null,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
@@ -42,7 +45,7 @@ typealias ResultHandler<T> = StateContext<*>.(value: T) -> Unit
 
 fun textInput(
     name: String,
-    label: String = ZERO_WIDTH_SPACE,
+    label: String = DEFAULT_LABEL,
     placeholder: String? = null,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
@@ -58,7 +61,7 @@ fun textInput(
 
 fun intInput(
     name: String,
-    label: String = ZERO_WIDTH_SPACE,
+    label: String = DEFAULT_LABEL,
     placeholder: String? = null,
     required: Boolean = true,
     min: Int = 0,
@@ -76,9 +79,9 @@ fun intInput(
     value
 }
 
-fun StateContext<*>.statefulTextInput(
+fun statefulTextInput(
     name: String,
-    label: String = ZERO_WIDTH_SPACE,
+    label: String = DEFAULT_LABEL,
     placeholder: String? = null,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
@@ -87,14 +90,17 @@ fun StateContext<*>.statefulTextInput(
     localization: LocalizationFile? = null,
     ref: State<String>,
     handler: ResultHandler<String>? = null
-) = textInput(name, label, placeholder, style, required, minLength, maxLength, ref.get(this), localization) {
-    ref.set(this, it)
-    handler?.invoke(this, it)
+): IModalComponent<String> {
+    var value by ref
+    return textInput(name, label, placeholder, style, required, minLength, maxLength, value, localization) {
+        value = it
+        handler?.invoke(this, it)
+    }
 }
 
 fun StateContext<*>.intInput(
     name: String,
-    label: String = ZERO_WIDTH_SPACE,
+    label: String = DEFAULT_LABEL,
     placeholder: String? = null,
     required: Boolean = true,
     min: Int = 0,
@@ -102,7 +108,10 @@ fun StateContext<*>.intInput(
     localization: LocalizationFile? = null,
     ref: State<Int>,
     handler: ResultHandler<Int>? = null
-) = intInput(name, label, placeholder, required, min, max, ref.get(this), localization) {
-    ref.set(this, it)
-    handler?.invoke(this, it)
+): IModalComponent<Int?> {
+    var value by ref
+    return intInput(name, label, placeholder, required, min, max, value, localization) {
+        value = it
+        handler?.invoke(this, it)
+    }
 }
