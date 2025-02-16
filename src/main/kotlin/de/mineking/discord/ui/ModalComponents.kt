@@ -3,6 +3,7 @@ package de.mineking.discord.ui
 import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
+import net.dv8tion.jda.api.interactions.components.ActionComponent
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 
 typealias ModalResult<M, T> = ModalContext<M>.() -> T
@@ -35,8 +36,10 @@ interface IModalComponent<out T> {
         override fun render(generator: IdGenerator): List<Pair<TextInput?, ModalElement<*>>> = this@IModalComponent.render(generator).map { (component, element) -> transform(component) to element }
     }
 
-    fun hide(hide: Boolean = true) = transform { if (hide) null else it }
-    fun show(show: Boolean = true) = hide(!show)
+    fun hide(hide: Boolean = true) = show(!hide)
+    fun show(show: Boolean = true) = if (show) this else object : IModalComponent<T> by this {
+        override fun render(generator: IdGenerator): List<Pair<TextInput?, ModalElement<*>>> = emptyList()
+    }
 
     fun <O> transformResult(handler: (value: T) -> O): IModalComponent<O> = object : IModalComponent<O> {
         override fun children() = this@IModalComponent.children()

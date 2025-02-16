@@ -49,22 +49,22 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
 fun createMessageComponent(components: List<IMessageComponent>) = MessageComponent(components)
 fun createMessageComponent(vararg components: IMessageComponent) = createMessageComponent(components.toList())
 
-internal open class Transform(val other: IMessageComponent) : IMessageComponent by other
-
 interface IMessageComponent {
     fun children(): List<IMessageComponent>
     fun elements(): List<MessageElement<*, *>> = children().flatMap { if (it is MessageElement<*, *>) listOf(it) else it.elements() }
 
     fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>>
-    fun transform(transform: (ActionComponent?) -> ActionComponent?): IMessageComponent = object : Transform(this) {
-        override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = other.render(menu, generator).map { (component, element) -> transform(component) to element }
+    fun transform(transform: (component: ActionComponent?) -> ActionComponent?): IMessageComponent = object : IMessageComponent by this {
+        override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = this@IMessageComponent.render(menu, generator).map { (component, element) -> transform(component) to element }
     }
 
     fun disabled(state: Boolean = true) = transform { it?.withDisabled(state || it.isDisabled) }
     fun enabled(state: Boolean = true) = disabled(!state)
 
-    fun hide(hide: Boolean = true) = transform { if (hide) null else it }
-    fun show(show: Boolean = true) = hide(!show)
+    fun hide(hide: Boolean = true) = show(!hide)
+    fun show(show: Boolean = true) = if (show) this else object : IMessageComponent by this {
+        override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = emptyList()
+    }
 
     fun format() = children().toString()
 }
