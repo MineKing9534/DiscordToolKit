@@ -26,7 +26,7 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
         val id = IdGenerator("")
         when (config) {
             is MessageMenuConfigImpl<*, *> -> renderMessageComponents(id, config, force = true)
-            is ModalConfigImpl<*, *> -> renderModalComponents(id, config)
+            is ModalConfigImpl<*, *> -> renderModalComponents(id, config, force = true)
         }
     }
 
@@ -106,7 +106,7 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <M> getMenu(name: String) = menus[name] as Menu<M, *, *>? ?: run { println(name); error("Menu not found") }
+    fun <M> getMenu(name: String) = menus[name] as Menu<M, *, *>? ?: error("Menu not found")
     fun <M> getMessageMenu(name: String) = getMenu<M>(name) as MessageMenu
     fun <M> getModalMenu(name: String) = getMenu<M>(name) as ModalMenu
 

@@ -39,6 +39,7 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("org.kodein.emoji:emoji-kt:2.0.1")
+    testImplementation("me.carleslc.Simple-YAML:Simple-Yaml:1.8.4")
 }
 
 testlogger {

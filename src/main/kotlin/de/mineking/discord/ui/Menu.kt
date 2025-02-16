@@ -78,8 +78,6 @@ sealed class Menu<M, E : GenericInteractionCreateEvent, L : LocalizationFile?>(
 ) {
     val info = MenuInfo.create(this)
 
-    fun effectiveLocalization(): LocalizationFile? = localization ?: info.parent?.effectiveLocalization()
-
     abstract fun handle(event: E)
 }
 

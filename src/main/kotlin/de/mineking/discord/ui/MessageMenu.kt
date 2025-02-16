@@ -203,7 +203,8 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
     }
 
     override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
-        return setup { menuInfo.manager.registerLocalizedMenu<M, CL>("${menuInfo.name}.$name", defer, localization, if (detach) init else { localization ->
+        @Suppress("UNCHECKED_CAST")
+        return setup { menuInfo.manager.registerLocalizedMenu<M, CL>("${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init else { localization ->
             require(this is MessageMenuConfigImpl)
 
             try {
@@ -242,8 +243,9 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
         }) }
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <CL : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedModalConfigurator<M, CL>): ModalMenu<M, CL> {
-        return setup { menuInfo.manager.registerLocalizedModal("${menuInfo.name}.$name", defer, localization, if (detach) init else { localization ->
+        return setup { menuInfo.manager.registerLocalizedModal("${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init else { localization ->
             require(this is ModalConfigImpl)
 
             try {

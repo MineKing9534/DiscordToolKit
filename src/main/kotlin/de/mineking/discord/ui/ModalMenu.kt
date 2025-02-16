@@ -6,7 +6,8 @@ import net.dv8tion.jda.api.interactions.callbacks.IModalCallback
 import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.modals.Modal
 
-fun renderModalComponents(id: IdGenerator, config: ModalConfigImpl<*, *>) = config.components
+fun renderModalComponents(id: IdGenerator, config: ModalConfigImpl<*, *>, force: Boolean = false) = config.components
+    .map { if (force) it.show() else it }
     .flatMap { it.render(id) }
     .mapNotNull { (component, element) -> element.finalize(component)?.let { element to it } }
     .map { (element, component) -> config.menuInfo.manager.localization.localize(config, element, component) }
