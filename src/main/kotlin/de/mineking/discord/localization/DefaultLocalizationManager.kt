@@ -113,7 +113,10 @@ class AdvancedLocalizationManager(
 
             val line = section.getString(name) ?:
                 if (default != null) return@createLocalizationFile { default(it) }
-                else error("Cannot find localization for ${ location.simpleName }#$name for $locale")
+                else {
+                    logger.error("Cannot find localization for ${ location.simpleName }#$name for $locale")
+                    ""
+                }
 
             val elements = parseLine(line, locale,
                 file to type.createType(type.typeParameters.map { KTypeProjection.invariant(it.starProjectedType) }),

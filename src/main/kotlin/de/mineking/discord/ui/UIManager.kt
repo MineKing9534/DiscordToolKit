@@ -13,6 +13,7 @@ import kotlin.math.min
 
 fun Emoji.jda() = fromUnicode(this.details.string)
 
+@MenuMarker
 class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
     internal val menus: MutableMap<String, Menu<*, *, *>> = mutableMapOf()
     var localization: MenuLocalizationHandler = SimpleMenuLocalizationHandler()

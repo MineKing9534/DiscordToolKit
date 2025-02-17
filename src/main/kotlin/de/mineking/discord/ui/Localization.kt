@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.Interaction
 import net.dv8tion.jda.api.interactions.components.buttons.Button
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.modals.Modal
 import kotlin.reflect.KFunction
@@ -33,23 +34,27 @@ interface IDefaultMenuLocalizationHandler : MenuLocalizationHandler {
         else -> component
     } as T
 
-    fun readString(menu: MenuConfigImpl<*, *>, element: Element?, name: String, base: String?, override: LocalizationFile? = null, prefix: String = ""): String?
+    fun readString(menu: MenuConfigImpl<*, *>, element: Element?, name: String, base: String?, override: LocalizationFile? = null, prefix: String = "", postfix: String = ""): String?
 
     fun localizeButton(menu: MenuConfigImpl<*, *>, element: Element?, button: Button) = button
         .withLabel(readString(menu, element, "label", button.label)?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE)
 
-    fun localizeSelect(menu: MenuConfigImpl<*, *>, element: Element?, select: SelectMenu) = select.createCopy()
-        .setPlaceholder(readString(menu, element, "placeholder", select.placeholder).takeIf { it != " " })
+    fun localizeSelect(menu: MenuConfigImpl<*, *>, element: Element?, select: SelectMenu): SelectMenu = select.createCopy()
+        .setPlaceholder(readString(menu, element, "placeholder", select.placeholder)?.takeIf { it.isNotBlank() })
+        .apply { if (this is StringSelectMenu.Builder) {
+            val localizedOptions = options.map { if (it is SelectOption) localize(menu, element, it) else it }
+            options.clear()
+            options.addAll(localizedOptions)
+        } }
         .build()
 
-    fun localizeSelectOption(menu: MenuConfigImpl<*, *>, element: Element?, option: SelectOption) = option.copy(
-        label = readString(menu, element, "label", option.label, override = option.localization)?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE,
-        description = readString(menu, element, "description", option.description)
-    )
+    fun localizeSelectOption(menu: MenuConfigImpl<*, *>, element: Element?, option: SelectOption) = option
+        .withLabel(readString(menu, element, "label", option.label, override = option.localization, postfix = "options.${option.value}")?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE)
+        .withDescription(readString(menu, element, "description", option.description, postfix = "options.${option.value}")?.takeIf { it.isNotBlank() })
 
     fun localizeTextInput(menu: MenuConfigImpl<*, *>, element: Element?, input: TextInput) = TextInput.create(input.id, "-", input.style)
         .setLabel(readString(menu, element, "label", input.label, prefix = "inputs")?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE)
-        .setPlaceholder(readString(menu, element, "placeholder", input.placeHolder, prefix = "inputs"))
+        .setPlaceholder(readString(menu, element, "placeholder", input.placeHolder, prefix = "inputs")?.takeIf { it.isNotBlank() })
         .setValue(input.value)
         .setRequired(input.isRequired)
         .setMinLength(input.minLength)
@@ -62,14 +67,14 @@ interface IDefaultMenuLocalizationHandler : MenuLocalizationHandler {
 }
 
 class SimpleMenuLocalizationHandler : IDefaultMenuLocalizationHandler {
-    override fun readString(menu: MenuConfigImpl<*, *>, element: Element?, name: String, base: String?, override: LocalizationFile?, prefix: String): String? =
+    override fun readString(menu: MenuConfigImpl<*, *>, element: Element?, name: String, base: String?, override: LocalizationFile?, prefix: String, postfix: String): String? =
         if (base?.shouldLocalize() == true) error("Cannot handle actual localization. Use localize() in your UIManager config to enable localization")
         else if (base != DEFAULT_LABEL) base
         else " "
 }
 
 class DefaultMenuLocalizationHandler(val prefix: String) : IDefaultMenuLocalizationHandler {
-    override fun readString(menu: MenuConfigImpl<*, *>, element: Element?, name: String, base: String?, override: LocalizationFile?, prefix: String): String? {
+    override fun readString(menu: MenuConfigImpl<*, *>, element: Element?, name: String, base: String?, override: LocalizationFile?, prefix: String, postfix: String): String? {
         val file = override ?: element?.localization ?: menu.menuInfo.menu.localization
         val localize = file != null && (base?.shouldLocalize() == true || base == DEFAULT_LABEL)
 
@@ -78,7 +83,13 @@ class DefaultMenuLocalizationHandler(val prefix: String) : IDefaultMenuLocalizat
             val config = menu.localizationConfig ?: error("You have to configure the localization context for a localized menu (e.g. call localize(DiscordLocale) in the menu builder)")
 
             val locale = config.locale.takeIf { it in menu.menuInfo.manager.manager.localizationManager.locales } ?: menu.menuInfo.manager.manager.localizationManager.defaultLocale
-            val key = if (base == DEFAULT_LABEL) "${this.prefix.takeIf { it.isNotBlank() }?.let { "$it." } ?: ""}${menu.menuInfo.name}${prefix.takeIf { it.isNotEmpty() }?.let { ".$it" } ?: ""}${element?.name?.let { ".$it" } ?: ""}.$name" else base.substring(LOCALIZATION_PREFIX.length)
+
+            val globalPrefix = this.prefix.takeIf { it.isNotBlank() }?.let { "$it." } ?: ""
+            val prefix = prefix.takeIf { it.isNotEmpty() }?.let { ".$it" } ?: ""
+            val element = element?.name?.let { ".$it" } ?: ""
+            val postfix = postfix.takeIf { it.isNotEmpty() }?.let { ".$it" } ?: ""
+
+            val key = if (base == DEFAULT_LABEL) "$globalPrefix${menu.menuInfo.name}$prefix$element$postfix.$name" else base.substring(LOCALIZATION_PREFIX.length)
 
             file.register(key, config.args.mapValues { it.value.second }, typeOf<String>())
             file.readString(key, locale, config.args.mapValues { it.value.first })

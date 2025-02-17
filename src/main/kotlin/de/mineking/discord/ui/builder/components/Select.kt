@@ -17,29 +17,26 @@ typealias EntitySelectHandler = ComponentHandler<*, EntitySelectInteractionEvent
 typealias JDASelectOption = net.dv8tion.jda.api.interactions.components.selections.SelectOption
 typealias StringSelectElement = MessageElement<StringSelectMenu, StringSelectInteractionEvent>
 
-data class SelectOption(
-    val value: String,
-    val label: String,
-    val description: String?,
-    val default: Boolean,
-    val emoji: Emoji?,
+class SelectOption(
+    value: String,
+    label: String,
+    description: String?,
+    default: Boolean,
+    emoji: Emoji?,
     val localization: LocalizationFile?,
     val visible: Boolean,
     val handler: StringSelectHandler?
-) {
-    fun build() = JDASelectOption.of(label, value)
-        .withEmoji(emoji)
-        .withDescription(description)
-        .withDefault(default)
+) : JDASelectOption(label, value, description, default, emoji) {
+    override fun withDefault(default: Boolean) = SelectOption(value, label, description, default, emoji, localization, visible, handler)
 
-    fun show(visible: Boolean) = copy(visible = visible)
+    fun show(visible: Boolean) = SelectOption(value, label, description, isDefault, emoji, localization, visible, handler)
     fun hide(hide: Boolean) = show(!hide)
 }
 
 fun selectOption(
     value: Any,
     label: String = DEFAULT_LABEL,
-    description: String? = null,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -49,17 +46,17 @@ fun selectOption(
 fun stringSelect(
     name: String,
     options: List<SelectOption>,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
     handler: StringSelectHandler = {}
-) = element<StringSelectMenu, StringSelectInteractionEvent>(name, localization, { _, id ->
+) = element<StringSelectMenu, StringSelectInteractionEvent>(name, localization, { menu, id ->
     val select = StringSelectMenu.create(id)
         .setPlaceholder(placeholder)
         .setMinValues(min)
         .setMaxValues(max)
-        .addOptions(options.map { it.build() })
+        .addOptions(options.filter { it.visible })
 
     if (options.isEmpty()) select.addOption("---", "---").setDisabled(true)
 
@@ -87,7 +84,7 @@ fun statefulMultiStringSelect(
     max: Int = 1,
     ref: State<List<String>>,
     handler: StringSelectHandler = {}
-) = stringSelect(name, options.map { it.copy(default = it.value in ref.get(null)) }, placeholder, min, max) {
+) = stringSelect(name, options.map { it.withDefault(it.value in ref.get(null)) }, placeholder, min, max) {
     ref.set(null, event.values)
     handler()
 }
@@ -155,7 +152,7 @@ inline fun <reified E : Enum<E>> statefulMultiEnumSelect(
     ref: State<EnumSet<E>>,
     noinline handler: StringSelectHandler = {}
 ): StringSelectElement {
-    return enumSelect<E>(name, placeholder, min, max, localization, { id, e -> label(id, e).copy(default = id in ref.get(null).map { it.name }) }) {
+    return enumSelect<E>(name, placeholder, min, max, localization, { id, e -> label(id, e).withDefault(id in ref.get(null).map { it.name }) }) {
         val temp = E::class.java.enumConstants.filter { it.name in event.values }
         ref.set(null, if (temp.isNotEmpty()) EnumSet.copyOf(temp) else EnumSet.noneOf(E::class.java))
 

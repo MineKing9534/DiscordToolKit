@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
 fun <T> typedTextInput(
     name: String,
     label: String = DEFAULT_LABEL,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
     minLength: Int = 0,
@@ -42,7 +42,7 @@ typealias ResultHandler<T> = StateContext<*>.(value: T) -> Unit
 fun textInput(
     name: String,
     label: String = DEFAULT_LABEL,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
     minLength: Int = 0,
@@ -58,7 +58,7 @@ fun textInput(
 fun intInput(
     name: String,
     label: String = DEFAULT_LABEL,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     required: Boolean = true,
     min: Int = 0,
     max: Int = TextInput.MAX_VALUE_LENGTH,
@@ -78,7 +78,7 @@ fun intInput(
 fun statefulTextInput(
     name: String,
     label: String = DEFAULT_LABEL,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
     minLength: Int = 0,
@@ -97,7 +97,7 @@ fun statefulTextInput(
 fun StateContext<*>.intInput(
     name: String,
     label: String = DEFAULT_LABEL,
-    placeholder: String? = null,
+    placeholder: String? = DEFAULT_LABEL,
     required: Boolean = true,
     min: Int = 0,
     max: Int = TextInput.MAX_VALUE_LENGTH,

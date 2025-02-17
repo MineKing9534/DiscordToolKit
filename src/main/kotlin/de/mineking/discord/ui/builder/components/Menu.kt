@@ -14,14 +14,14 @@ class BackReference(val menu: MenuInfo<*>, val stateCount: Int) {
         label: String = DEFAULT_LABEL,
         emoji: Emoji? = null,
         localization: LocalizationFile? = null
-    ) = switchMenuButton(menu, name, color = color, label = label, emoji = emoji, localization) {
+    ) = switchMenuButton(menu, name, color, label, emoji, localization) {
         copy(stateCount)
         pushDefaults()
     }
 
     fun asSelectOption(
-        label: String,
-        description: String? = null,
+        label: String = DEFAULT_LABEL,
+        description: String? = DEFAULT_LABEL,
         default: Boolean = false,
         emoji: Emoji? = null,
         localization: LocalizationFile? = null
@@ -182,8 +182,8 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
 
 fun switchMenuSelectOption(
     menu: Menu<*, *, *>,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -194,8 +194,8 @@ fun switchMenuSelectOption(
 
 fun switchMenuSelectOption(
     menu: MenuInfo<*>,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -206,8 +206,8 @@ fun switchMenuSelectOption(
 
 fun switchMenuSelectOption(
     menu: String,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -218,8 +218,8 @@ fun switchMenuSelectOption(
 
 fun MessageMenuConfig<*, *>.menuSelectOption(
     name: String,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -231,8 +231,8 @@ fun MessageMenuConfig<*, *>.menuSelectOption(
 
 inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuSelectOption(
     name: String,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -246,8 +246,8 @@ inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuS
 
 fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuSelectOption(
     name: String,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -271,8 +271,8 @@ fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuSelectOption(
 
 inline fun <reified T> MessageMenuConfig<*, *>.modalSelectOption(
     name: String,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     title: String = DEFAULT_LABEL,
@@ -285,8 +285,8 @@ inline fun <reified T> MessageMenuConfig<*, *>.modalSelectOption(
 
 inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedModalSelectOption(
     name: String,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     title: String = DEFAULT_LABEL,
@@ -301,8 +301,8 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
 
 inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedModalSelectOption(
     name: String,
-    label: String,
-    description: String? = null,
+    label: String = DEFAULT_LABEL,
+    description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     title: String = DEFAULT_LABEL,
