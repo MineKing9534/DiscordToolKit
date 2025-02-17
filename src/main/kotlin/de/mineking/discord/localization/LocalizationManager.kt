@@ -72,7 +72,9 @@ fun <T : LocalizationFile> createLocalizationFile(
             val function = method.kotlinFunction
 
             fun invoke(name: String, locale: DiscordLocale, params: (name: String) -> Any?): Any? {
-                val message = messages[name to locale] ?: throw LocalizationNotFoundException("Cannot find localization for $name in $locale ($type)")
+                val effectiveLocale = locale.takeIf { it in manager.locales } ?: manager.defaultLocale
+
+                val message = messages[name to effectiveLocale] ?: throw LocalizationNotFoundException("Cannot find localization for $name in $effectiveLocale ($type)")
                 return message.first(message.second.associateWith { params(it) })
             }
 
