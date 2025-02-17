@@ -201,9 +201,14 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> cache(value: () -> T): T =
-        if (currentCache >= cache.size) value().apply { cache += this }
-        else cache[currentCache] as T
+    override fun <T> cache(value: () -> T): T {
+        val value =
+            if (currentCache >= cache.size) value().apply { cache += this }
+            else cache[currentCache] as T
+
+        currentCache++
+        return value
+    }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> setup(value: () -> T): T =
