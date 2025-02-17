@@ -157,7 +157,7 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
 
     fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: L, detach: Boolean = false, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L>
     fun modal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: LocalizationFile? = null, detach: Boolean = false, init: ModalConfigurator<M>): ModalMenu<M, LocalizationFile?> {
-        return localizedModal(name, defer, localization, false) { init() }
+        return localizedModal(name, defer, localization, detach) { init() }
     }
 }
 
