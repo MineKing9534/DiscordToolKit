@@ -149,10 +149,13 @@ data class StateData(val data: MutableList<String>) {
 interface StateContext<M> {
     val menuInfo: MenuInfo<M>
     val stateData: StateData
+    val cache: MutableList<Any?>
 }
 
 @MenuMarker
-class SendState<M>(override val menuInfo: MenuInfo<M>, override val stateData: StateData, val param: M) : StateContext<M>
+class SendState<M>(override val menuInfo: MenuInfo<M>, override val stateData: StateData, val param: M) : StateContext<M> {
+    override val cache: MutableList<Any?> = mutableListOf()
+}
 
 @MenuMarker
 interface StateConfig {

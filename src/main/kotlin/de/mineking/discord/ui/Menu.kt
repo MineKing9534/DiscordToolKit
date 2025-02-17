@@ -32,6 +32,7 @@ abstract class HandlerContext<M, out E>(
 ) : StateContext<M>, IMessageEditCallback by event, IReplyCallback by event
         where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback
 {
+    override val cache: MutableList<Any?> = mutableListOf()
     abstract val message: Message
 
     internal val after: MutableList<() -> Unit> = mutableListOf()
@@ -63,7 +64,9 @@ class TransferContext<M, E>(
     stateData: StateData,
     event: E,
     override val message: Message
-) : HandlerContext<M, E>(menu, stateData, event) where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback
+) : HandlerContext<M, E>(menu, stateData, event) where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
+    override val cache: MutableList<Any?> = mutableListOf()
+}
 
 sealed interface Element {
     val name: String
@@ -143,6 +146,8 @@ interface MenuConfig<M, L : LocalizationFile?> : StateContext<M>, StateConfig {
     fun <T> setup(value: () -> T): T
     fun initialize(handler: (param: M) -> Unit)
 
+    fun <T> cache(value: () -> T): T
+
     fun <T> parameter(initial: (param: M) -> T, render: HandlerContext<M, *>.() -> T): Parameter<T> = parameter({ error("Render-Only param value used during build") }, initial, render)
     fun <T> parameter(default: () -> T, initial: (param: M) -> T, render: HandlerContext<M, *>.() -> T): Parameter<T>
 
@@ -165,6 +170,9 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
     private val stateAccess = stateData?.access() //This not-null check is required to allow stateData to be overridden
 
     override val states = mutableListOf<InternalState<*>>()
+
+    override val cache: MutableList<Any?> = state?.cache ?: mutableListOf()
+    private var currentCache = 0
 
     override val setup = mutableListOf<Any?>()
     private var currentSetup = 0
@@ -191,6 +199,11 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
 
         return stateAccess!!.nextState(type, handler)
     }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> cache(value: () -> T): T =
+        if (currentCache >= cache.size) value().apply { cache += this }
+        else cache[currentCache] as T
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> setup(value: () -> T): T =
