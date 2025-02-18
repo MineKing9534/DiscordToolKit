@@ -21,7 +21,7 @@ fun main() {
                 val text = requiredOption<String>("text")
 
                 execute {
-                    reply(localization.commandResponse(event.userLocale, text())).queue()
+                    reply(localization.commandEchoResponse(event.userLocale, text())).queue()
                 }
             }
 
@@ -33,5 +33,5 @@ fun main() {
 //See resources/test/de/examples/echo_localization.yaml
 interface EchoLocalization : LocalizationFile {
     @Localize
-    fun commandResponse(@Locale locale: DiscordLocale, @LocalizationParameter text: String): String
+    fun commandEchoResponse(@Locale locale: DiscordLocale, @LocalizationParameter text: String): String
 }

@@ -1,5 +1,6 @@
 package de.mineking.discord.commands
 
+import com.sun.tools.javac.tree.TreeInfo.args
 import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import kotlin.reflect.KType
@@ -14,10 +15,7 @@ interface CommandLocalizationHandler {
 }
 
 class DefaultCommandLocalizationHandler(val prefix: String, val args: Map<String, Pair<KType, (command: CommandImpl<*, *>) -> Any?>> = emptyMap()) : CommandLocalizationHandler {
-    private fun CommandImpl<*, *>.path(): String {
-        val temp = path
-        return temp.joinToString(".subcommands.").substring(temp[0].length)
-    }
+    private fun CommandImpl<*, *>.path() = "${prefix.takeIf { it.isNotBlank() }?.let { "$it." } ?: ""}${path.joinToString(".subcommands.")}"
 
     private fun createLocalization(file: LocalizationFile, command: CommandImpl<*, *>, key: String): LocalizationInfo {
         file.register(key, args.mapValues { it.value.first }, typeOf<String>())
@@ -30,11 +28,11 @@ class DefaultCommandLocalizationHandler(val prefix: String, val args: Map<String
         val default = if (command is SlashCommandImpl) command.description else command.name
         if (file == null) return LocalizationInfo(default)
 
-        val key = default.takeIf { it != DEFAULT_COMMAND_DESCRIPTION } ?: "$prefix${command.path()}.description"
+        val key = default.takeIf { it != DEFAULT_COMMAND_DESCRIPTION } ?: "${command.path()}.description"
         return createLocalization(file, command, key)
     }
 
-    private fun optionPath(command: CommandImpl<*, *>, option: OptionInfo) = option.description.takeIf { it != DEFAULT_OPTION_DESCRIPTION } ?: "$prefix${command.path()}.options.${option.name}"
+    private fun optionPath(command: CommandImpl<*, *>, option: OptionInfo) = option.description.takeIf { it != DEFAULT_OPTION_DESCRIPTION } ?: "${command.path()}.options.${option.name}"
 
     override fun getOptionDescription(file: LocalizationFile?, command: CommandImpl<*, *>, option: OptionInfo): LocalizationInfo {
         val default = option.description

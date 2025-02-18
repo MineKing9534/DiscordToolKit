@@ -1,4 +1,4 @@
-command:
+command.echo:
   response: 'Deine Nachricht: **${ text }**'
   description: Sendet deine Nachricht als Bot
   options:
