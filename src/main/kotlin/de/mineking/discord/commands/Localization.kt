@@ -1,6 +1,5 @@
 package de.mineking.discord.commands
 
-import com.sun.tools.javac.tree.TreeInfo.args
 import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import kotlin.reflect.KType

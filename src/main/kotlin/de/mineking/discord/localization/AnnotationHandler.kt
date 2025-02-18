@@ -38,22 +38,37 @@ annotation class Localize(val name: String = "")
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Embed(val name: String = "")
 
-private data class EmbedComponent<T>(val name: String, val type: KType, val builder: EmbedBuilder.(value: T?) -> Unit)
+private data class EmbedComponent<T>(val name: String, val type: KType, val builder: EmbedBuilder.(value: T?, read: (name: String) -> Any?) -> Unit)
 
-private inline fun <reified T> embedComponent(name: String, noinline builder: EmbedBuilder.(value: T?) -> Unit) = EmbedComponent<T>(name, typeOf<T?>(), builder)
+private inline fun <reified T> embedComponent(name: String, noinline builder: EmbedBuilder.(value: T?, read: (name: String) -> Any?) -> Unit) = EmbedComponent<T>(name, typeOf<T?>(), builder)
 private val embedComponents = listOf(
-    embedComponent<String>("title") { setTitle(it) },
-    embedComponent<String>("url") { setUrl(it) },
-    embedComponent<Color>("color") { setColor(it) },
-    embedComponent<ConfigurationSection>("author") { if (it != null) setAuthor(it.getString("name"), it.getString("url"), it.getString("icon")) },
-    embedComponent<String>("thumbnail") { setThumbnail(it) },
-    embedComponent<String>("description") { setDescription(it) },
-    embedComponent<List<Map<String, Any>>>("fields") { fields -> fields?.forEach {
-        addField(it["name"] as String, it["value"] as String, it.getOrDefault("inline", false) as Boolean)
+    embedComponent<String>("title") { title, read -> setTitle(title) },
+    embedComponent<String>("url") { url, read -> setUrl(url) },
+    embedComponent<Color>("color") { color, read -> setColor(color) },
+    embedComponent<ConfigurationSection>("author") { author, read -> if (author != null) {
+        setAuthor(
+            if (author.contains("name")) read(".name") as String? else null,
+            if (author.contains("url")) read(".url") as String? else null,
+            if (author.contains("icon")) read(".icon") as String? else null
+        )
     } },
-    embedComponent<String>("image") { setImage(it) },
-    embedComponent<ConfigurationSection>("footer") { if (it != null) setFooter(it.getString("text"), it.getString("icon")) },
-    embedComponent<Instant>("timestamp") { setTimestamp(it) },
+    embedComponent<String>("thumbnail") { thumbnail, read -> setThumbnail(thumbnail) },
+    embedComponent<String>("description") { description, read -> setDescription(description) },
+    embedComponent<List<Map<String, Any>>>("fields") { fields, read -> fields?.forEachIndexed { index, field ->
+        addField(
+            read("[$index].name") as String,
+            read("[$index].value") as String,
+            field.getOrDefault("inline", false) as Boolean
+        )
+    } },
+    embedComponent<String>("image") { image, read -> setImage(image) },
+    embedComponent<ConfigurationSection>("footer") { footer, read -> if (footer != null)
+        setFooter(
+            if (footer.contains("text")) read(".text") as String? else null,
+            if (footer.contains("icon")) read(".icon") as String? else null
+        )
+                                                   },
+    embedComponent<Instant>("timestamp") { timestamp, read -> setTimestamp(timestamp) },
 )
 
 object AdvancedLocalizationAnnotationHandlers {
@@ -70,7 +85,7 @@ object AdvancedLocalizationAnnotationHandlers {
 
         @Suppress("UNCHECKED_CAST")
         embedComponents.map { it as EmbedComponent<Any?> }.forEach { (name, _, builder) ->
-            embed.builder(read("$key.$name"))
+            embed.builder(read("$key.$name")) { read("$key.$name$it") }
         }
 
         when (function.returnType) {

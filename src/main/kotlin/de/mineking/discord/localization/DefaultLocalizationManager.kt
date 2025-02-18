@@ -110,8 +110,22 @@ class AdvancedLocalizationManager(
             val location = function?.javaMethod?.declaringClass?.kotlin ?: type
             val section = read(location, locale)
 
-            if (result.jvmErasure == List::class && section.isList(name)) return@createLocalizationFile { section.getList(name) }
-            if (result.jvmErasure == ConfigurationSection::class && section.isConfigurationSection(name)) return@createLocalizationFile { section.getConfigurationSection(name) }
+            val value = section.get(name)
+
+            if (result.jvmErasure == List::class && value is List<*>) {
+                val list = section.getList(name)
+                list.forEachIndexed { index, value -> file.register("$name[$index]", types, if (value is String) typeOf<String>() else typeOf<ConfigurationSection>(), function, default) }
+
+                return@createLocalizationFile { value }
+            }
+
+            if (result.jvmErasure == ConfigurationSection::class && (value is ConfigurationSection || value is Map<*, *>)) {
+                @Suppress("UNCHECKED_CAST")
+                val keys = if (value is ConfigurationSection) value.getKeys(false) else (value as Map<String, *>).keys
+                keys.forEach { file.register("$name.$it", types, typeOf<String>(), function, default) }
+
+                return@createLocalizationFile { value }
+            }
 
             val line = section.getString(name) ?:
                 if (default != null) return@createLocalizationFile { default(it) }
