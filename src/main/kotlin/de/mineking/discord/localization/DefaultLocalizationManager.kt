@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.interactions.DiscordLocale
+import org.simpleyaml.configuration.ConfigurationSection
 import org.simpleyaml.configuration.file.YamlConfiguration
 import org.simpleyaml.utils.SupplierIO.InputStream
 import kotlin.reflect.KClass
@@ -110,6 +111,7 @@ class AdvancedLocalizationManager(
             val section = read(location, locale)
 
             if (result.jvmErasure == List::class && section.isList(name)) return@createLocalizationFile { section.getList(name) }
+            if (result.jvmErasure == ConfigurationSection::class && section.isConfigurationSection(name)) return@createLocalizationFile { section.getConfigurationSection(name) }
 
             val line = section.getString(name) ?:
                 if (default != null) return@createLocalizationFile { default(it) }

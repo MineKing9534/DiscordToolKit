@@ -2,6 +2,7 @@ package de.mineking.discord.localization
 
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
+import org.simpleyaml.configuration.ConfigurationSection
 import java.awt.Color
 import java.time.Instant
 import kotlin.reflect.KFunction
@@ -44,26 +45,14 @@ private val embedComponents = listOf(
     embedComponent<String>("title") { setTitle(it) },
     embedComponent<String>("url") { setUrl(it) },
     embedComponent<Color>("color") { setColor(it) },
-    embedComponent<String>("author.name") {
-        val temp = build()
-        this.setAuthor(it, temp.author?.url, temp.author?.iconUrl)
-    },
-    embedComponent<String>("author.url") {
-        val temp = build()
-        this.setAuthor(temp.author?.name, it, temp.author?.iconUrl)
-    },
-    embedComponent<String>("author.icon") {
-        val temp = build()
-        this.setAuthor(temp.author?.name, temp.author?.url, it)
-    },
+    embedComponent<ConfigurationSection>("author") { if (it != null) setAuthor(it.getString("name"), it.getString("url"), it.getString("icon")) },
     embedComponent<String>("thumbnail") { setThumbnail(it) },
     embedComponent<String>("description") { setDescription(it) },
     embedComponent<List<Map<String, Any>>>("fields") { fields -> fields?.forEach {
         addField(it["name"] as String, it["value"] as String, it.getOrDefault("inline", false) as Boolean)
     } },
     embedComponent<String>("image") { setImage(it) },
-    embedComponent<String>("footer") { setFooter(it) },
-    embedComponent<String>("icon") { setFooter(build().footer?.text, it) },
+    embedComponent<ConfigurationSection>("footer") { if (it != null) setFooter(it.getString("text"), it.getString("icon")) },
     embedComponent<Instant>("timestamp") { setTimestamp(it) },
 )
 
