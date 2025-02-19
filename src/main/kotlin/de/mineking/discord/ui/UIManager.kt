@@ -2,6 +2,7 @@ package de.mineking.discord.ui
 
 import de.mineking.discord.DiscordToolKit
 import de.mineking.discord.Manager
+import de.mineking.discord.commands.MenuCommandConfigImpl
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import net.dv8tion.jda.api.entities.emoji.Emoji.fromUnicode
@@ -26,6 +27,7 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
         val id = IdGenerator("")
         when (config) {
             is MessageMenuConfigImpl<*, *> -> renderMessageComponents(id, config, force = true)
+            is MenuCommandConfigImpl<*> -> prepareLocalization(config.parent as MessageMenuConfigImpl<*, *>)
             is ModalConfigImpl<*, *> -> renderModalComponents(id, config, force = true)
         }
     }
