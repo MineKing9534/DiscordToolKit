@@ -11,8 +11,8 @@ fun main() {
             +slashCommand("echo", description = "Sends a message as the bot") {
                 val text = requiredStringOption("text", description = "The text to send") {
                     replyChoices(
-                        autocompleteChoice(currentValue!!.lowercase(), label = currentValue.lowercase()),
-                        autocompleteChoice(currentValue.uppercase(), label = currentValue.uppercase())
+                        autocompleteChoice(currentValue!!.lowercase(), label = currentValue!!.lowercase()),
+                        autocompleteChoice(currentValue!!.uppercase(), label = currentValue!!.uppercase())
                     )
                 }
 
