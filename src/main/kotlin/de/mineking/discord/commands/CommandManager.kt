@@ -80,13 +80,15 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         val optionMap = hashMapOf<String, Any?>()
         val options = CommandOptions(optionMap)
 
-        val context = AutocompleteContext<Any?>(this, event, options.parseOption(option.name), options, command, option)
+        val context = AutocompleteContext<Any?>(this, event, null, options, command, option)
 
         try {
             event.options.forEach {
                 val option = command.options[it.name]!!
                 optionMap += option.name to getOptionMapper(option.type)!!.read(this, option.type, context, option.name)
             }
+
+            context.currentValue = options.parseOption(option.name)
 
             option.autocomplete?.invoke(context)
         } catch (_: CommandTermination) {}

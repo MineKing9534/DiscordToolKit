@@ -43,14 +43,17 @@ class SlashCommandContext(
     val options: CommandOptions
 ) : ICommandContext<SlashCommandInteractionEvent>, IOptionContext<SlashCommandInteractionEvent>, OptionContext by options, SlashCommandInteraction by event
 
-data class AutocompleteContext<out T>(
+class AutocompleteContext<out T>(
     override val manager: CommandManager,
     override val event: CommandAutoCompleteInteractionEvent,
-    val currentValue: T?,
+    currentValue: T?,
     val options: CommandOptions,
     val command: SlashCommandImpl,
     val option: OptionInfo
 ) : IOptionContext<CommandAutoCompleteInteractionEvent>, OptionContext by options, CommandInteractionPayload by event {
+    var currentValue: @UnsafeVariance T? = currentValue
+        internal set
+
     fun replyChoices(choices: List<Choice>) = event.replyChoices(choices.map { it.build(manager, command, option, event.focusedOption.type) }).queue()
     fun replyChoices(vararg choices: Choice) = replyChoices(choices.toList())
 }
