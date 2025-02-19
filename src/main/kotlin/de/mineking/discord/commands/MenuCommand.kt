@@ -31,7 +31,7 @@ interface MenuCommandConfig<L : LocalizationFile?> : MessageMenuConfig<SlashComm
     fun ignoreParentConditions()
 }
 
-class MenuCommandConfigImpl<L : LocalizationFile?>(val manager: CommandManager, val parent: MessageMenuConfig<SlashCommandContext, L>) : MessageMenuConfig<SlashCommandContext, L> by parent, MenuCommandConfig<L>, MenuConfigData {
+class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: CommandManager, val parent: MessageMenuConfig<SlashCommandContext, L>) : MessageMenuConfig<SlashCommandContext, L> by parent, MenuCommandConfig<L>, MenuConfigData {
     internal val options = mutableListOf<OptionInfo>()
 
     internal val before = mutableListOf<BeforeHandler<in SlashCommandContext>>()

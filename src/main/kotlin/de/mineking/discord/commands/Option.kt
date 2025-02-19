@@ -170,6 +170,8 @@ fun <T> Option<OptionalOption<T>>.orElse(type: KType?, value: T): Option<T> = if
 
 @Suppress("UNCHECKED_CAST")
 interface OptionConfig {
+    val manager: CommandManager
+
     fun <T> option(data: OptionInfo): Option<OptionalOption<T>>
     fun <T> nullableOption(data: OptionInfo) = option<T>(data).orNull()
     fun <T> requiredOption(data: OptionInfo) = option<T>(data).get()
