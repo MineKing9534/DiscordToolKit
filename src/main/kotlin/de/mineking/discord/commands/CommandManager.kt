@@ -13,7 +13,6 @@ import kotlin.reflect.typeOf
 @DslMarker
 annotation class CommandMarker
 
-@CommandMarker
 class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(manager) {
     val commands: MutableMap<String, CommandImpl<*, out CommandData>> = hashMapOf()
     var entryPoint: EntryPointCommandImpl? = null
