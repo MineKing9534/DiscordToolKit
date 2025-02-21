@@ -25,7 +25,7 @@ class BackReference(val menu: MenuInfo<*>, val stateCount: Int) {
         default: Boolean = false,
         emoji: Emoji? = null,
         localization: LocalizationFile? = null
-    ) = switchMenuSelectOption(menu, label, description, default, emoji, localization) {
+    ) = switchMenuSelectOption(menu, label = label, description = description, default = default, emoji = emoji, localization = localization) {
         copy(stateCount)
         pushDefaults()
     }
@@ -182,37 +182,40 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
 
 fun switchMenuSelectOption(
     menu: Menu<*, *, *>,
+    name: String = menu.name.menuName(),
     label: String = DEFAULT_LABEL,
     description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
-) = selectOption(label, menu.name, description, default, emoji, localization) {
+) = selectOption(name, label, description, default, emoji, localization) {
     switchMenu(menu, state)
 }
 
 fun switchMenuSelectOption(
     menu: MenuInfo<*>,
+    name: String = menu.name.menuName(),
     label: String = DEFAULT_LABEL,
     description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
-) = selectOption(menu.name, label, description, default, emoji, localization) {
+) = selectOption(name, label, description, default, emoji, localization) {
     switchMenu(menu.menu, state)
 }
 
 fun switchMenuSelectOption(
     menu: String,
+    name: String = menu.menuName(),
     label: String = DEFAULT_LABEL,
     description: String? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
-) = selectOption(menu, label, description, default, emoji, localization) {
+) = selectOption(name, label, description, default, emoji, localization) {
     switchMenu(menuInfo.manager.getMenu<Any?>(menu), state)
 }
 
@@ -263,7 +266,7 @@ fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuSelectOption(
         config(it, BackReference(this@localizedMenuSelectOption.menuInfo, currentState))
     }
 
-    return switchMenuSelectOption(menu, label, description, default, emoji, localization) {
+    return switchMenuSelectOption(menu, label = label, description = description, default = default, emoji = emoji, localization = localization) {
         copy(currentState)
         pushDefaults()
     }
