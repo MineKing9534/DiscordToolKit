@@ -81,7 +81,7 @@ enum class MenuCommandResponseType(val action: SlashCommandContext.(menu: Messag
 
 fun menuCommand(
     name: String,
-    menu: String = name,
+    menu: String? =null,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
@@ -91,7 +91,7 @@ fun menuCommand(
 
 inline fun <reified L : LocalizationFile> localizedMenuCommand(
     name: String,
-    menu: String = name,
+    menu: String? = null,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     response: MenuCommandResponseType = MenuCommandResponseType.EPHEMERAL_REPLY,
@@ -103,7 +103,7 @@ inline fun <reified L : LocalizationFile> localizedMenuCommand(
 
 fun <L : LocalizationFile?> localizedMenuCommand(
     name: String,
-    menu: String = name,
+    menu: String? = null,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     localization: L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
@@ -112,12 +112,14 @@ fun <L : LocalizationFile?> localizedMenuCommand(
 ): SlashCommand = { parent ->
     val manager = this
 
+    val menuName = menu ?: "${ parent?.path?.joinToString(".")?.let { "$it." } ?: "" }$name"
+
     val ui = manager.manager.get<UIManager>()
-    val builder = MenuCommandConfigImpl(this, MessageMenuConfigImpl(MenuConfigPhase.BUILD, null, MenuInfo.create(menu, ui), localization) { MenuCommandConfigImpl(manager, this).config(localization) })
+    val builder = MenuCommandConfigImpl(this, MessageMenuConfigImpl(MenuConfigPhase.BUILD, null, MenuInfo.create(menuName, ui), localization) { MenuCommandConfigImpl(manager, this).config(localization) })
     builder.config(localization)
 
     @Suppress("UNCHECKED_CAST")
-    val menu = ui.registerLocalizedMenu(menu, defer, localization, builder) { MenuCommandConfigImpl(manager, this).config(localization) }
+    val menu = ui.registerLocalizedMenu(menuName, defer, localization, builder) { MenuCommandConfigImpl(manager, this).config(localization) }
 
     slashCommand(name, description, localization) {
         builder.defaultMemberPermission?.let(this::defaultMemberPermission)
