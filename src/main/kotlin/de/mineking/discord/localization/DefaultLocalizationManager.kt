@@ -229,6 +229,7 @@ class AdvancedLocalizationManager(
 
             providedProperties("LOCALE" to typeOf<DiscordLocale>())
             providedProperties("FILE" to file.second)
+            providedProperties("ARGS" to typeOf<Map<String, KType>>())
             providedProperties("MANAGER" to typeOf<AdvancedLocalizationManager>())
 
             defaultValues.forEach { (name, type) -> providedProperties(name to type) }
@@ -240,6 +241,7 @@ class AdvancedLocalizationManager(
                         val value = engine.evaluator(it, ScriptEvaluationConfiguration {
                             providedProperties("LOCALE" to locale)
                             providedProperties("FILE" to file.first)
+                            providedProperties("ARGS" to args)
                             providedProperties("MANAGER" to this@AdvancedLocalizationManager)
 
                             defaultValues.forEach { (name, _, value) -> providedProperties(name to value(this@AdvancedLocalizationManager, args)) }
