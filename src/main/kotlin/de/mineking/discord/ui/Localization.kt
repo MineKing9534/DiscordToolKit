@@ -50,7 +50,7 @@ interface IDefaultMenuLocalizationHandler : MenuLocalizationHandler {
 
     fun localizeSelectOption(menu: MenuConfigImpl<*, *>, element: Element?, option: SelectOption) = option
         .withLabel(readString(menu, element, "label", option.label, override = option.localization, postfix = "options.${option.value}")?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE)
-        .withDescription(readString(menu, element, "description", option.description, postfix = "options.${option.value}")?.takeIf { it.isNotBlank() })
+        .withDescription(readString(menu, element, "description", option.description, override = option.localization, postfix = "options.${option.value}")?.takeIf { it.isNotBlank() })
 
     fun localizeTextInput(menu: MenuConfigImpl<*, *>, element: Element?, input: TextInput) = TextInput.create(input.id, "-", input.style)
         .setLabel(readString(menu, element, "label", input.label, prefix = "inputs")?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE)
