@@ -136,8 +136,8 @@ class OptionalOption<out T>(private val value: T?, private val present: Boolean)
 fun <T> OptionalOption<T>.orElse(other: T) = if (isPresent()) get() else other
 fun <T> OptionalOption<T>.or(other: OptionalOption<T>) = if (isPresent()) this else other
 
-inline fun <T, reified U> Option<T>.map(noinline mapper: SlashCommandContext.(T) -> U): Option<U> = map(typeOf<U>(), mapper)
-fun <T, U> Option<T>.map(type: KType?, mapper: SlashCommandContext.(T) -> U): Option<U> = if (this is RichOption<*>) object : RichOption<U> {
+inline fun <T, reified U> Option<T>.map(noinline mapper: SlashCommandContext.(value: T) -> U): Option<U> = map(typeOf<U>(), mapper)
+fun <T, U> Option<T>.map(type: KType?, mapper: SlashCommandContext.(value: T) -> U): Option<U> = if (this is RichOption<*>) object : RichOption<U> {
     override val data: OptionInfo = this@map.data
     override val type: KType = type!!
 
@@ -147,8 +147,8 @@ fun <T, U> Option<T>.map(type: KType?, mapper: SlashCommandContext.(T) -> U): Op
     override fun invoke(context: SlashCommandContext): U = context.mapper(this@map(context))
 } else { { mapper(this@map()) } }
 
-fun <T, U> Option<OptionalOption<T>>.mapValue(mapper: (value: T) -> U): Option<OptionalOption<U>> = map { it.map(mapper) }
-fun <T> Option<OptionalOption<T>>.filterValue(filter: (value: T) -> Boolean): Option<OptionalOption<T>> = map { it.filter(filter) }
+fun <T, U> Option<OptionalOption<T>>.mapValue(mapper: SlashCommandContext.(value: T) -> U): Option<OptionalOption<U>> = map { it.map { mapper(it) } }
+fun <T> Option<OptionalOption<T>>.filterValue(filter: SlashCommandContext.(value: T) -> Boolean): Option<OptionalOption<T>> = map { it.filter { filter(it) } }
 
 fun <T> Option<OptionalOption<T>>.get(): Option<T> = map(if (this is RichOption) type else null) { it.get() }
 fun <T> Option<OptionalOption<T>>.orNull(): Option<T?> = map(if (this is RichOption) type.withNullability(true) else null) { it.orNull() }
