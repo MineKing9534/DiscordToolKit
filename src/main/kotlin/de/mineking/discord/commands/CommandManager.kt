@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import kotlin.reflect.KType
-import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.kotlinProperty
 import kotlin.reflect.typeOf
 
 @DslMarker
@@ -18,7 +18,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
     var entryPoint: EntryPointCommandImpl? = null
         private set
 
-    val optionMappers = OptionMappers::class.memberProperties.map { it(OptionMappers) as OptionMapper<*> }.toMutableList()
+    val optionMappers = DefaultOptionMappers.javaClass.declaredFields.filter { it.kotlinProperty != null }.onEach { it.trySetAccessible() }.map { it.get(DefaultOptionMappers) as OptionMapper<*> }.toMutableList()
 
     val defaultInteractionContextTypes = mutableSetOf(InteractionContextType.GUILD, InteractionContextType.BOT_DM)
     val defaultIntegrationTypes = mutableSetOf(IntegrationType.GUILD_INSTALL)

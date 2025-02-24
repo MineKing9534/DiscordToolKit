@@ -26,7 +26,7 @@ interface OptionMapper<T> {
 
 annotation class EnumChoice(val name: String = "", val localize: Boolean = true)
 
-object OptionMappers {
+object DefaultOptionMappers {
     val INTEGER = nullSafeOptionMapper<Int>(OptionType.INTEGER) { asString.toIntOrNull() }
     val LONG = nullSafeOptionMapper<Long>(OptionType.INTEGER) { asString.toLongOrNull() }
     val DOUBLE = nullSafeOptionMapper<Double>(OptionType.NUMBER) { asString.toDoubleOrNull() }
@@ -67,6 +67,8 @@ inline fun <reified T> optionMapper(
     override fun read(manager: CommandManager, type: KType, context: IOptionContext<*>, name: String): T = context.parser(name, type)
 
     override fun configure(manager: CommandManager, command: SlashCommandImpl, info: OptionInfo, type: KType, option: OptionData) = option.configure(manager, command, info, type)
+
+    override fun toString(): String = "OptionMapper[type=${ typeOf<T>() }]"
 }
 
 inline fun <reified T> simpleOptionMapper(
