@@ -24,6 +24,19 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
         event.deferEdit().queue()
     }
 
+    fun render() = (menuInfo.menu as MessageMenu).render(this)
+    fun update() {
+        val menu = menuInfo.menu as MessageMenu
+        try {
+            if (menu.defer != DeferMode.NEVER) {
+                if (menu.defer == DeferMode.UNLESS_PREVENTED && !isAcknowledged) disableComponents(message).queue()
+                hook.editOriginal(render()).queue()
+            } else editMessage(render()).queue()
+        } catch (_: RenderTermination) {
+            if (!isAcknowledged) deferEdit().queue()
+        }
+    }
+
     fun <N> switchMenu(menu: Menu<N, *, *>, builder: StateBuilderConfig = DEFAULT_STATE_BUILDER) {
         preventUpdate()
 
@@ -35,7 +48,7 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
                 val context = ComponentContext(menu.info, state.build(), event)
 
                 if (menu.defer == DeferMode.ALWAYS && !context.event.isAcknowledged) context.disableComponents(context.message).queue()
-                menu.update(context)
+                context.update()
             }
 
             is ModalMenu -> {

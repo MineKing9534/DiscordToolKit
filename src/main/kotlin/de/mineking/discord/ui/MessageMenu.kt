@@ -5,6 +5,7 @@ import de.mineking.discord.localization.read
 import de.mineking.discord.ui.builder.IMessage
 import de.mineking.discord.ui.builder.Message
 import de.mineking.discord.ui.builder.components.BREAKPOINT
+import jdk.jfr.internal.consumer.EventLog.update
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
@@ -109,22 +110,11 @@ class MessageMenu<M, L : LocalizationFile?>(
         val newData = context.stateData.encode()
         if (context.update != false) {
             //Rerender if: state changed, update forced, or we deferred before
-            if (data != newData || context.update == true || defer == DeferMode.ALWAYS) update(context)
+            if (data != newData || context.update == true || defer == DeferMode.ALWAYS) context.update()
             else if (!context.event.isAcknowledged) context.defer()
         }
 
         context.after.forEach { it() }
-    }
-
-    fun update(context: HandlerContext<M, *>) {
-        try {
-            if (defer != DeferMode.NEVER) {
-                if (defer == DeferMode.UNLESS_PREVENTED && !context.event.isAcknowledged) context.disableComponents(context.message).queue()
-                context.hook.editOriginal(render(context)).queue()
-            } else context.editMessage(render(context)).queue()
-        } catch (_: RenderTermination) {
-            if (!context.event.isAcknowledged) context.deferEdit().queue()
-        }
     }
 
     fun createInitial(param: M): MessageEditData = render(SendState(info, StateData.createInitial(states), param))
@@ -140,7 +130,7 @@ fun IReplyCallback.replyMenu(menu: MessageMenu<Unit, *>, ephemeral: Boolean = tr
 fun IReplyCallback.replyChannelMenu(menu: MessageMenu<in MessageChannel, *>, ephemeral: Boolean = true) = replyMenu(menu, messageChannel, ephemeral)
 fun <C : IReplyCallback> C.replyEventMenu(menu: MessageMenu<in C, *>, ephemeral: Boolean = true) = replyMenu(menu, this, ephemeral)
 fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral: Boolean = true): RestAction<*> =
-    if (isAcknowledged) hook.editOriginal(menu.createInitial(param))
+    if (isAcknowledged) hook.sendMessage(menu.createInitial(param).toCreateData()).setEphemeral(true)
     else reply(menu.createInitial(param).toCreateData()).setEphemeral(ephemeral)
 
 typealias MessageMenuConfigurator<M> = MessageMenuConfig<M, *>.() -> Unit
