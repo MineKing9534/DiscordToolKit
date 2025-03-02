@@ -25,17 +25,9 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
     }
 
     fun render() = (menuInfo.menu as MessageMenu).render(this)
-    fun update() {
-        val menu = menuInfo.menu as MessageMenu
-        try {
-            if (menu.defer != DeferMode.NEVER) {
-                if (menu.defer == DeferMode.UNLESS_PREVENTED && !isAcknowledged) disableComponents(message).queue()
-                hook.editOriginal(render()).queue()
-            } else editMessage(render()).queue()
-        } catch (_: RenderTermination) {
-            if (!isAcknowledged) deferEdit().queue()
-        }
-    }
+    fun update() = (menuInfo.menu as MessageMenu).update(this)
+
+    fun cloneMenu(ephemeral: Boolean = true) = hook.sendMessage(render().toCreateData()).setEphemeral(ephemeral).queue()
 
     fun <N> switchMenu(menu: Menu<N, *, *>, builder: StateBuilderConfig = DEFAULT_STATE_BUILDER) {
         preventUpdate()

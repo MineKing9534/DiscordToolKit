@@ -117,6 +117,17 @@ class MessageMenu<M, L : LocalizationFile?>(
         context.after.forEach { it() }
     }
 
+    fun update(context: HandlerContext<M, *>) {
+        try {
+            if (defer != DeferMode.NEVER) {
+                if (defer == DeferMode.UNLESS_PREVENTED && !context.event.isAcknowledged) context.disableComponents(context.message).queue()
+                context.hook.editOriginal(render(context)).queue()
+            } else context.editMessage(render(context)).queue()
+        } catch (_: RenderTermination) {
+            if (!context.event.isAcknowledged) context.deferEdit().queue()
+        }
+    }
+
     fun createInitial(param: M): MessageEditData = render(SendState(info, StateData.createInitial(states), param))
 }
 
