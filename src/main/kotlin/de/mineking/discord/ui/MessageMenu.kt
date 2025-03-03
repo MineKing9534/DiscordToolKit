@@ -148,12 +148,9 @@ fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral
 
 typealias JDAMessage = net.dv8tion.jda.api.entities.Message
 fun JDAMessage.decodeState() = components.flatMap { it.components.filterIsInstance<ActionComponent>().map { it.id } }.filterNotNull().joinToString("") { it.split(":", limit = 3)[2] }
-fun <M> JDAMessage.rerender(menu: MessageMenu<M, *>): RestAction<*> {
-    return editMessage(menu.render(object : StateContext<M> {
-        override val menuInfo = menu.info
-        override val stateData = StateData.decode(decodeState())
-        override val cache = mutableListOf<Any?>()
-    }))
+fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
+    val context = TransferContext(menu.info, StateData.decode(decodeState()), event, this)
+    return editMessage(menu.render(context))
 }
 
 typealias MessageMenuConfigurator<M> = MessageMenuConfig<M, *>.() -> Unit
