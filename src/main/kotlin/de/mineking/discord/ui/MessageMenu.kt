@@ -7,6 +7,7 @@ import de.mineking.discord.ui.builder.Message
 import de.mineking.discord.ui.builder.components.BREAKPOINT
 import jdk.jfr.internal.consumer.EventLog.update
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
+import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.callbacks.IMessageEditCallback
@@ -147,9 +148,12 @@ fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral
 
 typealias JDAMessage = net.dv8tion.jda.api.entities.Message
 fun JDAMessage.decodeState() = components.flatMap { it.components.filterIsInstance<ActionComponent>().map { it.id } }.filterNotNull().joinToString("") { it.split(":", limit = 3)[2] }
-fun JDAMessage.rerender(menu: MessageMenu<*, *>, event: GenericComponentInteractionCreateEvent): RestAction<*> {
-    val context = ComponentContext(menu.info, StateData.decode(decodeState()), event)
-    return editMessage(context.render())
+fun <M> JDAMessage.rerender(menu: MessageMenu<M, *>): RestAction<*> {
+    return editMessage(menu.render(object : StateContext<M> {
+        override val menuInfo = menu.info
+        override val stateData = StateData.decode(decodeState())
+        override val cache = mutableListOf<Any?>()
+    }))
 }
 
 typealias MessageMenuConfigurator<M> = MessageMenuConfig<M, *>.() -> Unit
