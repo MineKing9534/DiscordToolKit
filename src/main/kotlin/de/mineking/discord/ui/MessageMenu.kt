@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
+import kotlin.collections.map
 import kotlin.reflect.KType
 
 fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities.Message) = editComponents(message.components.map { ActionRow.of(it.actionComponents.map { it.asDisabled() }) })
@@ -93,7 +94,7 @@ class MessageMenu<M, L : LocalizationFile?>(
 
         val name = event.componentId.split(":", limit = 3)[1]
 
-        val data = event.message.components.flatMap { it.components.filterIsInstance<ActionComponent>().map { it.id } }.filterNotNull().joinToString("") { it.split(":", limit = 3)[2] }
+        val data = event.message.decodeState()
         val context = ComponentContext(info, StateData.decode(data), event)
 
         val renderer = MessageMenuConfigImpl(MenuConfigPhase.COMPONENTS, context, info, localization, config)
@@ -143,6 +144,13 @@ fun <C : IReplyCallback> C.replyEventMenu(menu: MessageMenu<in C, *>, ephemeral:
 fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral: Boolean = true): RestAction<*> =
     if (isAcknowledged) hook.sendMessage(menu.createInitial(param).toCreateData()).setEphemeral(true)
     else reply(menu.createInitial(param).toCreateData()).setEphemeral(ephemeral)
+
+typealias JDAMessage = net.dv8tion.jda.api.entities.Message
+fun JDAMessage.decodeState() = components.flatMap { it.components.filterIsInstance<ActionComponent>().map { it.id } }.filterNotNull().joinToString("") { it.split(":", limit = 3)[2] }
+fun JDAMessage.rerender(menu: MessageMenu<*, *>, event: GenericComponentInteractionCreateEvent): RestAction<*> {
+    val context = ComponentContext(menu.info, StateData.decode(decodeState()), event)
+    return editMessage(context.render())
+}
 
 typealias MessageMenuConfigurator<M> = MessageMenuConfig<M, *>.() -> Unit
 typealias LocalizedMessageMenuConfigurator<M, L> = MessageMenuConfig<M, L>.(localization: L) -> Unit
