@@ -118,7 +118,7 @@ fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuButton(
 }
 
 @MenuMarker
-class ModalButtonContext<M, N>(val target: MessageMenu<N, *>, context: StateContext<M>, val event: ModalInteractionEvent) : StateContext<M> by context, ModalInteraction by event {
+class ModalButtonContext<M, N>(val target: MessageMenu<N, *>, val context: ModalContext<M>) : StateContext<M> by context, ModalInteraction by context.event {
     private var update: (StateBuilderConfig)? = { copyAll() }
 
     fun preventUpdate() = update(null)
@@ -333,7 +333,7 @@ fun <T, M, L : LocalizationFile?> MessageMenuConfig<M, *>.createModal(name: Stri
     execute {
         val target = menuInfo.parent as MessageMenu<*, *>
 
-        val context = ModalButtonContext(target, this, event)
+        val context = ModalButtonContext(target, this)
         context.handler(it, componentValue())
 
         if (context.getStateBuilder() != null) switchMenu(target, context.getStateBuilder()!!)
