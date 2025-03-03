@@ -27,7 +27,9 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
     fun render() = (menuInfo.menu as MessageMenu).render(this)
     fun update() = (menuInfo.menu as MessageMenu).update(this)
 
-    fun cloneMenu(ephemeral: Boolean = true) = hook.sendMessage(render().toCreateData()).setEphemeral(ephemeral).queue()
+    fun cloneMenu(ephemeral: Boolean = true) =
+        if (isAcknowledged) hook.sendMessage(render().toCreateData()).setEphemeral(ephemeral).queue()
+        else reply(render().toCreateData()).setEphemeral(ephemeral).queue()
 
     fun <N> switchMenu(menu: Menu<N, *, *>, builder: StateBuilderConfig = DEFAULT_STATE_BUILDER) {
         preventUpdate()
