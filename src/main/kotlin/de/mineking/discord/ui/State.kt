@@ -86,13 +86,15 @@ interface StateAccessor {
 }
 
 data class StateData(val data: MutableList<String>) {
+    private val cache = mutableMapOf<Int, Pair<KType, Any?>>()
+
     fun pushInitial(type: KType, value: Any?) {
         data += encodeSingle(type, value)
     }
 
-    fun get(id: Int, type: KType): Any? = decodeSingle(type, data[id])
+    fun get(id: Int, type: KType): Any? = cache.computeIfAbsent(id) { type to decodeSingle(type, data[id]) }.second
     fun set(id: Int, value: Any?, type: KType) {
-        data[id] = encodeSingle(type, value)
+        cache[id] = type to value
     }
 
     fun <T> getState(type: KType, id: Int, handler: StateHandler<T>? = null): State<T> {
@@ -126,14 +128,14 @@ data class StateData(val data: MutableList<String>) {
         override fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T> = getState(type, currentState++, handler)
     }
 
-    fun encode() = encode(typeOf<List<String>>(), data)
+    fun encode() = encode(typeOf<List<String>>(), data.mapIndexed { id, value -> cache[id]?.let { (type, value) -> encodeSingle(type, value)} ?: value })
 
     companion object {
         @OptIn(ExperimentalSerializationApi::class)
-        internal fun encode(type: KType, value: Any?) = Cbor.encodeToByteArray(Cbor.serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
+        private fun encode(type: KType, value: Any?) = Cbor.encodeToByteArray(Cbor.serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
 
         @OptIn(ExperimentalSerializationApi::class)
-        internal fun decode(type: KType, data: String) = Cbor.decodeFromByteArray(Cbor.serializersModule.serializer(type), data.map { it.code.toByte() }.toByteArray())
+        private fun decode(type: KType, data: String) = Cbor.decodeFromByteArray(Cbor.serializersModule.serializer(type), data.map { it.code.toByte() }.toByteArray())
 
         @Suppress("UNCHECKED_CAST")
         fun decode(data: String) = StateData(if (data.isEmpty()) mutableListOf() else (decode(typeOf<List<String>>(), data) as List<String>).toMutableList())
