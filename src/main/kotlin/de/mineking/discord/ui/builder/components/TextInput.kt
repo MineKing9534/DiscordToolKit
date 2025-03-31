@@ -4,6 +4,7 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
+import net.dv8tion.jda.internal.interactions.component.TextInputImpl
 
 fun <T> typedTextInput(
     name: String,
@@ -18,13 +19,7 @@ fun <T> typedTextInput(
     formatter: (value: T) -> String = { it.toString() },
     parser: ParseContext<*>.(value: String) -> T
 ) = modalElement(name, {
-    TextInput.create(it, label, style)
-        .setRequired(required)
-        .setPlaceholder(placeholder)
-        .setMinLength(minLength)
-        .setMaxLength(maxLength)
-        .setValue(value?.let(formatter)?.takeIf { it.isNotBlank() })
-        .build()
+    TextInputImpl(it, style, label, minLength, maxLength, required, value?.let(formatter)?.takeIf { it.isNotBlank() }, placeholder)
 }, localization) {
     val temp = event.values.first { it.id.split(":", limit = 2)[0] == name }.asString
     ParseContext(this).parser(temp)
