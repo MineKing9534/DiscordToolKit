@@ -61,17 +61,20 @@ interface IMessageComponent {
     fun elements(): List<MessageElement<*, *>> = children().flatMap { if (it is MessageElement<*, *>) listOf(it) else it.elements() }
 
     fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>>
-    fun transform(transform: (component: ActionComponent?) -> ActionComponent?): IMessageComponent = object : IMessageComponent by this {
-        override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = this@IMessageComponent.render(menu, generator).map { (component, element) -> transform(component) to element }
+    fun transform(transform: (component: ActionComponent?) -> ActionComponent?): IMessageComponent = object : IMessageComponent{
+        override fun children() = this@IMessageComponent.children()
+        override fun elements() = this@IMessageComponent.elements()
+
+        override fun render(menu: MessageMenu<*, *>, generator: IdGenerator) = this@IMessageComponent.render(menu, generator).map { (component, element) -> transform(component) to element }
+
+        override fun format() = this@IMessageComponent.format()
     }
 
     fun disabled(state: Boolean = true) = transform { it?.withDisabled(state || it.isDisabled) }
     fun enabled(state: Boolean = true) = disabled(!state)
 
     fun hide(hide: Boolean = true) = show(!hide)
-    fun show(show: Boolean = true) = if (show) this else object : IMessageComponent by this {
-        override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = emptyList()
-    }
+    fun show(show: Boolean = true) = if (show) this else transform { null }
 
     fun format() = children().toString()
 }
