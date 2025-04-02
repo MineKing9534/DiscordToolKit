@@ -4,6 +4,7 @@ import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.interactions.components.text.TextInput
+import kotlin.reflect.full.primaryConstructor
 
 typealias ModalResult<M, T> = ModalContext<M>.() -> T
 
@@ -115,7 +116,7 @@ fun <T> composeInputs(vararg inputs: IModalComponent<T>) = composeInputs {
     produce { values.map { it() } }
 }
 
-inline fun <reified T> composeTo(vararg inputs: IModalComponent<*>) = composeInputs {
+inline fun <reified T : Any> composeTo(vararg inputs: IModalComponent<*>) = composeInputs {
     val values = inputs.map { +it }
-    produce { T::class.constructors.first().call(*values.map { it() }.toTypedArray()) }
+    produce { T::class.primaryConstructor!!.call(*values.map { it() }.toTypedArray()) }
 }
