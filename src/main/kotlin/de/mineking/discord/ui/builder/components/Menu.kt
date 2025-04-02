@@ -137,10 +137,11 @@ inline fun <reified T> MessageMenuConfig<*, *>.modalButton(
     title: String = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     modalLocalization: LocalizationFile? = localization,
+    defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
     component: IModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(value: T) -> Unit = { }
-) = localizedModalButton(name, color, label, emoji, title, localization, modalLocalization, detach, component) { _, value -> handler(value) }
+) = localizedModalButton(name, color, label, emoji, title, localization, modalLocalization, defer, detach, component) { _, value -> handler(value) }
 
 inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedModalButton(
     name: String,
@@ -149,12 +150,13 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
     emoji: Emoji? = null,
     title: String = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
+    defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
     component: IModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): ButtonElement {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
-    return localizedModalButton(name, color, label, emoji, title, localization, file, detach, component, handler)
+    return localizedModalButton(name, color, label, emoji, title, localization, file, defer, detach, component, handler)
 }
 
 inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedModalButton(
@@ -166,12 +168,13 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     localization: LocalizationFile? = null,
     @Suppress("UNCHECKED_CAST")
     modalLocalization: L = localization as L,
+    defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
     component: IModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): ButtonElement {
     val currentState = if (detach) 0 else currentState()
-    val modal = createModal(name, title, modalLocalization, detach, component, handler)
+    val modal = createModal(name, title, modalLocalization, defer, detach, component, handler)
 
     return switchMenuButton(modal.name, color = color, label = label, emoji = emoji, localization = localization) {
         copy(currentState)
@@ -280,10 +283,11 @@ inline fun <reified T> MessageMenuConfig<*, *>.modalSelectOption(
     title: String = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     modalLocalization: LocalizationFile? = localization,
+    defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
     component: IModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(value: T) -> Unit = { }
-) = localizedModalSelectOption(name, label, description, default, emoji, title, localization, modalLocalization, detach, component) { _, value -> handler(value) }
+) = localizedModalSelectOption(name, label, description, default, emoji, title, localization, modalLocalization, defer, detach, component) { _, value -> handler(value) }
 
 inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedModalSelectOption(
     name: String,
@@ -293,12 +297,13 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
     emoji: Emoji? = null,
     title: String = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
+    defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
     component: IModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): SelectOption {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
-    return localizedModalSelectOption(name, label, description, default, emoji, title, localization, file, detach, component, handler)
+    return localizedModalSelectOption(name, label, description, default, emoji, title, localization, file, defer, detach, component, handler)
 }
 
 inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedModalSelectOption(
@@ -311,12 +316,13 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     localization: LocalizationFile? = null,
     @Suppress("UNCHECKED_CAST")
     modalLocalization: L = localization as L,
+    defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
     component: IModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): SelectOption {
     val currentState = if (detach) 0 else currentState()
-    val modal = createModal(name, title, modalLocalization, detach, component, handler)
+    val modal = createModal(name, title, modalLocalization, defer, detach, component, handler)
 
     return switchMenuSelectOption(modal, label = label, description = description, default = default, emoji = emoji, localization = localization) {
         copy(currentState)
@@ -324,7 +330,7 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     }
 }
 
-fun <T, M, L : LocalizationFile?> MessageMenuConfig<M, *>.createModal(name: String, title: String, localization: L, detach: Boolean, component: IModalComponent<T>, handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit) = localizedModal(name, localization = localization, detach = detach) {
+fun <T, M, L : LocalizationFile?> MessageMenuConfig<M, *>.createModal(name: String, title: String, localization: L, defer: DeferMode = DEFAULT_DEFER_MODE, detach: Boolean, component: IModalComponent<T>, handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit) = localizedModal(name, localization = localization, defer = defer, detach = detach) {
     title(title)
 
     val componentValue = +component
