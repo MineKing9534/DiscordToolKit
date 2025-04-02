@@ -40,7 +40,7 @@ interface IModalComponent<out T> {
         override fun render(generator: IdGenerator): List<Pair<TextInput?, ModalElement<*>>> = emptyList()
     }
 
-    fun <O> transformResult(handler: (value: T) -> O): IModalComponent<O> = object : IModalComponent<O> {
+    fun <O> map(handler: (value: T) -> O): IModalComponent<O> = object : IModalComponent<O> {
         override fun children() = this@IModalComponent.children()
         override fun render(generator: IdGenerator) = this@IModalComponent.render(generator)
 
@@ -108,4 +108,14 @@ fun <T> composeInputs(builder: ModalComponentBuilder<T>.() -> Unit): ModalCompon
         temp.builder()
         temp.producer!!.invoke(this)
     }
+}
+
+fun <T> composeInputs(vararg inputs: IModalComponent<T>) = composeInputs {
+    val values = inputs.map { +it }
+    produce { values.map { it() } }
+}
+
+inline fun <reified T> composeTo(vararg inputs: IModalComponent<*>) = composeInputs {
+    val values = inputs.map { +it }
+    produce { T::class.constructors.first().call(*values.map { it() }.toTypedArray()) }
 }

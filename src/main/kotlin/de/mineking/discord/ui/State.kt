@@ -128,7 +128,9 @@ data class StateData(val data: MutableList<String>) {
         override fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T> = getState(type, currentState++, handler)
     }
 
-    fun encode() = encode(typeOf<List<String>>(), data.mapIndexed { id, value -> cache[id]?.let { (type, value) -> encodeSingle(type, value)} ?: value })
+    fun effectiveData(id: Int) = cache[id]?.let { (type, value) -> encodeSingle(type, value)} ?: data[id]
+
+    fun encode() = encode(typeOf<List<String>>(), data.indices.map { effectiveData(it) })
 
     companion object {
         @OptIn(ExperimentalSerializationApi::class)

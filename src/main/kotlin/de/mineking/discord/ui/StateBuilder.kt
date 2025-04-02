@@ -23,7 +23,7 @@ class StateBuilder<M, N>(val base: StateContext<M>, val target: Menu<N, *, *>) {
 
     fun copy(amount: Int = 1) {
         repeat(amount) {
-            data += base.stateData.data[index++]
+            data += base.stateData.effectiveData(index++)
         }
     }
 
