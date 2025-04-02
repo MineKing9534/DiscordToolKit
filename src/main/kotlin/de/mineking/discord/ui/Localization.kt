@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.interactions.components.text.TextInput
 import net.dv8tion.jda.api.interactions.modals.Modal
+import net.dv8tion.jda.internal.interactions.component.ButtonImpl
 import kotlin.reflect.KFunction
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
@@ -36,8 +37,15 @@ interface IDefaultMenuLocalizationHandler : MenuLocalizationHandler {
 
     fun readString(menu: MenuConfigImpl<*, *>, element: Element?, name: String, base: String?, override: LocalizationFile? = null, prefix: String = "", postfix: String = ""): String?
 
-    fun localizeButton(menu: MenuConfigImpl<*, *>, element: Element?, button: Button) = button
-        .withLabel(readString(menu, element, "label", button.label)?.takeIf { it.isNotBlank() } ?: ZERO_WIDTH_SPACE)
+    fun localizeButton(menu: MenuConfigImpl<*, *>, element: Element?, button: Button): Button = ButtonImpl(
+        button.id,
+        readString(menu, element, "label", button.label)?.takeIf { it.isNotBlank() } ?: if (button.emoji != null) null else ZERO_WIDTH_SPACE,
+        button.style,
+        button.url,
+        button.sku,
+        button.isDisabled,
+        button.emoji
+    ).checkValid()
 
     fun localizeSelect(menu: MenuConfigImpl<*, *>, element: Element?, select: SelectMenu): SelectMenu = select.createCopy()
         .setPlaceholder(readString(menu, element, "placeholder", select.placeholder)?.takeIf { it.isNotBlank() })
