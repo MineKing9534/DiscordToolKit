@@ -39,4 +39,5 @@ class StateBuilder<M, N>(val base: StateContext<M>, val target: Menu<N, *, *>) {
 }
 
 typealias StateBuilderConfig = StateBuilder<*, *>.() -> Unit
+
 val DEFAULT_STATE_BUILDER: StateBuilderConfig = { copyAll(); pushDefaults() }

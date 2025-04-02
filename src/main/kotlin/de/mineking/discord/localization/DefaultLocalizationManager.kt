@@ -106,47 +106,49 @@ class AdvancedLocalizationManager(
         @Suppress("UNCHECKED_CAST")
         if (type in cache) return cache[type] as T
 
-        val (file, time) = measureTimedValue { createLocalizationFile(this, type) { file, name, locale, result, types, function, default ->
-            val location = function?.javaMethod?.declaringClass?.kotlin ?: type
-            val section = read(location, locale)
+        val (file, time) = measureTimedValue {
+            createLocalizationFile(this, type) { file, name, locale, result, types, function, default ->
+                val location = function?.javaMethod?.declaringClass?.kotlin ?: type
+                val section = read(location, locale)
 
-            val value = section.get(name)
+                val value = section.get(name)
 
-            if (result.jvmErasure == List::class && value is List<*>) {
-                val list = section.getList(name)
-                list.forEachIndexed { index, value -> file.register("$name[$index]", types, if (value is String) typeOf<String>() else typeOf<ConfigurationSection>(), function, default) }
+                if (result.jvmErasure == List::class && value is List<*>) {
+                    val list = section.getList(name)
+                    list.forEachIndexed { index, value -> file.register("$name[$index]", types, if (value is String) typeOf<String>() else typeOf<ConfigurationSection>(), function, default) }
 
-                return@createLocalizationFile { value }
-            }
+                    return@createLocalizationFile { value }
+                }
 
-            if (result.jvmErasure == ConfigurationSection::class && (value is ConfigurationSection || value is Map<*, *>)) {
-                @Suppress("UNCHECKED_CAST")
-                val keys = if (value is ConfigurationSection) value.getKeys(false) else (value as Map<String, *>).keys
-                keys.forEach { file.register("$name.$it", types, typeOf<String>(), function, default) }
+                if (result.jvmErasure == ConfigurationSection::class && (value is ConfigurationSection || value is Map<*, *>)) {
+                    @Suppress("UNCHECKED_CAST")
+                    val keys = if (value is ConfigurationSection) value.getKeys(false) else (value as Map<String, *>).keys
+                    keys.forEach { file.register("$name.$it", types, typeOf<String>(), function, default) }
 
-                return@createLocalizationFile { value }
-            }
+                    return@createLocalizationFile { value }
+                }
 
-            val line = section.getString(name) ?:
-                if (default != null) return@createLocalizationFile { default(it) }
+                val line = section.getString(name) ?: if (default != null) return@createLocalizationFile { default(it) }
                 else {
-                    logger.error("Cannot find localization for ${ location.simpleName }#$name for $locale")
+                    logger.error("Cannot find localization for ${location.simpleName}#$name for $locale")
                     ""
                 }
 
-            val elements = parseLine(line, locale,
-                file to type.createType(type.typeParameters.map { KTypeProjection.invariant(it.starProjectedType) }),
-                location.simpleName!!,
-                name,
-                types,
-                result
-            )
+                val elements = parseLine(
+                    line, locale,
+                    file to type.createType(type.typeParameters.map { KTypeProjection.invariant(it.starProjectedType) }),
+                    location.simpleName!!,
+                    name,
+                    types,
+                    result
+                )
 
-            return@createLocalizationFile { args ->
-                if (elements.size == 1) elements.first()(args)
-                else elements.joinToString("") { it(args).toString() }
+                return@createLocalizationFile { args ->
+                    if (elements.size == 1) elements.first()(args)
+                    else elements.joinToString("") { it(args).toString() }
+                }
             }
-        } }
+        }
 
         cache[type] = file
 
@@ -280,6 +282,6 @@ class AdvancedLocalizationManager(
     }
 }
 
-class ArgumentMap(val args: Map<String, Any?>): Map<String, Any?> by args {
+class ArgumentMap(val args: Map<String, Any?>) : Map<String, Any?> by args {
     override fun toString() = args.toString()
 }

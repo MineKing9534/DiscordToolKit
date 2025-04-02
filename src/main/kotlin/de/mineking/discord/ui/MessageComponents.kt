@@ -61,7 +61,7 @@ interface IMessageComponent {
     fun elements(): List<MessageElement<*, *>> = children().flatMap { if (it is MessageElement<*, *>) listOf(it) else it.elements() }
 
     fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>>
-    fun transform(transform: (component: ActionComponent?) -> ActionComponent?): IMessageComponent = object : IMessageComponent{
+    fun transform(transform: (component: ActionComponent?) -> ActionComponent?): IMessageComponent = object : IMessageComponent {
         override fun children() = this@IMessageComponent.children()
         override fun elements() = this@IMessageComponent.elements()
 

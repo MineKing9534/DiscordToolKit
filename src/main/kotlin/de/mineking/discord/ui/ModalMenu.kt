@@ -41,7 +41,8 @@ class ModalMenu<M, L : LocalizationFile?>(
 
         try {
             renderer.handlers.forEach { handler -> context.handler() }
-        } catch (_: RenderTermination) {}
+        } catch (_: RenderTermination) {
+        }
 
         context.after.forEach { it() }
     }
@@ -52,9 +53,10 @@ class ModalMenu<M, L : LocalizationFile?>(
 
         val generator = IdGenerator(state.stateData.encode())
 
-        return manager.localization.localize(renderer, null, Modal.create(generator.nextId("$name:"), renderer.title)
-            .addComponents(buildComponents(generator, renderer))
-            .build()
+        return manager.localization.localize(
+            renderer, null, Modal.create(generator.nextId("$name:"), renderer.title)
+                .addComponents(buildComponents(generator, renderer))
+                .build()
         )
     }
 

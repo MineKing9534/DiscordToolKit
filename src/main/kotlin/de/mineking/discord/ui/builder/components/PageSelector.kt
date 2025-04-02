@@ -25,7 +25,8 @@ fun MessageMenuConfig<*, *>.pageSelector(
         button("$name-first", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏪")) { page = 1 }.disabled(page == 1),
         button("$name-back", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⬅\uFE0F")) { page-- }.disabled(page <= 1),
         if (modal)
-            modalButton(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max", title = title, localization = localization,
+            modalButton(
+                name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max", title = title, localization = localization,
                 component = intInput("page", label = label, localization = localization, value = page, placeholder = "$page").map { it ?: terminateRender() }
             ) { page = clamp(it, 1, max) }
         else label(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max"),
@@ -41,7 +42,7 @@ fun pageFocusSelector(
 ): MessageComponent {
     var page by ref
 
-    val pages = if (page > 2) min(page - 2, max - 4) .. min(page + 2, max) else max(1, page - 2) .. max(page + 2, 5)
+    val pages = if (page > 2) min(page - 2, max - 4)..min(page + 2, max) else max(1, page - 2)..max(page + 2, 5)
 
     return createMessageComponent(pages.map {
         button("$name-$it", label = "$it") { page = it }.disabled(it == page)

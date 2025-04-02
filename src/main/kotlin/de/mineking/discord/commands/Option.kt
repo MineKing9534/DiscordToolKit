@@ -244,7 +244,8 @@ inline fun <reified E : Enum<E>> OptionConfig.enumOption(
     noinline configurator: OptionConfigurator = {},
     label: (value: E) -> String? = { it.name },
     noinline autocomplete: AutocompleteHandler<E>? = null
-): Option<OptionalOption<E>> = option<String>(name, description, required, localization,
+): Option<OptionalOption<E>> = option<String>(
+    name, description, required, localization,
     choices = E::class.java.enumConstants
         .map { it.name to label(it) }
         .filter { it.second != null }

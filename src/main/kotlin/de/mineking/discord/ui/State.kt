@@ -128,7 +128,7 @@ data class StateData(val data: MutableList<String>) {
         override fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T> = getState(type, currentState++, handler)
     }
 
-    fun effectiveData(id: Int) = cache[id]?.let { (type, value) -> encodeSingle(type, value)} ?: data[id]
+    fun effectiveData(id: Int) = cache[id]?.let { (type, value) -> encodeSingle(type, value) } ?: data[id]
 
     fun encode() = encode(typeOf<List<String>>(), data.indices.map { effectiveData(it) })
 

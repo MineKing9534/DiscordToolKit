@@ -81,7 +81,7 @@ enum class MenuCommandResponseType(val action: SlashCommandContext.(menu: Messag
 
 fun menuCommand(
     name: String,
-    menu: String? =null,
+    menu: String? = null,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
@@ -112,7 +112,7 @@ fun <L : LocalizationFile?> localizedMenuCommand(
 ): SlashCommand = { parent ->
     val manager = this
 
-    val menuName = menu ?: "${ parent?.path?.joinToString(".")?.let { "$it." } ?: "" }$name"
+    val menuName = menu ?: "${parent?.path?.joinToString(".")?.let { "$it." } ?: ""}$name"
 
     val ui = manager.manager.get<UIManager>()
     val builder = MenuCommandConfigImpl(this, MessageMenuConfigImpl(MenuConfigPhase.BUILD, null, MenuInfo.create(menuName, ui), localization) { MenuCommandConfigImpl(manager, this).config(localization) })

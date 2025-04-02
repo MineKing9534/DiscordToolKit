@@ -95,7 +95,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
 
     fun getCommand(name: String): CommandImpl<*, *>? = if (name == entryPoint?.name) entryPoint else commands[name]
 
-    fun <C: CommandImpl<*, out CommandData>> registerCommand(command: Command<C>) = command(null).apply(this::registerCommand)
+    fun <C : CommandImpl<*, out CommandData>> registerCommand(command: Command<C>) = command(null).apply(this::registerCommand)
     fun registerCommand(command: CommandImpl<*, out CommandData>) {
         commands[command.getDiscordPath()] = command
         if (command is SlashCommandImpl) command.subcommands.values.forEach { registerCommand(it) }
@@ -110,7 +110,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
     operator fun <C: CommandImpl<*, out CommandData>> plusAssign(command: Command<C>) { registerCommand(command) }
     operator fun plusAssign(command: CommandImpl<*, out CommandData>) = registerCommand(command)
 
-    operator fun <C: CommandImpl<*, out CommandData>> Command<C>.unaryPlus() = registerCommand(this)
+    operator fun <C : CommandImpl<*, out CommandData>> Command<C>.unaryPlus() = registerCommand(this)
     operator fun CommandImpl<*, out CommandData>.unaryPlus() = registerCommand(this)
 
     fun updateCommands() = manager.jda.updateCommands()

@@ -30,8 +30,7 @@ abstract class HandlerContext<M, out E>(
     override val stateData: StateData,
     val event: E
 ) : StateContext<M>, IMessageEditCallback by event, IReplyCallback by event
-        where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback
-{
+        where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
     override val cache: MutableList<Any?> = mutableListOf()
     abstract val message: Message
 
@@ -117,7 +116,7 @@ interface MenuInfo<M> {
     val parentContext get() = parentName?.let { create<M>(it, manager) }
 
     companion object {
-        fun <M> create(menu: Menu<M, *, *>) = object: MenuInfo<M> {
+        fun <M> create(menu: Menu<M, *, *>) = object : MenuInfo<M> {
             override val name: String get() = menu.name
             override val manager: UIManager get() = menu.manager
 

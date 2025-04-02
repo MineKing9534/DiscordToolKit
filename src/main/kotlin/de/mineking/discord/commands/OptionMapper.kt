@@ -68,7 +68,7 @@ inline fun <reified T> optionMapper(
 
     override fun configure(manager: CommandManager, command: SlashCommandImpl, info: OptionInfo, type: KType, option: OptionData) = option.configure(manager, command, info, type)
 
-    override fun toString(): String = "OptionMapper[type=${ typeOf<T>() }]"
+    override fun toString(): String = "OptionMapper[type=${typeOf<T>()}]"
 }
 
 inline fun <reified T> simpleOptionMapper(

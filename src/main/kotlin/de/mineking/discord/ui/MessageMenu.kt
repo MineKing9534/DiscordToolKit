@@ -145,6 +145,7 @@ fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral
     else reply(menu.createInitial(param).toCreateData()).setEphemeral(ephemeral)
 
 typealias JDAMessage = net.dv8tion.jda.api.entities.Message
+
 fun JDAMessage.decodeState() = components.flatMap { it.components.filterIsInstance<ActionComponent>().map { it.id } }.filterNotNull().joinToString("") { it.split(":", limit = 3)[2] }
 fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
     val context = TransferContext(menu.info, StateData.decode(decodeState()), event, this)
@@ -190,6 +191,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 ) : MenuConfigImpl<M, L>(phase, state, menu), MessageMenuConfig<M, L>, IMessage by Message() {
     private companion object {
         val TARGET_CONFIG = ThreadLocal<Any>()
+
         object InternalTermination : RuntimeException() {
             private fun readResolve(): Any = InternalTermination
         }
@@ -212,83 +214,91 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
     override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
         @Suppress("UNCHECKED_CAST")
-        return setup { menuInfo.manager.registerLocalizedMenu<M, CL>("${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init else { localization ->
-            require(this is MessageMenuConfigImpl)
+        return setup {
+            menuInfo.manager.registerLocalizedMenu<M, CL>(
+                "${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init
+                else { localization ->
+                    require(this is MessageMenuConfigImpl)
 
-            try {
-                val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
-                    var currentSetup = 0
+                    try {
+                        val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
+                            var currentSetup = 0
 
-                    override fun render(handler: IMessage.() -> Unit) {}
+                            override fun render(handler: IMessage.() -> Unit) {}
 
-                    override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
-                        if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
-                        return super.localizedSubmenu(name, defer, localization, detach, init)
+                            override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+                                if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
+                                return super.localizedSubmenu(name, defer, localization, detach, init)
+                            }
+
+                            @Suppress("UNCHECKED_CAST")
+                            override fun <T> setup(value: () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
+
+                            override val stateData: StateData = this@registerLocalizedMenu.stateData
+
+                            override fun currentState(): Int = this@registerLocalizedMenu.currentState()
+                            override fun skipState(amount: Int) = this@registerLocalizedMenu.skipState(amount)
+                            override fun <T> state(type: KType, initial: T, handler: StateHandler<T>?): State<T> = this@registerLocalizedMenu.state(type, initial, handler)
+
+                            override fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit) {
+                                super.localize(locale, init)
+                                this@registerLocalizedMenu.localize(locale, init)
+                            }
+                        }
+
+                        this@MessageMenuConfigImpl.config.invoke(context, this@MessageMenuConfigImpl.localization)
+
+                        error("Unable to match parent render to child entrypoint")
+                    } catch (_: InternalTermination) {
+                        @Suppress("UNCHECKED_CAST")
+                        (TARGET_CONFIG.get() as LocalizedMessageMenuConfigurator<M, CL>).invoke(this, localization)
                     }
-
-                    @Suppress("UNCHECKED_CAST")
-                    override fun <T> setup(value: () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
-
-                    override val stateData: StateData = this@registerLocalizedMenu.stateData
-
-                    override fun currentState(): Int = this@registerLocalizedMenu.currentState()
-                    override fun skipState(amount: Int) = this@registerLocalizedMenu.skipState(amount)
-                    override fun <T> state(type: KType, initial: T, handler: StateHandler<T>?): State<T> = this@registerLocalizedMenu.state(type, initial, handler)
-
-                    override fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit) {
-                        super.localize(locale, init)
-                        this@registerLocalizedMenu.localize(locale, init)
-                    }
-                }
-
-                this@MessageMenuConfigImpl.config.invoke(context, this@MessageMenuConfigImpl.localization)
-
-                error("Unable to match parent render to child entrypoint")
-            } catch (_: InternalTermination) {
-                @Suppress("UNCHECKED_CAST")
-                (TARGET_CONFIG.get() as LocalizedMessageMenuConfigurator<M, CL>).invoke(this, localization)
-            }
-        }) }
+                })
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <CL : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedModalConfigurator<M, CL>): ModalMenu<M, CL> {
-        return setup { menuInfo.manager.registerLocalizedModal("${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init else { localization ->
-            require(this is ModalConfigImpl)
+        return setup {
+            menuInfo.manager.registerLocalizedModal(
+                "${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init
+                else { localization ->
+                    require(this is ModalConfigImpl)
 
-            try {
-                val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
-                    var currentSetup = 0
+                    try {
+                        val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
+                            var currentSetup = 0
 
-                    override fun render(handler: IMessage.() -> Unit) {}
+                            override fun render(handler: IMessage.() -> Unit) {}
 
-                    override fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
-                        if (this@registerLocalizedModal.menuInfo.name.menuName() == name) end(init)
-                        return super.localizedModal(name, defer, localization, detach, init)
+                            override fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
+                                if (this@registerLocalizedModal.menuInfo.name.menuName() == name) end(init)
+                                return super.localizedModal(name, defer, localization, detach, init)
+                            }
+
+                            @Suppress("UNCHECKED_CAST")
+                            override fun <T> setup(value: () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
+
+                            override val stateData: StateData = this@registerLocalizedModal.stateData
+
+                            override fun currentState(): Int = this@registerLocalizedModal.currentState()
+                            override fun skipState(amount: Int) = this@registerLocalizedModal.skipState(amount)
+                            override fun <T> state(type: KType, initial: T, handler: StateHandler<T>?): State<T> = this@registerLocalizedModal.state(type, initial, handler)
+
+                            override fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit) {
+                                super.localize(locale, init)
+                                this@registerLocalizedModal.localize(locale, init)
+                            }
+                        }
+
+                        this@MessageMenuConfigImpl.config.invoke(context, this@MessageMenuConfigImpl.localization)
+
+                        error("Unable to match parent render to child entrypoint")
+                    } catch (_: InternalTermination) {
+                        @Suppress("UNCHECKED_CAST")
+                        (TARGET_CONFIG.get() as LocalizedModalConfigurator<M, CL>).invoke(this, localization)
                     }
-
-                    @Suppress("UNCHECKED_CAST")
-                    override fun <T> setup(value: () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
-
-                    override val stateData: StateData = this@registerLocalizedModal.stateData
-
-                    override fun currentState(): Int = this@registerLocalizedModal.currentState()
-                    override fun skipState(amount: Int) = this@registerLocalizedModal.skipState(amount)
-                    override fun <T> state(type: KType, initial: T, handler: StateHandler<T>?): State<T> = this@registerLocalizedModal.state(type, initial, handler)
-
-                    override fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit) {
-                        super.localize(locale, init)
-                        this@registerLocalizedModal.localize(locale, init)
-                    }
-                }
-
-                this@MessageMenuConfigImpl.config.invoke(context, this@MessageMenuConfigImpl.localization)
-
-                error("Unable to match parent render to child entrypoint")
-            } catch (_: InternalTermination) {
-                @Suppress("UNCHECKED_CAST")
-                (TARGET_CONFIG.get() as LocalizedModalConfigurator<M, CL>).invoke(this, localization)
-            }
-        }) }
+                })
+        }
     }
 }

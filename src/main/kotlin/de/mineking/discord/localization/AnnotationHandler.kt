@@ -45,29 +45,35 @@ private val embedComponents = listOf(
     embedComponent<String>("title") { title, read -> setTitle(title) },
     embedComponent<String>("url") { url, read -> setUrl(url) },
     embedComponent<Color>("color") { color, read -> setColor(color) },
-    embedComponent<ConfigurationSection>("author") { author, read -> if (author != null) {
-        setAuthor(
-            if (author.contains("name")) read(".name") as String? else null,
-            if (author.contains("url")) read(".url") as String? else null,
-            if (author.contains("icon")) read(".icon") as String? else null
-        )
-    } },
+    embedComponent<ConfigurationSection>("author") { author, read ->
+        if (author != null) {
+            setAuthor(
+                if (author.contains("name")) read(".name") as String? else null,
+                if (author.contains("url")) read(".url") as String? else null,
+                if (author.contains("icon")) read(".icon") as String? else null
+            )
+        }
+    },
     embedComponent<String>("thumbnail") { thumbnail, read -> setThumbnail(thumbnail) },
     embedComponent<String>("description") { description, read -> setDescription(description) },
-    embedComponent<List<Map<String, Any>>>("fields") { fields, read -> fields?.forEachIndexed { index, field ->
-        addField(
-            read("[$index].name") as String,
-            read("[$index].value") as String,
-            field.getOrDefault("inline", false) as Boolean
-        )
-    } },
+    embedComponent<List<Map<String, Any>>>("fields") { fields, read ->
+        fields?.forEachIndexed { index, field ->
+            addField(
+                read("[$index].name") as String,
+                read("[$index].value") as String,
+                field.getOrDefault("inline", false) as Boolean
+            )
+        }
+    },
     embedComponent<String>("image") { image, read -> setImage(image) },
-    embedComponent<ConfigurationSection>("footer") { footer, read -> if (footer != null)
-        setFooter(
-            if (footer.contains("text")) read(".text") as String? else null,
-            if (footer.contains("icon")) read(".icon") as String? else null
-        )
-                                                   },
+    embedComponent<ConfigurationSection>("footer") { footer, read ->
+        if (footer != null) {
+            setFooter(
+                if (footer.contains("text")) read(".text") as String? else null,
+                if (footer.contains("icon")) read(".icon") as String? else null
+            )
+        }
+    },
     embedComponent<Instant>("timestamp") { timestamp, read -> setTimestamp(timestamp) },
 )
 

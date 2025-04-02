@@ -49,11 +49,13 @@ interface IDefaultMenuLocalizationHandler : MenuLocalizationHandler {
 
     fun localizeSelect(menu: MenuConfigImpl<*, *>, element: Element?, select: SelectMenu): SelectMenu = select.createCopy()
         .setPlaceholder(readString(menu, element, "placeholder", select.placeholder)?.takeIf { it.isNotBlank() })
-        .apply { if (this is StringSelectMenu.Builder) {
-            val localizedOptions = options.map { if (it is SelectOption) localize(menu, element, it) else it }
-            options.clear()
-            options.addAll(localizedOptions)
-        } }
+        .apply {
+            if (this is StringSelectMenu.Builder) {
+                val localizedOptions = options.map { if (it is SelectOption) localize(menu, element, it) else it }
+                options.clear()
+                options.addAll(localizedOptions)
+            }
+        }
         .build()
 
     fun localizeSelectOption(menu: MenuConfigImpl<*, *>, element: Element?, option: SelectOption) = option
