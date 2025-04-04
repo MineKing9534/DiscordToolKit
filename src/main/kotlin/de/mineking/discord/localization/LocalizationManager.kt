@@ -16,8 +16,7 @@ import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.kotlinFunction
 import kotlin.reflect.typeOf
 
-val logger = KotlinLogging.logger {}
-
+internal val logger = KotlinLogging.logger {}
 
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
