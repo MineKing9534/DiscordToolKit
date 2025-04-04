@@ -21,8 +21,10 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.toScriptSource
+import kotlin.script.experimental.impl._languageVersion
 import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
+import kotlin.script.experimental.jvm.jvmTarget
 import kotlin.script.experimental.jvmhost.BasicJvmScriptingHost
 import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
@@ -227,6 +229,7 @@ class AdvancedLocalizationManager(
         engine.compiler(scriptWithImports.toScriptSource(), ScriptCompilationConfiguration {
             jvm {
                 dependenciesFromCurrentContext(wholeClasspath = true)
+                jvmTarget("21")
             }
 
             providedProperties("LOCALE" to typeOf<DiscordLocale>())
