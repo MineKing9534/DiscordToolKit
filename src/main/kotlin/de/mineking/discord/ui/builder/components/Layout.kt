@@ -30,5 +30,5 @@ internal val BREAKPOINT = object : ActionComponent {
 
 internal val BREAKPOINT_ELEMENT = object : MessageElement<ActionComponent, GenericComponentInteractionCreateEvent>("", null) {
     override fun handle(context: ComponentContext<*, GenericComponentInteractionCreateEvent>) {}
-    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = listOf(BREAKPOINT to this)
+    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>> = listOf({ BREAKPOINT } to this)
 }

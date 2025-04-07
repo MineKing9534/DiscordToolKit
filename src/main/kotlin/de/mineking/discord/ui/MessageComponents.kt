@@ -62,12 +62,14 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
 fun createMessageComponent(components: List<IMessageComponent>) = MessageComponent(components)
 fun createMessageComponent(vararg components: IMessageComponent) = createMessageComponent(components.toList())
 
+typealias ComponentProvider = () -> ActionComponent?
+
 interface IMessageComponent {
     fun children(): List<IMessageComponent>
     fun elements(): List<MessageElement<*, *>> = children().flatMap { if (it is MessageElement<*, *>) listOf(it) else it.elements() }
 
-    fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>>
-    fun transform(transform: (component: ActionComponent?) -> ActionComponent?): IMessageComponent = object : IMessageComponent {
+    fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>>
+    fun transform(transform: (component: ComponentProvider) -> ComponentProvider): IMessageComponent = object : IMessageComponent {
         override fun children() = this@IMessageComponent.children()
         override fun elements() = this@IMessageComponent.elements()
 
@@ -76,11 +78,11 @@ interface IMessageComponent {
         override fun format() = this@IMessageComponent.format()
     }
 
-    fun disabled(state: Boolean = true) = transform { it?.withDisabled(state || it.isDisabled) }
+    fun disabled(state: Boolean = true) = transform { { it()?.let { it.withDisabled(state || it.isDisabled) } } }
     fun enabled(state: Boolean = true) = disabled(!state)
 
     fun hide(hide: Boolean = true) = show(!hide)
-    fun show(show: Boolean = true) = if (show) this else transform { null }
+    fun show(show: Boolean = true) = if (show) this else transform { { null } }
 
     fun format() = children().toString()
 }
@@ -97,13 +99,13 @@ abstract class MessageElement<C : ActionComponent, E : GenericComponentInteracti
 internal fun <C : ActionComponent, E : GenericComponentInteractionCreateEvent> createElement(
     name: String,
     localization: LocalizationFile? = null,
-    renderer: (menu: MessageMenu<*, *>, id: IdGenerator) -> List<ActionComponent?>,
+    renderer: (menu: MessageMenu<*, *>, id: IdGenerator) -> List<ComponentProvider>,
     handler: ComponentHandler<*, E>,
     finalizer: C?.() -> C?
 ): MessageElement<C, E> = object : MessageElement<C, E>(name, localization) {
     override fun handle(context: ComponentContext<*, E>) = context.handler()
-    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = renderer(menu, generator).map { it to this }
-    override fun transform(transform: (ActionComponent?) -> ActionComponent?): IMessageComponent = createElement(name, localization, { menu, id -> render(menu, id).map { (component) -> transform(component) } }, handler, finalizer)
+    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>> = renderer(menu, generator).map { it to this }
+    override fun transform(transform: (component: ComponentProvider) -> ComponentProvider): IMessageComponent = createElement(name, localization, { menu, id -> render(menu, id).map { (component) -> transform(component) } }, handler, finalizer)
     override fun finalize(component: C?): C? = finalizer(component)
 }
 
@@ -113,9 +115,9 @@ fun <C : ActionComponent, E : GenericComponentInteractionCreateEvent> element(
     render: (menu: MessageMenu<*, *>, id: String) -> ActionComponent?,
     handler: ComponentHandler<*, E>,
     finalizer: C?.() -> C? = { this }
-): MessageElement<C, E> = createElement(name, localization, { menu, id -> listOf(render(menu, id.nextId("${menu.name}:$name:"))) }, handler, finalizer)
+): MessageElement<C, E> = createElement(name, localization, { menu, id -> listOf({ render(menu, id.nextId("${menu.name}:$name:")) }) }, handler, finalizer)
 
 class MessageComponent(private val children: List<IMessageComponent>) : IMessageComponent {
     override fun children(): List<IMessageComponent> = children
-    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ActionComponent?, MessageElement<*, *>>> = elements().flatMap { it.render(menu, generator) }
+    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>> = elements().flatMap { it.render(menu, generator) }
 }

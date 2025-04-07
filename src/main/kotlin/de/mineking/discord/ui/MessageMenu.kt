@@ -32,7 +32,7 @@ fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>
             throw RuntimeException("Error rendering component ${it.format()}", e)
         }
     }
-    .mapNotNull { (component, element) -> (element as MessageElement<ActionComponent, *>).finalize(component)?.let { element to it } }
+    .mapNotNull { (component, element) -> (element as MessageElement<ActionComponent, *>).finalize(component())?.let { element to it } }
     .map { (element, component) -> config.menuInfo.manager.localization.localize(config, element, component) }
 
 class MessageMenu<M, L : LocalizationFile?>(
