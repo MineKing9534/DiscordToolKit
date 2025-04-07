@@ -109,8 +109,12 @@ class MessageMenu<M, L : LocalizationFile?>(
 
         val newData = context.stateData.encode()
         if (context.update != false) {
-            //Rerender if: state changed, update forced, or we deferred before
-            if (data != newData || context.update == true || defer == DeferMode.ALWAYS) context.update()
+            //Rerender if: state changed, update forced
+            if (data != newData || context.update == true) context.update()
+
+            //Recreate previous state if we deferred but state didn't change
+            else if (defer == DeferMode.ALWAYS) event.hook.editOriginal(MessageEditData.fromMessage(event.message)).queue()
+
             else if (!context.event.isAcknowledged) context.defer()
         }
 
