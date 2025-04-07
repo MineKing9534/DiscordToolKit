@@ -1,6 +1,7 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.builder.components.BackReference
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.interactions.components.ActionComponent
@@ -51,6 +52,11 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
             }
         }
     }
+
+    operator fun BackReference.invoke(state: StateBuilderConfig = {
+        copy(stateCount)
+        pushDefaults()
+    }) = switchMenu(menu.menu, state)
 }
 
 fun createMessageComponent(components: List<IMessageComponent>) = MessageComponent(components)
