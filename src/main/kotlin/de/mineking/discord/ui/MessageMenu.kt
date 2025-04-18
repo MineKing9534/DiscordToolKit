@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
+import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
 fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities.Message) = editComponents(message.components.map { ActionRow.of(it.actionComponents.map { it.asDisabled() }) })
@@ -99,6 +100,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         val renderer = MessageMenuConfigImpl(MenuConfigPhase.COMPONENTS, context, info, localization, config)
         renderer.config(localization)
 
+        renderer.lazy.forEach { it.active = true } //Activate lazy values => Allow them to load in the handler
         val element = renderer.components.flatMap { it.elements() }.firstOrNull { it.name == name } as MessageElement<*, GenericComponentInteractionCreateEvent>? ?: error("Component $name not found")
 
         try {
@@ -159,9 +161,18 @@ fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*>
 typealias MessageMenuConfigurator<M> = MessageMenuConfig<M, *>.() -> Unit
 typealias LocalizedMessageMenuConfigurator<M, L> = MessageMenuConfig<M, L>.(localization: L) -> Unit
 
+class Lazy<T>(var active: Boolean = false, val default: T, provider: () -> T) {
+    private val value by lazy(provider)
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>) = if (active) value else default
+}
+
 interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessage {
     operator fun IMessageComponent.unaryPlus()
     fun render(handler: IMessage.() -> Unit)
+
+    fun <T> lazy(default: T, provider: () -> T): Lazy<T>
+    fun <T> lazy(provider: () -> T) = lazy(null, provider)
 
     fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
     fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
@@ -207,6 +218,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
     }
 
     internal val components = mutableListOf<IMessageComponent>()
+    internal val lazy = mutableListOf<Lazy<*>>()
 
     override fun IMessageComponent.unaryPlus() {
         components += this
@@ -214,6 +226,13 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
     override fun render(handler: IMessage.() -> Unit) {
         if (phase == MenuConfigPhase.RENDER) handler()
+    }
+
+    override fun <T> lazy(default: T, provider: () -> T): Lazy<T> {
+        val lazy = Lazy(phase == MenuConfigPhase.RENDER, default, provider)
+        this.lazy += lazy
+
+        return lazy
     }
 
     override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
