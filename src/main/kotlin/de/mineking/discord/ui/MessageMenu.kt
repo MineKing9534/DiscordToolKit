@@ -162,9 +162,10 @@ typealias MessageMenuConfigurator<M> = MessageMenuConfig<M, *>.() -> Unit
 typealias LocalizedMessageMenuConfigurator<M, L> = MessageMenuConfig<M, L>.(localization: L) -> Unit
 
 class Lazy<T>(var active: Boolean = false, val default: T, provider: () -> T) {
-    private val value by lazy(provider)
+    private val _value by lazy(provider)
 
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = if (active) value else default
+    val value get() = if (active) _value else default
+    operator fun getValue(thisRef: Any?, property: KProperty<*>) = value
 }
 
 interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessage {

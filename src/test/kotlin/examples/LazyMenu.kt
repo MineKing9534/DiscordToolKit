@@ -29,6 +29,9 @@ fun main() {
                 +button("b", label = value) {
                     //Because the value is used here, clicking "b" will load the lazy value
                     value
+
+                    //Using it twice will not load again (result is cached)
+                    value
                 }
             }
 
