@@ -39,6 +39,8 @@ class ModalMenu<M, L : LocalizationFile?>(
         val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, context, this.info)
         renderer.config(localization)
 
+        renderer.activate()
+
         try {
             renderer.handlers.forEach { handler -> context.handler() }
         } catch (_: RenderTermination) {

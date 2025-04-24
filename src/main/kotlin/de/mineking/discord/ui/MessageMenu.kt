@@ -100,7 +100,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         val renderer = MessageMenuConfigImpl(MenuConfigPhase.COMPONENTS, context, info, localization, config)
         renderer.config(localization)
 
-        renderer.lazy.forEach { it.active = true } //Activate lazy values => Allow them to load in the handler
+        renderer.activate() //Activate lazy values => Allow them to load in the handler
         val element = renderer.components.flatMap { it.elements() }.firstOrNull { it.name == name } as MessageElement<*, GenericComponentInteractionCreateEvent>? ?: error("Component $name not found")
 
         try {
@@ -219,7 +219,6 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
     }
 
     internal val components = mutableListOf<IMessageComponent>()
-    internal val lazy = mutableListOf<Lazy<*>>()
 
     override fun IMessageComponent.unaryPlus() {
         components += this
@@ -227,13 +226,6 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
     override fun render(handler: IMessage.() -> Unit) {
         if (phase == MenuConfigPhase.RENDER) handler()
-    }
-
-    override fun <T> lazy(default: T, provider: () -> T): Lazy<T> {
-        val lazy = Lazy(phase == MenuConfigPhase.RENDER, default, provider)
-        this.lazy += lazy
-
-        return lazy
     }
 
     override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
@@ -249,6 +241,8 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             var currentSetup = 0
 
                             override fun render(handler: IMessage.() -> Unit) {}
+
+                            override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedMenu.lazy(default, provider)
 
                             override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
                                 if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
@@ -294,6 +288,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             var currentSetup = 0
 
                             override fun render(handler: IMessage.() -> Unit) {}
+                            override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedModal.lazy(default, provider)
 
                             override fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
                                 if (this@registerLocalizedModal.menuInfo.name.menuName() == name) end(init)

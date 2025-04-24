@@ -176,6 +176,17 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
     override val setup = mutableListOf<Any?>()
     private var currentSetup = 0
 
+    internal val lazy = mutableListOf<Lazy<*>>()
+
+    open fun <T> lazy(default: T, provider: () -> T): Lazy<T> {
+        val lazy = Lazy(phase == MenuConfigPhase.RENDER, default, provider)
+        this.lazy += lazy
+
+        return lazy
+    }
+
+    internal fun activate() = lazy.forEach { it.active = true }
+
     override fun currentState(): Int = stateAccess!!.currentState()
     override fun skipState(amount: Int) {
         if (phase == MenuConfigPhase.BUILD) {
