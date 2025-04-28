@@ -134,10 +134,13 @@ data class StateData(val data: MutableList<String>) {
 
     companion object {
         @OptIn(ExperimentalSerializationApi::class)
-        private fun encode(type: KType, value: Any?) = Cbor.encodeToByteArray(Cbor.serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
+        var serializersModule = Cbor.serializersModule
 
         @OptIn(ExperimentalSerializationApi::class)
-        private fun decode(type: KType, data: String) = Cbor.decodeFromByteArray(Cbor.serializersModule.serializer(type), data.map { it.code.toByte() }.toByteArray())
+        private fun encode(type: KType, value: Any?) = Cbor.encodeToByteArray(serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
+
+        @OptIn(ExperimentalSerializationApi::class)
+        private fun decode(type: KType, data: String) = Cbor.decodeFromByteArray(serializersModule.serializer(type), data.map { it.code.toByte() }.toByteArray())
 
         @Suppress("UNCHECKED_CAST")
         fun decode(data: String) = StateData(if (data.isEmpty()) mutableListOf() else (decode(typeOf<List<String>>(), data) as List<String>).toMutableList())
