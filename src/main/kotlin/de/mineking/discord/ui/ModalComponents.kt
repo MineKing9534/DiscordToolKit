@@ -120,3 +120,11 @@ inline fun <reified T : Any> composeTo(vararg inputs: IModalComponent<*>) = comp
     val values = inputs.map { +it }
     produce { T::class.primaryConstructor!!.call(*values.map { it() }.toTypedArray()) }
 }
+
+fun <T> (() -> IModalComponent<T>).createLazyComponent() = object : IModalComponent<T> {
+    val component by lazy(this@createLazyComponent)
+
+    override fun children() = component.children()
+    override fun handle(context: ModalContext<*>) = component.handle(context)
+    override fun render(generator: IdGenerator) = component.render(generator)
+}
