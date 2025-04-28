@@ -137,9 +137,17 @@ fun MenuConfig<out GenericInteractionCreateEvent, *>.event(): Parameter<GenericI
 
 enum class MenuConfigPhase { BUILD, COMPONENTS, RENDER }
 
-@MenuMarker
-interface MenuConfig<M, L : LocalizationFile?> : StateContext<M>, StateConfig {
+class MenuContext(override val phase: MenuConfigPhase) : IMenuContext
+
+interface IMenuContext {
     val phase: MenuConfigPhase
+
+    fun <T> render(default: T, handler: () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
+    fun <T> render(handler: () -> T) = render(null, handler)
+}
+
+@MenuMarker
+interface MenuConfig<M, L : LocalizationFile?> : StateContext<M>, StateConfig, IMenuContext {
     val localizationConfig: LocalizationConfig?
 
     fun <T> setup(value: () -> T): T

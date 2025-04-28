@@ -85,7 +85,7 @@ class ModalComponent<T>(private val children: List<IModalComponent<*>>, private 
     override fun render(generator: IdGenerator): List<Pair<TextInput?, ModalElement<*>>> = elements().flatMap { it.render(generator) }
 }
 
-class ModalComponentBuilder<T> {
+class ModalComponentBuilder<T>(override val phase: MenuConfigPhase) : IMenuContext {
     internal val components = mutableListOf<IModalComponent<*>>()
     internal var producer: (ModalContext<*>.() -> T)? = null
 
@@ -101,11 +101,11 @@ class ModalComponentBuilder<T> {
 }
 
 fun <T> composeInputs(builder: ModalComponentBuilder<T>.() -> Unit): ModalComponent<T> {
-    val initial = ModalComponentBuilder<T>()
+    val initial = ModalComponentBuilder<T>(MenuConfigPhase.RENDER)
     initial.builder()
 
     return ModalComponent(initial.components) {
-        val temp = ModalComponentBuilder<T>()
+        val temp = ModalComponentBuilder<T>(MenuConfigPhase.COMPONENTS)
         temp.builder()
         temp.producer!!.invoke(this)
     }
@@ -121,10 +121,11 @@ inline fun <reified T : Any> composeTo(vararg inputs: IModalComponent<*>) = comp
     produce { T::class.primaryConstructor!!.call(*values.map { it() }.toTypedArray()) }
 }
 
-fun <T> (() -> IModalComponent<T>).createLazyComponent() = object : IModalComponent<T> {
-    val component by lazy(this@createLazyComponent)
+fun <T> createLazyComponent(component: IMenuContext.() -> IModalComponent<T>) = object : IModalComponent<T> {
+    val renderComponent by lazy { MenuContext(MenuConfigPhase.RENDER).component() }
+    val handleComponent by lazy { MenuContext(MenuConfigPhase.COMPONENTS).component() }
 
-    override fun children() = component.children()
-    override fun handle(context: ModalContext<*>) = component.handle(context)
-    override fun render(generator: IdGenerator) = component.render(generator)
+    override fun children() = renderComponent.children()
+    override fun handle(context: ModalContext<*>) = handleComponent.handle(context)
+    override fun render(generator: IdGenerator) = renderComponent.render(generator)
 }
