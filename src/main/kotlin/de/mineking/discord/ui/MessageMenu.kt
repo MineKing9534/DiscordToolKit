@@ -152,8 +152,8 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
     fun <T> lazy(default: T, provider: () -> T): Lazy<T>
     fun <T> lazy(provider: () -> T) = lazy(null, provider)
 
-    fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
-    fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
+    fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
+    fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
         return localizedSubmenu(name, defer, useComponentsV2, localization, detach) { init() }
     }
 
@@ -163,7 +163,7 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
     }
 }
 
-inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2, detach: Boolean = false, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, detach: Boolean = false, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
     return localizedSubmenu(name, defer, useComponentsV2, file, detach, init)
 }
@@ -201,7 +201,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
         components += this
     }
 
-    override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
+    override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
         @Suppress("UNCHECKED_CAST")
         return setup {
             menuInfo.manager.registerLocalizedMenu<M, CL>(
@@ -217,7 +217,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
                             override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedMenu.lazy(default, provider)
 
-                            override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+                            override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
                                 if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
                                 return super.localizedSubmenu(name, defer, useComponentsV2, localization, detach, init)
                             }

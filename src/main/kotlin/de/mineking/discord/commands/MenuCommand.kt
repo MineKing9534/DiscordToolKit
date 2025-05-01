@@ -85,7 +85,7 @@ fun menuCommand(
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
-    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
+    useComponentsV2: Boolean? = null,
     response: MenuCommandResponseType = MenuCommandResponseType.EPHEMERAL_REPLY,
     config: MenuCommandConfigurator
 ) = localizedMenuCommand(name, menu, description, localization, defer, useComponentsV2, response, config)
@@ -95,7 +95,7 @@ inline fun <reified L : LocalizationFile> localizedMenuCommand(
     menu: String? = null,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     defer: DeferMode = DEFAULT_DEFER_MODE,
-    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
+    useComponentsV2: Boolean? = null,
     response: MenuCommandResponseType = MenuCommandResponseType.EPHEMERAL_REPLY,
     crossinline config: LocalizedMenuCommandConfigurator<L>
 ): SlashCommand = {
@@ -109,7 +109,7 @@ fun <L : LocalizationFile?> localizedMenuCommand(
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     localization: L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
-    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
+    useComponentsV2: Boolean? = null,
     response: MenuCommandResponseType = MenuCommandResponseType.EPHEMERAL_REPLY,
     config: LocalizedMenuCommandConfigurator<L>
 ): SlashCommand = { parent ->
