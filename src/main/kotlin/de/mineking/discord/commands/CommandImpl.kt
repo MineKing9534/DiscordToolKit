@@ -7,8 +7,6 @@ import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.Command.Type
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.*
-import net.dv8tion.jda.api.interactions.commands.build.attributes.IRestrictedCommandData
-import net.dv8tion.jda.api.interactions.commands.build.attributes.IScopedCommandData
 
 class CommandTermination : RuntimeException()
 
@@ -72,9 +70,9 @@ abstract class EntryPointCommandImpl(
     defaultMemberPermissions: DefaultMemberPermissions?,
     contexts: Set<InteractionContextType>,
     types: Set<IntegrationType>,
-    val handler: EntryPointCommandData.Handler
-) : CommandImpl<EntrypointCommandContext, EntryPointCommandData>(name, null, localization, setup, conditions, defaultMemberPermissions, contexts, types) {
-    override fun build(manager: CommandManager): EntryPointCommandData {
+    val handler: PrimaryEntryPointCommandData.Handler
+) : CommandImpl<EntrypointCommandContext, PrimaryEntryPointCommandData>(name, null, localization, setup, conditions, defaultMemberPermissions, contexts, types) {
+    override fun build(manager: CommandManager): PrimaryEntryPointCommandData {
         val localization = manager.localization?.getCommandDescription(effectiveLocalization(), this)
 
         val result = Commands.entryPoint(name, localization?.default ?: description)

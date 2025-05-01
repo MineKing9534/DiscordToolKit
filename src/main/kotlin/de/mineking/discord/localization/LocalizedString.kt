@@ -1,6 +1,8 @@
 package de.mineking.discord.localization
 
-const val LOCALIZATION_PREFIX = "§§"
+val DEFAULT_LABEL = object : CharSequence by "" {}
+class LocalizedString internal constructor(val name: String) : CharSequence by name
 
-fun String.localize() = if (shouldLocalize()) this else "$LOCALIZATION_PREFIX$this"
-fun String.shouldLocalize() = startsWith(LOCALIZATION_PREFIX)
+fun CharSequence.localize() = if (shouldLocalize() || isDefault()) this else LocalizedString(this.toString())
+fun CharSequence?.shouldLocalize() = this is LocalizedString
+fun CharSequence?.isDefault() = this == DEFAULT_LABEL

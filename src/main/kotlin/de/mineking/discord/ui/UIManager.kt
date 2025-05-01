@@ -16,10 +16,10 @@ fun Emoji.jda() = fromUnicode(this.details.string)
 
 class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
     internal val menus: MutableMap<String, Menu<*, *, *>> = mutableMapOf()
-    var localization: MenuLocalizationHandler = SimpleMenuLocalizationHandler()
+    var localization: MenuLocalizationHandler = UnlocalizedLocalizationHandler()
         private set
 
-    fun localize(localization: MenuLocalizationHandler = DefaultMenuLocalizationHandler("menu")) {
+    fun localize(localization: MenuLocalizationHandler = DefaultLocalizationHandler("menu")) {
         this.localization = localization
     }
 

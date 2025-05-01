@@ -29,23 +29,24 @@ fun main() {
 
                 embed(read(localization::testEmbed))
 
-                +label("label")
-                +button("button") { state++ }
-                +label("constant", label = "Not Localized")
-                +label("custom", label = "abc".localize())
-
-                +endRow()
+                +actionRow(
+                    label("label"),
+                    button("button") { state++ },
+                    label("constant", label = "Not Localized"),
+                    label("custom", label = "abc".localize())
+                )
 
                 val test = state
 
-                +menuButton("menu1") { back ->
-                    content("$test")
-                    +back.asButton("back")
-                }
-
-                +localizedMenuButton<SubmenuLocalization>("menu2") { _, back ->
-                    +back.asButton("back")
-                }
+                +actionRow(
+                    menuButton("menu1") { back ->
+                        content("$test")
+                        +actionRow(back.asButton("back"))
+                    },
+                    localizedMenuButton<SubmenuLocalization>("menu2") { _, back ->
+                        +actionRow(back.asButton("back"))
+                    }
+                )
             }
 
             updateCommands().queue()

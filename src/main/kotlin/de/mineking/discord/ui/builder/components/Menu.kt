@@ -1,5 +1,6 @@
 package de.mineking.discord.ui.builder.components
 
+import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.*
@@ -10,7 +11,7 @@ class BackReference(val menu: MenuInfo<*>, val stateCount: Int) {
     fun asButton(
         name: String = menu.name.menuName(),
         color: ButtonColor = DEFAULT_BUTTON_COLOR,
-        label: String = DEFAULT_LABEL,
+        label: CharSequence = DEFAULT_LABEL,
         emoji: Emoji? = null,
         localization: LocalizationFile? = null
     ) = switchMenuButton(menu, name, color, label, emoji, localization) {
@@ -19,8 +20,8 @@ class BackReference(val menu: MenuInfo<*>, val stateCount: Int) {
     }
 
     fun asSelectOption(
-        label: String = DEFAULT_LABEL,
-        description: String? = DEFAULT_LABEL,
+        label: CharSequence = DEFAULT_LABEL,
+        description: CharSequence? = DEFAULT_LABEL,
         default: Boolean = false,
         emoji: Emoji? = null,
         localization: LocalizationFile? = null
@@ -34,7 +35,7 @@ fun switchMenuButton(
     menu: Menu<*, *, *>,
     name: String = menu.name.menuName(),
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
@@ -46,7 +47,7 @@ fun switchMenuButton(
     menu: MenuInfo<*>,
     name: String = menu.name.menuName(),
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
@@ -58,7 +59,7 @@ fun switchMenuButton(
     menu: String,
     name: String = menu.menuName(),
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
@@ -69,7 +70,7 @@ fun switchMenuButton(
 fun MessageMenuConfig<*, *>.menuButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     menuLocalization: LocalizationFile? = localization,
@@ -81,7 +82,7 @@ fun MessageMenuConfig<*, *>.menuButton(
 inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
@@ -95,7 +96,7 @@ inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuB
 fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     @Suppress("UNCHECKED_CAST")
@@ -132,27 +133,27 @@ class ModalButtonContext<M, N>(val target: MessageMenu<N, *>, val context: Modal
 inline fun <reified T> MessageMenuConfig<*, *>.modalButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
-    title: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     modalLocalization: LocalizationFile? = localization,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: IModalComponent<T>,
+    component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(value: T) -> Unit = { }
 ) = localizedModalButton(name, color, label, emoji, title, localization, modalLocalization, defer, detach, component) { _, value -> handler(value) }
 
 inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedModalButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
-    title: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: IModalComponent<T>,
+    component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): ButtonElement {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
@@ -162,15 +163,15 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
 inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedModalButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
-    title: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     @Suppress("UNCHECKED_CAST")
     modalLocalization: L = localization as L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: IModalComponent<T>,
+    component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): ButtonElement {
     val currentState = if (detach) 0 else currentState()
@@ -185,8 +186,8 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
 fun switchMenuSelectOption(
     menu: Menu<*, *, *>,
     name: String = menu.name.menuName(),
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -198,8 +199,8 @@ fun switchMenuSelectOption(
 fun switchMenuSelectOption(
     menu: MenuInfo<*>,
     name: String = menu.name.menuName(),
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -211,8 +212,8 @@ fun switchMenuSelectOption(
 fun switchMenuSelectOption(
     menu: String,
     name: String = menu.menuName(),
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -223,8 +224,8 @@ fun switchMenuSelectOption(
 
 fun MessageMenuConfig<*, *>.menuSelectOption(
     name: String,
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -236,8 +237,8 @@ fun MessageMenuConfig<*, *>.menuSelectOption(
 
 inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuSelectOption(
     name: String,
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -251,8 +252,8 @@ inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuS
 
 fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuSelectOption(
     name: String,
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
@@ -276,30 +277,30 @@ fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuSelectOption(
 
 inline fun <reified T> MessageMenuConfig<*, *>.modalSelectOption(
     name: String,
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
-    title: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     modalLocalization: LocalizationFile? = localization,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: IModalComponent<T>,
+    component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(value: T) -> Unit = { }
 ) = localizedModalSelectOption(name, label, description, default, emoji, title, localization, modalLocalization, defer, detach, component) { _, value -> handler(value) }
 
 inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedModalSelectOption(
     name: String,
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
-    title: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: IModalComponent<T>,
+    component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): SelectOption {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
@@ -308,17 +309,17 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
 
 inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedModalSelectOption(
     name: String,
-    label: String = DEFAULT_LABEL,
-    description: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     default: Boolean = false,
     emoji: Emoji? = null,
-    title: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
     @Suppress("UNCHECKED_CAST")
     modalLocalization: L = localization as L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: IModalComponent<T>,
+    component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): SelectOption {
     val currentState = if (detach) 0 else currentState()
@@ -330,7 +331,7 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     }
 }
 
-fun <T, M, L : LocalizationFile?> MessageMenuConfig<M, *>.createModal(name: String, title: String, localization: L, defer: DeferMode = DEFAULT_DEFER_MODE, detach: Boolean, component: IModalComponent<T>, handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit) = localizedModal(name, localization = localization, defer = defer, detach = detach) {
+fun <T, M, L : LocalizationFile?> MessageMenuConfig<M, *>.createModal(name: String, title: CharSequence, localization: L, defer: DeferMode = DEFAULT_DEFER_MODE, detach: Boolean, component: ModalComponent<T>, handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit) = localizedModal(name, localization = localization, defer = defer, detach = detach) {
     title(title)
 
     val componentValue = +component

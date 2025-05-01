@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
-import net.dv8tion.jda.api.interactions.commands.build.EntryPointCommandData
+import net.dv8tion.jda.api.interactions.commands.build.PrimaryEntryPointCommandData
 
 typealias CommandHandler<C> = C.() -> Unit
 
@@ -189,7 +189,7 @@ fun entrypointCommand(
     types: Set<IntegrationType>? = null,
     localization: LocalizationFile? = null
 ): EntrypointCommand = {
-    object : EntryPointCommandImpl(name, description, localization, emptyList(), emptyList(), permission, contexts ?: defaultInteractionContextTypes.toMutableSet(), types ?: defaultIntegrationTypes.toMutableSet(), EntryPointCommandData.Handler.DISCORD_LAUNCH_ACTIVITY) {
+    object : EntryPointCommandImpl(name, description, localization, emptyList(), emptyList(), permission, contexts ?: defaultInteractionContextTypes.toMutableSet(), types ?: defaultIntegrationTypes.toMutableSet(), PrimaryEntryPointCommandData.Handler.DISCORD_LAUNCH_ACTIVITY) {
         override fun handle(context: EntrypointCommandContext) {}
     }
 }
@@ -206,7 +206,7 @@ fun entrypointCommand(
     builder.config()
 
     lateinit var command: EntryPointCommandImpl
-    command = object : EntryPointCommandImpl(name, description, localization, builder.setup, builder.before, builder.defaultMemberPermission, builder.contexts, builder.types, EntryPointCommandData.Handler.APP_HANDLER) {
+    command = object : EntryPointCommandImpl(name, description, localization, builder.setup, builder.before, builder.defaultMemberPermission, builder.contexts, builder.types, PrimaryEntryPointCommandData.Handler.APP_HANDLER) {
         override fun handle(context: EntrypointCommandContext) {
             val executor = GenericCommandBuilder(manager, this)
             executor.config()

@@ -3,6 +3,7 @@ package examples
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.DeferMode
+import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
 import de.mineking.discord.ui.builder.components.modalButton
 import de.mineking.discord.ui.builder.components.textInput
@@ -25,23 +26,25 @@ fun main() {
                     }
                 }
 
-                +button("a", label = "a") { switchMenu(modal) }
-
                 var count by state(0)
                 var text by state("")
 
-                //Same as above but simpler
-                +modalButton("b", label = "b", component = textInput("text", label = "Text"), title = "Modal Title") {
-                    count++
-                    hook.sendMessage(it).setEphemeral(true).queue()
-                }
+                +actionRow(
+                    button("a", label = "a") { switchMenu(modal) },
 
-                +modalButton("c", label = "c", title = "Modal Title", component = textInput("text", label = "Text", value = text)) {
-                    text = it
-                }
+                    //Same as above but simpler by inlining the modal definition
+                    modalButton("b", label = "b", component = textInput("text", label = "Text"), title = "Modal Title") {
+                        hook.sendMessage(it).setEphemeral(true).queue()
+                    },
+
+                    modalButton("c", label = "c", title = "Modal Title", component = textInput("text", label = "Text", value = text)) {
+                        count++
+                        text = it
+                    }
+                )
 
                 content {
-                    +"**Clicked B:** $count\n"
+                    +"**Clicked C:** $count\n"
                     +"**Text:** $text"
                 }
             }

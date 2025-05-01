@@ -4,13 +4,16 @@ import de.mineking.discord.commands.channel
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.commands.slashCommand
 import de.mineking.discord.discordToolKit
+import de.mineking.discord.ui.MessageComponent
 import de.mineking.discord.ui.UIManager
+import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
 import de.mineking.discord.ui.builder.components.counter
 import de.mineking.discord.ui.builder.components.label
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.replyMenu
 import de.mineking.discord.ui.state
+import net.dv8tion.jda.api.components.button.Button
 import setup.createJDA
 
 fun main() {
@@ -25,9 +28,10 @@ fun main() {
                     content("Current Count: $count")
                 }
 
-                +button("inc", label = "Increase Counter") { count++ }
-
-                +label("current", label = "$count")
+                +actionRow(
+                    button("inc", label = "Increase Counter") { count++ },
+                    label("current", label = "$count")
+                )
             }
 
             registerMenu<Int>("counter") {
@@ -37,7 +41,7 @@ fun main() {
                 //Initialize the "count" state to the menu parameter
                 initialize { count = it }
 
-                +counter("counter", ref = countRef)
+                +actionRow(counter("counter", ref = countRef))
             }
         }
         .withCommandManager {
@@ -68,8 +72,10 @@ fun main() {
                     }
                 }
 
-                +button("inc", label = "Increase Counter") { count++ }
-                +label("current", label = "$count")
+                +actionRow(
+                    button("inc", label = "Increase Counter") { count++ },
+                    label("current", label = "$count")
+                )
             }
 
             updateCommands().queue()

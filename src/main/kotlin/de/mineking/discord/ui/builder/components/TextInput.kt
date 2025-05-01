@@ -1,15 +1,17 @@
 package de.mineking.discord.ui.builder.components
 
+import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
-import net.dv8tion.jda.api.interactions.components.text.TextInput
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle
-import net.dv8tion.jda.internal.interactions.component.TextInputImpl
+import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import net.dv8tion.jda.api.components.textinput.TextInput
+import net.dv8tion.jda.api.components.textinput.TextInputStyle
+import sun.security.util.KeyUtil.validate
 
 fun <T> typedTextInput(
     name: String,
-    label: String = DEFAULT_LABEL,
-    placeholder: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    placeholder: CharSequence? = DEFAULT_LABEL,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
     minLength: Int = 0,
@@ -18,16 +20,22 @@ fun <T> typedTextInput(
     localization: LocalizationFile? = null,
     formatter: (value: T) -> String = { it.toString() },
     parser: ParseContext<*>.(value: String) -> T
-) = modalElement(name, {
-    TextInputImpl(it, style, label, minLength, maxLength, required, value?.let(formatter)?.takeIf { it.isNotBlank() }, placeholder)
-}, localization) {
-    val temp = event.values.first { it.id.split(":", limit = 2)[0] == name }.asString
+) = createModalElement(name, localization, {
+    val temp = event.values.first { it.customId.split(":", limit = 2)[0] == name }.asString
     ParseContext(this).parser(temp)
+}) { config, id ->
+    TextInput.create(id, config.readLocalizedString(localization, name, label, "label", prefix = "inputs") ?: ZERO_WIDTH_SPACE, style)
+        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = "inputs"))
+        .setValue(value?.let(formatter)?.takeIf { it.isNotBlank() })
+        .setMinLength(minLength)
+        .setMaxLength(maxLength)
+        .setRequired(required)
+        .build()
 }
 
 @MenuMarker
 class ParseContext<M>(context: StateContext<M>) : StateContext<M> by context {
-    fun validate(validator: () -> Boolean) {
+    fun check(validator: () -> Boolean) {
         if (!validator()) throw RenderTermination
     }
 }
@@ -36,73 +44,81 @@ typealias ResultHandler<T> = StateContext<*>.(value: T) -> Unit
 
 fun textInput(
     name: String,
-    label: String = DEFAULT_LABEL,
-    placeholder: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    placeholder: CharSequence? = DEFAULT_LABEL,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
     minLength: Int = 0,
     maxLength: Int = TextInput.MAX_VALUE_LENGTH,
     value: String? = null,
     localization: LocalizationFile? = null,
-    handler: ResultHandler<String>? = null
+    handler: ResultHandler<String> = {}
 ) = typedTextInput(name, label, placeholder, style, required, minLength, maxLength, value, localization) {
-    handler?.invoke(this, it)
+    handler.invoke(this, it)
     it
 }
 
+data class IntParseResult(val value: Int?, val error: Boolean)
+fun ModalComponent<IntParseResult>.unbox() = map { it.value }
+
 fun intInput(
     name: String,
-    label: String = DEFAULT_LABEL,
-    placeholder: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    placeholder: CharSequence? = DEFAULT_LABEL,
     required: Boolean = true,
     min: Int = 0,
     max: Int = TextInput.MAX_VALUE_LENGTH,
     value: Int? = null,
     localization: LocalizationFile? = null,
-    handler: ResultHandler<Int>? = null
+    handler: ResultHandler<IntParseResult> = {}
 ) = typedTextInput(name, label, placeholder, TextInputStyle.SHORT, required, value = value, localization = localization) {
-    val value = it.toIntOrNull()
-    if (value != null) {
-        validate { value >= min && value <= max }
-        handler?.invoke(this, value)
+    val result = try {
+        IntParseResult(it.toInt(), false)
+    } catch (_: NumberFormatException) {
+        IntParseResult(null, true)
     }
 
+    if (result.value != null) {
+        check { result.value >= min && result.value <= max }
+    }
+
+    handler(this, result)
     value
 }
 
 fun statefulTextInput(
     name: String,
-    label: String = DEFAULT_LABEL,
-    placeholder: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    placeholder: CharSequence? = DEFAULT_LABEL,
     style: TextInputStyle = TextInputStyle.SHORT,
     required: Boolean = true,
     minLength: Int = 0,
     maxLength: Int = TextInput.MAX_VALUE_LENGTH,
     localization: LocalizationFile? = null,
     ref: State<String>,
-    handler: ResultHandler<String>? = null
-): IModalComponent<String> {
+    handler: ResultHandler<String> = {}
+): ModalComponent<String> {
     var value by ref
     return textInput(name, label, placeholder, style, required, minLength, maxLength, value, localization) {
         value = it
-        handler?.invoke(this, it)
+        handler(this, it)
     }
 }
 
-fun StateContext<*>.intInput(
+fun StateContext<*>.statefulIntInput(
     name: String,
-    label: String = DEFAULT_LABEL,
-    placeholder: String? = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
+    placeholder: CharSequence? = DEFAULT_LABEL,
     required: Boolean = true,
     min: Int = 0,
     max: Int = TextInput.MAX_VALUE_LENGTH,
     localization: LocalizationFile? = null,
     ref: State<Int>,
-    handler: ResultHandler<Int>? = null
-): IModalComponent<Int?> {
+    handler: ResultHandler<IntParseResult> = {}
+): ModalComponent<Int?> {
     var value by ref
     return intInput(name, label, placeholder, required, min, max, value, localization) {
-        value = it
-        handler?.invoke(this, it)
+        if (it.value != null) value = it.value
+        handler(this, it)
     }
 }

@@ -1,11 +1,14 @@
 package de.mineking.discord.ui.builder.components
 
+import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.TextElement
 import de.mineking.discord.ui.builder.paginate
 import de.mineking.discord.ui.builder.text
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.button.Button
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import java.lang.Integer.max
 import java.lang.Integer.min
@@ -15,13 +18,13 @@ fun MessageMenuConfig<*, *>.pageSelector(
     max: Int,
     ref: State<Int>,
     modal: Boolean = true,
-    title: String = DEFAULT_LABEL,
-    label: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null
-): MessageComponent {
+): MessageComponent<ActionRow> {
     var page by ref
 
-    return createMessageComponent(
+    return actionRow(
         button("$name-first", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏪")) { page = 1 }.disabled(page == 1),
         button("$name-back", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⬅\uFE0F")) { page-- }.disabled(page <= 1),
         if (modal)
@@ -39,17 +42,17 @@ fun pageFocusSelector(
     name: String,
     max: Int,
     ref: State<Int>
-): MessageComponent {
+): MessageComponent<ActionRow> {
     var page by ref
 
     val pages = if (page > 2) min(page - 2, max - 4)..min(page + 2, max) else max(1, page - 2)..max(page + 2, 5)
 
-    return createMessageComponent(pages.map {
+    return actionRow(pages.map {
         button("$name-$it", label = "$it") { page = it }.disabled(it == page)
     })
 }
 
-data class PaginationResult(val text: TextElement, val component: MessageComponent)
+data class PaginationResult(val text: TextElement, val component: MessageComponent<ActionRow>)
 
 fun <T> MessageMenuConfig<*, *>.pagination(
     name: String,
@@ -59,8 +62,8 @@ fun <T> MessageMenuConfig<*, *>.pagination(
     ref: State<Int>,
     pageFocusSelector: Boolean = false,
     modal: Boolean = true,
-    title: String = DEFAULT_LABEL,
-    label: String = DEFAULT_LABEL,
+    title: CharSequence = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null
 ): PaginationResult {
     val page by ref

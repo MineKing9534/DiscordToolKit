@@ -1,34 +1,73 @@
 package de.mineking.discord.ui.builder.components
 
+import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
-import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
+import net.dv8tion.jda.api.components.container.Container
+import net.dv8tion.jda.api.components.container.ContainerChildComponent
+import net.dv8tion.jda.api.components.section.Section
+import net.dv8tion.jda.api.components.section.SectionAccessoryComponent
+import net.dv8tion.jda.api.components.section.SectionContentComponent
+import net.dv8tion.jda.api.components.separator.Separator
+import net.dv8tion.jda.api.components.textdisplay.TextDisplay
+import net.dv8tion.jda.api.components.thumbnail.Thumbnail
 import net.dv8tion.jda.api.entities.emoji.Emoji
-import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
-import net.dv8tion.jda.api.interactions.components.ActionComponent
-import net.dv8tion.jda.api.interactions.components.Component
+import net.dv8tion.jda.api.utils.FileUpload
+import java.awt.Color
 
 fun label(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: String = DEFAULT_LABEL,
+    label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null
 ) = button(name, color, label, emoji, localization).disabled()
 
-fun blank(name: String, color: ButtonColor = DEFAULT_BUTTON_COLOR) = label(name, color = color, label = ZERO_WIDTH_SPACE)
-
-fun endRow() = BREAKPOINT_ELEMENT
-
-internal val BREAKPOINT = object : ActionComponent {
-    override fun toData() = error("")
-    override fun getType() = Component.Type.UNKNOWN
-    override fun getId(): String = ""
-    override fun isDisabled() = false
-    override fun withDisabled(disabled: Boolean) = this
+fun actionRow(vararg components: MessageComponent<out ActionRowChildComponent>) = actionRow(components.toList())
+fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayout(components) { config, id ->
+    ActionRow.of(components.flatMap { it.render(config, id) })
 }
 
-internal val BREAKPOINT_ELEMENT = object : MessageElement<ActionComponent, GenericComponentInteractionCreateEvent>("", null) {
-    override fun handle(context: ComponentContext<*, GenericComponentInteractionCreateEvent>) {}
-    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>> = listOf({ BREAKPOINT } to this)
+fun separator(invisible: Boolean = false, spacing: Separator.Spacing = Separator.Spacing.SMALL) = createLayout { _, _ -> Separator.create(!invisible, spacing) }
+
+fun container(
+    vararg components: MessageComponent<out ContainerChildComponent>,
+    spoiler: Boolean = false,
+    color: Color? = null
+) = container(components.toList(), spoiler, color)
+
+fun container(
+    components: List<MessageComponent<out ContainerChildComponent>>,
+    spoiler: Boolean = false,
+    color: Color? = null
+) = createLayout(components) { config, id ->
+    Container.of(components.flatMap { it.render(config, id) })
+        .withSpoiler(spoiler)
+        .withAccentColor(color)
+}
+
+fun section(
+    accessory: MessageElement<SectionAccessoryComponent>,
+    vararg components: MessageComponent<out SectionContentComponent>
+) = section(accessory, components.toList())
+
+fun section(
+    accessory: MessageElement<SectionAccessoryComponent>,
+    components: List<MessageComponent<out SectionContentComponent>>
+) = createLayout(components + accessory) { config, id ->
+    Section.of(
+        accessory.render(config, id).single(),
+        components.flatMap { it.render(config, id) }
+    )
+}
+
+fun thumbnail(file: () -> FileUpload) = createLayout { _, _ -> Thumbnail.fromFile(file()) }
+fun thumbnail(file: FileUpload) = thumbnail { file }
+
+fun thumbnail(url: String) = createLayout { _, _ -> Thumbnail.fromUrl(url) }
+
+fun textDisplay(content: String, localization: LocalizationFile?) = createElement<TextDisplay>(content.take(100), localization) { _, _ ->
+    TextDisplay.create(content)
 }
