@@ -15,7 +15,8 @@ fun main() {
     discordToolKit(jda)
         .withUIManager()
         .withCommandManager {
-            +menuCommand("modal", defer = DeferMode.UNLESS_PREVENTED) { //Default deferMode ist ALWAYS. You have to set it to anything else if you want to use modals because otherwise the interaction is acknowledged before the handler is called
+            //If you change your DEFAULT_DEFER_MODE to ALWAYS, you have to manually change it to anything else (using the defer parameter) for menus that use modals because otherwise the interaction is acknowledged before the handler is called and therefore prevents responding with a modal
+            +menuCommand("modal") {
                 val modal = modal("modal") {
                     title("Modal Title")
 

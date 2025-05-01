@@ -20,7 +20,7 @@ fun main() {
         .withUIManager()
         .withCommandManager {
             //Manual pagination
-            +menuCommand("paginate1", defer = DeferMode.UNLESS_PREVENTED) { //Change deferMode away from default ALWAYS to allow modals (used by pageSelector)
+            +menuCommand("paginate1") {
                 val pageRef = state(1) { old, new -> println("Page: $old -> $new") } //You can define a state with an update listener
                 var page by pageRef
 
@@ -35,7 +35,7 @@ fun main() {
             val entries = (0 until 100).map { it % 15 + 1 }.map { Character.forDigit(it, 16).toString().repeat(it) }
 
             //Automated pagination. Shows up to 10 entries per page, where each entry is rendered its own line
-            +menuCommand("paginate2", defer = DeferMode.UNLESS_PREVENTED) {
+            +menuCommand("paginate2") {
                 val page = state(1)
                 val (content, component) = pagination("page", entries.toList(), display = { index -> text("$index. ") + bold(this) }, perPage = 10, ref = page)
 

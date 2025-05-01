@@ -22,7 +22,7 @@ annotation class MenuMarker
 
 enum class DeferMode { NEVER, ALWAYS, UNLESS_PREVENTED }
 
-val DEFAULT_DEFER_MODE = DeferMode.ALWAYS
+var DEFAULT_DEFER_MODE = DeferMode.NEVER
 
 @MenuMarker
 abstract class HandlerContext<M, out E>(
