@@ -21,7 +21,6 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.toScriptSource
-import kotlin.script.experimental.impl._languageVersion
 import kotlin.script.experimental.jvm.dependenciesFromCurrentContext
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.jvmTarget

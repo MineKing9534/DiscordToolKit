@@ -2,12 +2,9 @@ package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.components.BackReference
-import net.dv8tion.jda.api.components.ActionComponent
 import net.dv8tion.jda.api.components.Component
-import net.dv8tion.jda.api.components.attribute.IDisableable
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
-import java.awt.SystemColor.menu
 
 typealias ComponentHandler<M, E> = ComponentContext<M, E>.() -> Unit
 

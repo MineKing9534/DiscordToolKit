@@ -2,7 +2,6 @@ package examples
 
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.ui.DeferMode
 import de.mineking.discord.ui.builder.bold
 import de.mineking.discord.ui.builder.components.*
 import de.mineking.discord.ui.builder.h1

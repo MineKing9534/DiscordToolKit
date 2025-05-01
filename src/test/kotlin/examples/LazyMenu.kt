@@ -4,8 +4,6 @@ import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
-import de.mineking.discord.ui.builder.components.label
-import de.mineking.discord.ui.builder.components.menuButton
 import setup.createJDA
 
 fun main() {

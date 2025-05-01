@@ -8,7 +8,6 @@ import de.mineking.discord.ui.builder.paginate
 import de.mineking.discord.ui.builder.text
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.actionrow.ActionRow
-import net.dv8tion.jda.api.components.button.Button
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import java.lang.Integer.max
 import java.lang.Integer.min

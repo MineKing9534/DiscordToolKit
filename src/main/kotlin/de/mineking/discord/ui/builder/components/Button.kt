@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.components.button.Button
 import net.dv8tion.jda.api.components.button.ButtonStyle
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
-import net.dv8tion.jda.internal.components.button.ButtonImpl
 
 enum class ButtonColor(val style: ButtonStyle) {
     GRAY(ButtonStyle.SECONDARY),

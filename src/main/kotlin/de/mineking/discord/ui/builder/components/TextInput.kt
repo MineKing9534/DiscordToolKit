@@ -6,7 +6,6 @@ import de.mineking.discord.ui.*
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.textinput.TextInput
 import net.dv8tion.jda.api.components.textinput.TextInputStyle
-import sun.security.util.KeyUtil.validate
 
 fun <T> typedTextInput(
     name: String,

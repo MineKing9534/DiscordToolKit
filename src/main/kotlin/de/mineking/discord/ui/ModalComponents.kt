@@ -1,12 +1,9 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.MessageComponent
-import net.dv8tion.jda.api.components.ActionComponent
 import net.dv8tion.jda.api.components.textinput.TextInput
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
-import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 
 typealias ModalResult<M, T> = ModalContext<M>.() -> T
 
