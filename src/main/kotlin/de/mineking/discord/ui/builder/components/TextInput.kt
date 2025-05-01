@@ -19,7 +19,7 @@ fun <T> typedTextInput(
     localization: LocalizationFile? = null,
     formatter: (value: T) -> String = { it.toString() },
     parser: ParseContext<*>.(value: String) -> T
-) = createModalElement(name, localization, {
+) = createModalElement(name, {
     val temp = event.values.first { it.customId.split(":", limit = 2)[0] == name }.asString
     ParseContext(this).parser(temp)
 }) { config, id ->

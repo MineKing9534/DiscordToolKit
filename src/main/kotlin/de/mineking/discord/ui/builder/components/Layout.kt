@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
 import net.dv8tion.jda.api.components.container.Container
 import net.dv8tion.jda.api.components.container.ContainerChildComponent
+import net.dv8tion.jda.api.components.filedisplay.FileDisplay
 import net.dv8tion.jda.api.components.section.Section
 import net.dv8tion.jda.api.components.section.SectionAccessoryComponent
 import net.dv8tion.jda.api.components.section.SectionContentComponent
@@ -27,11 +28,11 @@ fun label(
 ) = button(name, color, label, emoji, localization).disabled()
 
 fun actionRow(vararg components: MessageComponent<out ActionRowChildComponent>) = actionRow(components.toList())
-fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayout(components) { config, id ->
+fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent(components) { config, id ->
     ActionRow.of(components.flatMap { it.render(config, id) })
 }
 
-fun separator(invisible: Boolean = false, spacing: Separator.Spacing = Separator.Spacing.SMALL) = createLayout { _, _ -> Separator.create(!invisible, spacing) }
+fun separator(invisible: Boolean = false, spacing: Separator.Spacing = Separator.Spacing.SMALL) = createMessageComponent { _, _ -> Separator.create(!invisible, spacing) }
 
 fun container(
     vararg components: MessageComponent<out ContainerChildComponent>,
@@ -43,36 +44,37 @@ fun container(
     components: List<MessageComponent<out ContainerChildComponent>>,
     spoiler: Boolean = false,
     color: Color? = null
-) = createLayout(components) { config, id ->
+) = createLayoutComponent(components) { config, id ->
     Container.of(components.flatMap { it.render(config, id) })
         .withSpoiler(spoiler)
         .withAccentColor(color)
 }
 
 fun section(
-    accessory: MessageElement<out SectionAccessoryComponent>,
+    accessory: MessageComponent<out SectionAccessoryComponent>,
     vararg components: MessageComponent<out SectionContentComponent>
 ) = section(accessory, components.toList())
 
 fun section(
-    accessory: MessageElement<out SectionAccessoryComponent>,
+    accessory: MessageComponent<out SectionAccessoryComponent>,
     components: List<MessageComponent<out SectionContentComponent>>
-) = createLayout(components + accessory) { config, id ->
+) = createLayoutComponent(components + accessory) { config, id ->
     Section.of(
         accessory.render(config, id).single(),
         components.flatMap { it.render(config, id) }
     )
 }
 
-fun thumbnail(file: () -> FileUpload) = createLayout { _, _ -> Thumbnail.fromFile(file()) }
+fun thumbnail(file: () -> FileUpload) = createMessageComponent { _, _ -> Thumbnail.fromFile(file()) }
 fun thumbnail(file: FileUpload) = thumbnail { file }
 
-fun thumbnail(url: String) = createLayout { _, _ -> Thumbnail.fromUrl(url) }
+fun thumbnail(url: String) = createMessageComponent { _, _ -> Thumbnail.fromUrl(url) }
 
-fun textDisplay(content: String, localization: LocalizationFile? = null) = createElement<TextDisplay>("", localization) { config, _ ->
-    TextDisplay.create(content)
-}
+fun textDisplay(content: String) = createMessageComponent { _, _ -> TextDisplay.create(content) }
 
-fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createElement<TextDisplay>(name, localization) { config, _ ->
+fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageComponent { config, _ ->
     TextDisplay.create(config.readLocalizedString(localization, name, path, "content") ?: ZERO_WIDTH_SPACE)
 }
+
+fun fileDisplay(file: () -> FileUpload) = createMessageComponent { _, _ -> FileDisplay.fromFile(file()) }
+fun fileDisplay(file: FileUpload) = fileDisplay { file }

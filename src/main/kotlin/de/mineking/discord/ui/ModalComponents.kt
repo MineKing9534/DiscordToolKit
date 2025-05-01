@@ -1,6 +1,5 @@
 package de.mineking.discord.ui
 
-import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.components.textinput.TextInput
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
@@ -25,11 +24,9 @@ class ModalContext<M>(menu: MenuInfo<M>, stateData: StateData, event: ModalInter
 }
 
 interface ModalComponent<T> : IComponent<TextInput> {
-    fun elements(): List<ModalElement<*>>
     fun handle(context: ModalContext<*>): T
 
     override fun transform(mapper: (() -> List<TextInput>) -> List<TextInput>) = object : ModalComponent<T> {
-        override fun elements() = this@ModalComponent.elements()
         override fun handle(context: ModalContext<*>) = this@ModalComponent.handle(context)
 
         override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper { this@ModalComponent.render(config, generator) }
@@ -38,7 +35,6 @@ interface ModalComponent<T> : IComponent<TextInput> {
     }
 
     fun <O> map(handler: (value: T) -> O) = object : ModalComponent<O> {
-        override fun elements() = this@ModalComponent.elements()
         override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = this@ModalComponent.render(config, generator)
 
         override fun handle(context: ModalContext<*>): O = handler.invoke(this@ModalComponent.handle(context))
@@ -47,25 +43,18 @@ interface ModalComponent<T> : IComponent<TextInput> {
     }
 }
 
-abstract class ModalElement<T>(
-    val name: String, val localization: LocalizationFile? = null,
-    val renderer: (MenuConfig<*, *>, String) -> TextInput
-) : ModalComponent<T> {
-    override fun elements() = listOf(this)
+fun <T> createModalElement(
+    name: String,
+    handler: ModalContext<*>.() -> T,
+    renderer: (MenuConfig<*, *>, String) -> TextInput
+) = object : ModalComponent<T> {
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("$name:")))
+    override fun handle(context: ModalContext<*>) = handler.invoke(context)
 
     override fun toString() = "ModalElement[$name]"
 }
 
-fun <T> createModalElement(
-    name: String,
-    localization: LocalizationFile?,
-    handler: ModalContext<*>.() -> T,
-    render: (MenuConfig<*, *>, String) -> TextInput
-) = object : ModalElement<T>(name, localization, render) {
-    override fun handle(context: ModalContext<*>) = handler(context)
-}
-
+//TODO
 fun createModalComponent() {
 
 }

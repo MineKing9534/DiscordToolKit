@@ -19,7 +19,6 @@ enum class ButtonColor(val style: ButtonStyle) {
 val DEFAULT_BUTTON_COLOR = ButtonColor.GRAY
 
 typealias ButtonHandler = ComponentHandler<*, ButtonInteractionEvent>
-typealias ButtonElement = ActionMessageElement<Button, ButtonInteractionEvent>
 
 fun button(
     name: String,
@@ -28,7 +27,7 @@ fun button(
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     handler: ButtonHandler = {}
-): ButtonElement = createActionElement<Button, _>(name, localization, handler) { config, id ->
+) = createMessageElement<Button, _>(name, handler) { config, id ->
     Button.of(
         color.style,
         id,
@@ -43,7 +42,7 @@ fun link(
     emoji: Emoji? = null,
     url: String,
     localization: LocalizationFile? = null
-): ButtonElement = createActionElement<Button, _>(name, localization) { config, _ ->
+) = createMessageComponent { config, _ ->
     Button.of(
         ButtonStyle.LINK,
         url,

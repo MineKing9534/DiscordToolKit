@@ -3,11 +3,8 @@ package de.mineking.discord.ui
 import de.mineking.discord.DiscordToolKit
 import de.mineking.discord.Manager
 import de.mineking.discord.commands.MenuCommandConfigImpl
-import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
-import de.mineking.discord.ui.builder.Message
-import de.mineking.discord.ui.builder.MessageBuilder
 import net.dv8tion.jda.api.entities.emoji.Emoji.fromUnicode
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent

@@ -17,8 +17,6 @@ typealias StringSelectHandler = ComponentHandler<*, StringSelectInteractionEvent
 typealias EntitySelectHandler = ComponentHandler<*, EntitySelectInteractionEvent>
 
 typealias JDASelectOption = net.dv8tion.jda.api.components.selects.SelectOption
-typealias StringSelectElement = ActionMessageElement<ActionRow, StringSelectInteractionEvent>
-typealias EntitySelectElement = ActionMessageElement<ActionRow, EntitySelectInteractionEvent>
 
 class SelectOption(
     val value: String,
@@ -61,7 +59,7 @@ fun stringSelect(
     max: Int = 1,
     localization: LocalizationFile? = null,
     handler: StringSelectHandler = {}
-): StringSelectElement = createActionElement<ActionRow, StringSelectInteractionEvent>(name, localization, {
+) = createMessageElement<ActionRow, StringSelectInteractionEvent>(name, {
     options.filter { it.value in event.values }.forEach { it.handler?.invoke(this) }
     handler()
 }) { config, id ->
@@ -197,7 +195,7 @@ fun entitySelect(
     max: Int = 1,
     localization: LocalizationFile? = null,
     handler: EntitySelectHandler = {}
-): EntitySelectElement = createActionElement<ActionRow, EntitySelectInteractionEvent>(name, localization, handler) { config, id ->
+) = createMessageElement<ActionRow, EntitySelectInteractionEvent>(name, handler) { config, id ->
     val select = EntitySelectMenu.create(id, targets.toList())
         .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder"))
         .setMinValues(min)

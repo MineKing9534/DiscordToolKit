@@ -75,14 +75,18 @@ class MessageMenu<M, L : LocalizationFile?>(
         val data = event.message.decodeState()
         val context = ComponentContext(info, StateData.decode(data), event)
 
-        val renderer = MessageMenuConfigImpl(MenuConfigPhase.COMPONENTS, context, info, localization, config)
-        renderer.config(localization)
+        val renderer = MessageMenuComponentFinder(name, context, info, localization, config)
 
-        renderer.activate() //Activate lazy values => Allow them to load in the handler
-        val element = renderer.components.flatMap { it.elements() }.firstOrNull { it.name == name } as ActionMessageElement<*, GenericComponentInteractionCreateEvent>? ?: error("Component $name not found")
+        val handler = try {
+            renderer.config(localization)
+            error("Component $name not found")
+        } catch (_: ComponentFinderResult) {
+            renderer.handler!!
+        }
 
         try {
-            element.handle(context)
+            renderer.activate() //Activate lazy values => Allow them to load in the handler
+            context.handler()
         } catch (_: RenderTermination) {
             return
         }
@@ -293,4 +297,29 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                 })
         }
     }
+}
+
+class MessageMenuComponentFinder<M, L : LocalizationFile?>(
+    val component: String,
+    state: StateContext<M>?,
+    menu: MenuInfo<M>,
+    localization: L,
+    config: LocalizedMessageMenuConfigurator<M, L>
+) : MessageMenuConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, state, menu, localization, config) {
+    var handler: ComponentHandler<*, *>? = null
+        private set
+
+    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
+        elements().forEach {
+            if (it.name == component) {
+                @Suppress("UNCHECKED_CAST")
+                this@MessageMenuComponentFinder.handler = it.handler as ComponentHandler<*, *>
+                throw ComponentFinderResult
+            }
+        }
+    }
+}
+
+private object ComponentFinderResult : RuntimeException() {
+    private fun readResolve(): Any = ComponentFinderResult
 }

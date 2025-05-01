@@ -1,7 +1,6 @@
 package examples
 
 import de.mineking.discord.commands.localizedMenuCommand
-import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.components.*
