@@ -22,7 +22,7 @@ import kotlin.reflect.KType
 fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities.Message) = editComponents(message.components.map {
     if (it is IDisableable) it.asDisabled() as MessageTopLevelComponent
     else it
-})
+}).useComponentsV2()
 
 @Suppress("UNCHECKED_CAST")
 fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>, force: Boolean = false) = config.components
