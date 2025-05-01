@@ -49,12 +49,12 @@ fun container(
 }
 
 fun section(
-    accessory: MessageElement<SectionAccessoryComponent>,
+    accessory: MessageElement<out SectionAccessoryComponent>,
     vararg components: MessageComponent<out SectionContentComponent>
 ) = section(accessory, components.toList())
 
 fun section(
-    accessory: MessageElement<SectionAccessoryComponent>,
+    accessory: MessageElement<out SectionAccessoryComponent>,
     components: List<MessageComponent<out SectionContentComponent>>
 ) = createLayout(components + accessory) { config, id ->
     Section.of(
@@ -68,6 +68,6 @@ fun thumbnail(file: FileUpload) = thumbnail { file }
 
 fun thumbnail(url: String) = createLayout { _, _ -> Thumbnail.fromUrl(url) }
 
-fun textDisplay(content: String, localization: LocalizationFile?) = createElement<TextDisplay>(content.take(100), localization) { _, _ ->
+fun textDisplay(content: String, localization: LocalizationFile? = null) = createElement<TextDisplay>(content.take(100), localization) { _, _ ->
     TextDisplay.create(content)
 }
