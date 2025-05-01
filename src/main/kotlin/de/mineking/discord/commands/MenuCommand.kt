@@ -85,20 +85,22 @@ fun menuCommand(
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     response: MenuCommandResponseType = MenuCommandResponseType.EPHEMERAL_REPLY,
     config: MenuCommandConfigurator
-) = localizedMenuCommand(name, menu, description, localization, defer, response, config)
+) = localizedMenuCommand(name, menu, description, localization, defer, useComponentsV2, response, config)
 
 inline fun <reified L : LocalizationFile> localizedMenuCommand(
     name: String,
     menu: String? = null,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     response: MenuCommandResponseType = MenuCommandResponseType.EPHEMERAL_REPLY,
     crossinline config: LocalizedMenuCommandConfigurator<L>
 ): SlashCommand = {
     val file = manager.localizationManager.read<L>()
-    localizedMenuCommand(name, menu, description, file, defer, response) { config(file) }(it)
+    localizedMenuCommand(name, menu, description, file, defer, useComponentsV2, response) { config(file) }(it)
 }
 
 fun <L : LocalizationFile?> localizedMenuCommand(
@@ -107,6 +109,7 @@ fun <L : LocalizationFile?> localizedMenuCommand(
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     localization: L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     response: MenuCommandResponseType = MenuCommandResponseType.EPHEMERAL_REPLY,
     config: LocalizedMenuCommandConfigurator<L>
 ): SlashCommand = { parent ->
@@ -119,7 +122,7 @@ fun <L : LocalizationFile?> localizedMenuCommand(
     builder.config(localization)
 
     @Suppress("UNCHECKED_CAST")
-    val menu = ui.registerLocalizedMenu(menuName, defer, localization, builder) { MenuCommandConfigImpl(manager, this).config(localization) }
+    val menu = ui.registerLocalizedMenu(menuName, defer, useComponentsV2, localization, builder) { MenuCommandConfigImpl(manager, this).config(localization) }
 
     slashCommand(name, description, localization) {
         builder.defaultMemberPermission?.let(this::defaultMemberPermission)

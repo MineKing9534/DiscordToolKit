@@ -1,0 +1,17 @@
+command.menu:
+  description: Opens a menu with components v2
+
+menu.menu:
+  modal:
+    label: Modal
+    title: Enter Text
+    inputs:
+      text:
+        label: Text
+        placeholder: Hello World!
+
+  text.content: 'Current Text: ${ text.let { if (it.isNotBlank()) "**$it**" else it } }'
+  count.content: 'Current Count: **${ count }**'
+
+  inc.label: Increment
+  dec.label: Decrement

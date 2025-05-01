@@ -1,4 +1,4 @@
-command:
+command.test:
   description: Öffnet ein menu
 
 menu.test:

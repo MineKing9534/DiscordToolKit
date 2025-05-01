@@ -78,32 +78,38 @@ interface MessageComponent<C : Component> : IComponent<C> {
 
 open class MessageElement<C : Component>(
     val name: String, val localization: LocalizationFile? = null,
-    val renderer: (MenuConfig<*, *>, String) -> C?
+    val renderer: (MenuConfig<*, *>, String) -> C
 ) : MessageComponent<C> {
     override fun elements() = listOf(this)
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator.nextId("${config.menuInfo.name}:$name:")).let { if (it != null) listOf(it) else emptyList() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("${config.menuInfo.name}:$name:")))
+
+    override fun transform(mapper: (() -> List<C>) -> List<C>) = MessageElement<C>(name, localization) { config, id -> mapper { listOf(renderer(config, id)) }.single() }
 
     override fun toString() = "MessageElement[$name]"
 }
 
 abstract class ActionMessageElement<C : Component, E : GenericComponentInteractionCreateEvent>(
     name: String, localization: LocalizationFile? = null,
-    renderer: (MenuConfig<*, *>, String) -> C?
+    renderer: (MenuConfig<*, *>, String) -> C
 ) : MessageElement<C>(name, localization, renderer) {
     abstract fun handle(context: ComponentContext<*, E>)
+
+    override fun transform(mapper: (() -> List<C>) -> List<C>) = object : ActionMessageElement<C, E>(name, localization, { config, id -> mapper { listOf(renderer(config, id)) }.single() }) {
+        override fun handle(context: ComponentContext<*, E>) = this@ActionMessageElement.handle(context)
+    }
 }
 
 fun <C : Component> createElement(
     name: String,
     localization: LocalizationFile?,
-    render: (MenuConfig<*, *>, String) -> C?
+    render: (MenuConfig<*, *>, String) -> C
 ) = MessageElement(name, localization, render)
 
 fun <C : Component, E : GenericComponentInteractionCreateEvent> createActionElement(
     name: String,
     localization: LocalizationFile?,
     handler: ComponentHandler<*, E> = {},
-    render: (MenuConfig<*, *>, String) -> C?
+    render: (MenuConfig<*, *>, String) -> C
 ) = object : ActionMessageElement<C, E>(name, localization, render) {
     override fun handle(context: ComponentContext<*, E>) = handler(context)
 }
@@ -112,5 +118,5 @@ fun <C : Component> createLayout(children: List<MessageComponent<*>> = emptyList
     override fun elements() = children.flatMap { it.elements() }
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator))
 
-    override fun toString() = "LayoutComponent[$children]"
+    override fun toString() = "LayoutComponent$children"
 }

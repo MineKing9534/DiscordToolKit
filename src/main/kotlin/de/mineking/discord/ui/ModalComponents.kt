@@ -49,10 +49,10 @@ interface ModalComponent<T> : IComponent<TextInput> {
 
 abstract class ModalElement<T>(
     val name: String, val localization: LocalizationFile? = null,
-    val renderer: (MenuConfig<*, *>, String) -> TextInput?
+    val renderer: (MenuConfig<*, *>, String) -> TextInput
 ) : ModalComponent<T> {
     override fun elements() = listOf(this)
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator.nextId("$name:")).let { if (it != null) listOf(it) else emptyList() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("$name:")))
 
     override fun toString() = "ModalElement[$name]"
 }
@@ -61,7 +61,7 @@ fun <T> createModalElement(
     name: String,
     localization: LocalizationFile?,
     handler: ModalContext<*>.() -> T,
-    render: (MenuConfig<*, *>, String) -> TextInput?
+    render: (MenuConfig<*, *>, String) -> TextInput
 ) = object : ModalElement<T>(name, localization, render) {
     override fun handle(context: ModalContext<*>) = handler(context)
 }

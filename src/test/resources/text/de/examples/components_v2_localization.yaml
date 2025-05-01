@@ -1,0 +1,17 @@
+command.menu:
+  description: Öffnet ein Menü mit Components v2
+
+menu.menu:
+  modal:
+    label: Modal
+    title: Text eingeben
+    inputs:
+      text:
+        label: Text
+        placeholder: Hallo Welt!
+
+  text.content: 'Aktueller Text: ${ text.let { if (it.isNotBlank()) "**$it**" else it } }'
+  count.content: 'Aktueller Zähler: **${ count }**'
+
+  inc.label: Erhöhen
+  dec.label: Verringern

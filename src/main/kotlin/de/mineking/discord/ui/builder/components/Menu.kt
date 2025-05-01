@@ -75,9 +75,10 @@ fun MessageMenuConfig<*, *>.menuButton(
     localization: LocalizationFile? = null,
     menuLocalization: LocalizationFile? = localization,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     detach: Boolean = false,
     config: MessageMenuConfig<*, *>.(back: BackReference) -> Unit
-) = localizedMenuButton(name, color, label, emoji, localization, menuLocalization, defer, detach) { _, back -> config(back) }
+) = localizedMenuButton(name, color, label, emoji, localization, menuLocalization, defer, useComponentsV2, detach) { _, back -> config(back) }
 
 inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuButton(
     name: String,
@@ -86,11 +87,12 @@ inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuB
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     detach: Boolean = false,
     noinline config: MessageMenuConfig<*, L>.(localization: L, back: BackReference) -> Unit
 ): ButtonElement {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
-    return localizedMenuButton(name, color, label, emoji, localization, file, defer, detach, config)
+    return localizedMenuButton(name, color, label, emoji, localization, file, defer, useComponentsV2, detach, config)
 }
 
 fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuButton(
@@ -102,12 +104,13 @@ fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuButton(
     @Suppress("UNCHECKED_CAST")
     menuLocalization: L = localization as L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     detach: Boolean = false,
     config: MessageMenuConfig<*, L>.(localization: L, back: BackReference) -> Unit
 ): ButtonElement {
     val currentState = if (detach) 0 else currentState()
 
-    val menu = localizedSubmenu(name, defer = defer, localization = menuLocalization, detach = detach) {
+    val menu = localizedSubmenu(name, defer, useComponentsV2, menuLocalization, detach) {
         config(it, BackReference(this@localizedMenuButton.menuInfo, currentState))
     }
 
@@ -231,9 +234,10 @@ fun MessageMenuConfig<*, *>.menuSelectOption(
     localization: LocalizationFile? = null,
     menuLocalization: LocalizationFile? = localization,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     detach: Boolean = false,
     config: MessageMenuConfig<*, *>.(back: BackReference) -> Unit
-) = localizedMenuSelectOption(name, label, description, default, emoji, localization, menuLocalization, defer, detach) { _, back -> config(back) }
+) = localizedMenuSelectOption(name, label, description, default, emoji, localization, menuLocalization, defer, useComponentsV2, detach) { _, back -> config(back) }
 
 inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuSelectOption(
     name: String,
@@ -244,10 +248,11 @@ inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuS
     localization: LocalizationFile? = null,
     detach: Boolean = false,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     noinline config: MessageMenuConfig<*, L>.(localization: L, back: BackReference) -> Unit
 ): SelectOption {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
-    return localizedMenuSelectOption(name, label, description, default, emoji, localization, file, defer, detach, config)
+    return localizedMenuSelectOption(name, label, description, default, emoji, localization, file, defer, useComponentsV2, detach, config)
 }
 
 fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuSelectOption(
@@ -260,12 +265,13 @@ fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuSelectOption(
     @Suppress("UNCHECKED_CAST")
     menuLocalization: L = localization as L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
+    useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     detach: Boolean = false,
     config: MessageMenuConfig<*, L>.(localization: L, back: BackReference) -> Unit
 ): SelectOption {
     val currentState = if (detach) 0 else currentState()
 
-    val menu = localizedSubmenu(name, defer = defer, localization = menuLocalization, detach = detach) {
+    val menu = localizedSubmenu(name, defer, useComponentsV2, menuLocalization, detach) {
         config(it, BackReference(this@localizedMenuSelectOption.menuInfo, currentState))
     }
 
