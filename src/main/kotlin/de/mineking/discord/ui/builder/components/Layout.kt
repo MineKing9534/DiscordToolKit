@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
 import net.dv8tion.jda.api.components.container.Container
 import net.dv8tion.jda.api.components.container.ContainerChildComponent
 import net.dv8tion.jda.api.components.filedisplay.FileDisplay
+import net.dv8tion.jda.api.components.mediagallery.MediaGallery
+import net.dv8tion.jda.api.components.mediagallery.MediaGalleryItem
 import net.dv8tion.jda.api.components.section.Section
 import net.dv8tion.jda.api.components.section.SectionAccessoryComponent
 import net.dv8tion.jda.api.components.section.SectionContentComponent
@@ -78,3 +80,6 @@ fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, local
 
 fun fileDisplay(file: () -> FileUpload) = createMessageComponent { _, _ -> FileDisplay.fromFile(file()) }
 fun fileDisplay(file: FileUpload) = fileDisplay { file }
+
+fun mediaGallery(vararg media: MediaGalleryItem) = mediaGallery(media.toList())
+fun mediaGallery(media: List<MediaGalleryItem>) = createMessageComponent { _, _ -> MediaGallery.of(media) }

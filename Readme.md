@@ -36,7 +36,7 @@ There are some examples available in `src/test/kotlin/examples` if you want to s
     * [Components](#components)
       * [Buttons](#buttons)
       * [Selects](#selects)
-      * [Layout](#layout)
+    * [Components V2](#components-v2)
     * [Submenus and Menu components](#submenus-and-menu-components)
     * [Pagination](#pagination)
     * [Text Builders](#text-builders)
@@ -502,7 +502,7 @@ The variable `DEFAULT_COMPONENTS_V2` also defaults to `MessageReference.isDefaul
 When a menu uses components v2, it cannot have regular contents like `content` or `embeds`. Calling functions to configure such fields on a menu with components v2 will throw exceptions when rendering the menu (because discord does not allow such messages).
 Instead, your message content should be displayed using text displays. You can create these using the `textDisplay` factory function. You can also use `localizedTextDisplay` to create a text display with localized content.
 
-All other components also have factory functions, like `container`, `section`, `thumbnail` and `fileDisplay`. They can be nested as supported by discord. Example:
+All other components also have factory functions, like `container`, `section`, `thumbnail`, `fileDisplay` and `mediaGallery`. They can be nested as supported by discord. Example:
 ```kt
 registerMenu("menu", useComponentsV2 = true) {
   var count by state(0)
