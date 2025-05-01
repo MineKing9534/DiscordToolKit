@@ -117,7 +117,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         .addCommands(commands.values
              .filter { it.parent == null }
              .map { it.build(this) }
-        ).apply { entryPoint?.build(this@CommandManager)?.let { setEntryPointCommand(it) } }
+        ).apply { entryPoint?.build(this@CommandManager)?.let { setPrimaryEntryPointCommand(it) } }
         .onSuccess { result -> result.forEach {
             getCommand(it.fullCommandName)!!.idLong = it.idLong
         } }

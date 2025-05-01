@@ -18,7 +18,7 @@ typealias ContextCommand<C> = Command<ContextCommandImpl<C>>
 typealias EntrypointCommand = Command<EntryPointCommandImpl>
 typealias SlashCommand = Command<SlashCommandImpl>
 
-sealed class CommandImpl<C : ICommandContext<*>, D>(
+sealed class CommandImpl<C : ICommandContext<*>, D : CommandData>(
     val name: String,
     val parent: CommandImpl<C, D>? = null,
     val localization: LocalizationFile? = null,
@@ -27,7 +27,7 @@ sealed class CommandImpl<C : ICommandContext<*>, D>(
     val defaultMemberPermissions: DefaultMemberPermissions?,
     val contexts: Set<InteractionContextType>,
     val types: Set<IntegrationType>
-) : IMentionable where D : IScopedCommandData, D : IRestrictedCommandData {
+) : IMentionable {
     internal var idLong: Long? = null
 
     val root: CommandImpl<*, *> = parent?.root ?: this
@@ -75,7 +75,7 @@ abstract class EntryPointCommandImpl(
     override fun build(manager: CommandManager): PrimaryEntryPointCommandData {
         val localization = manager.localization?.getCommandDescription(effectiveLocalization(), this)
 
-        val result = Commands.entryPoint(name, localization?.default ?: description)
+        val result = Commands.primaryEntryPoint(name, localization?.default ?: description)
         if (localization != null) result.setDescriptionLocalizations(localization.localization)
 
         result.setHandler(handler)
