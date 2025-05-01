@@ -55,7 +55,7 @@ abstract class ModalElement<T>(
     val renderer: (MenuConfig<*, *>, String) -> TextInput?
 ) : ModalComponent<T> {
     override fun elements() = listOf(this)
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator.nextId(name)).let { if (it != null) listOf(it) else emptyList() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator.nextId("${config.menuInfo.name}:$name:")).let { if (it != null) listOf(it) else emptyList() }
 
     override fun toString() = "ModalElement[$name]"
 }

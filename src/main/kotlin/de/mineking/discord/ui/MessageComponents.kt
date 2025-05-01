@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.components.Component
 import net.dv8tion.jda.api.components.attribute.IDisableable
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
+import java.awt.SystemColor.menu
 
 typealias ComponentHandler<M, E> = ComponentContext<M, E>.() -> Unit
 
@@ -83,7 +84,7 @@ open class MessageElement<C : Component>(
     val renderer: (MenuConfig<*, *>, String) -> C?
 ) : MessageComponent<C> {
     override fun elements() = listOf(this)
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator.nextId(name)).let { if (it != null) listOf(it) else emptyList() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator.nextId("${config.menuInfo.name}:$name:")).let { if (it != null) listOf(it) else emptyList() }
 
     override fun toString() = "MessageElement[$name]"
 }
