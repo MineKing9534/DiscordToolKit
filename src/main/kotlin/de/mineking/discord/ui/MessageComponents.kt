@@ -77,14 +77,22 @@ interface MessageComponent<C : Component> : IComponent<C> {
 class MessageElement<C : Component, E : GenericComponentInteractionCreateEvent>(
     val name: String,
     val handler: ComponentHandler<*, E>,
-    val renderer: (MenuConfig<*, *>, String) -> C
+    val renderer: (MenuConfig<*, *>, String) -> C?
 ) : MessageComponent<C> {
+    private fun render(config: MenuConfig<*, *>, id: String) = renderer(config, id)?.let { listOf(it) } ?: emptyList()
+
     override fun elements() = listOf(this)
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("${config.menuInfo.name}:$name:")))
-    override fun transform(mapper: (() -> List<C>) -> List<C>) = MessageElement(name, handler) { config, id -> mapper { listOf(renderer(config, id)) }.single() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = render(config, generator.nextId("${config.menuInfo.name}:$name:"))
+    override fun transform(mapper: (() -> List<C>) -> List<C>) = MessageElement(name, handler) { config, id -> mapper { render(config, id) }.firstOrNull() }
 
     override fun toString() = "MessageElement[$name]"
 }
+
+fun <C : Component, E : GenericComponentInteractionCreateEvent> createMessageElement(
+    name: String,
+    handler: ComponentHandler<*, E> = {},
+    renderer: (MenuConfig<*, *>, String) -> C?
+) = MessageElement<C, E>(name, handler, renderer)
 
 fun <C : Component> createLayoutComponent(
     vararg children: MessageComponent<*>,
@@ -103,9 +111,3 @@ fun <C : Component> createLayoutComponent(
 fun <C : Component> createMessageComponent(
     renderer: (MenuConfig<*, *>, String) -> C
 ) = createLayoutComponent { config, id -> renderer(config, id.nextId("::")) }
-
-fun <C : Component, E : GenericComponentInteractionCreateEvent> createMessageElement(
-    name: String,
-    handler: ComponentHandler<*, E> = {},
-    renderer: (MenuConfig<*, *>, String) -> C
-) = MessageElement<C, E>(name, handler, renderer)
