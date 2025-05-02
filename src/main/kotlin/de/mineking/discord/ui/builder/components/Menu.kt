@@ -6,6 +6,7 @@ import de.mineking.discord.localization.read
 import de.mineking.discord.ui.*
 import net.dv8tion.jda.api.components.button.Button
 import net.dv8tion.jda.api.entities.emoji.Emoji
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.interactions.modals.ModalInteraction
 
 class BackReference(val menu: MenuInfo<*>, val stateCount: Int) {
@@ -91,7 +92,7 @@ inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuB
     useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     detach: Boolean = false,
     noinline config: MessageMenuConfig<*, L>.(localization: L, back: BackReference) -> Unit
-): MessageComponent<Button> {
+): MessageElement<Button, ButtonInteractionEvent> {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
     return localizedMenuButton(name, color, label, emoji, localization, file, defer, useComponentsV2, detach, config)
 }
@@ -108,7 +109,7 @@ fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuButton(
     useComponentsV2: Boolean = DEFAULT_COMPONENTS_V2,
     detach: Boolean = false,
     config: MessageMenuConfig<*, L>.(localization: L, back: BackReference) -> Unit
-): MessageComponent<Button> {
+): MessageElement<Button, ButtonInteractionEvent> {
     val currentState = if (detach) 0 else currentState()
 
     val menu = localizedSubmenu(name, defer, useComponentsV2, menuLocalization, detach) {
@@ -159,7 +160,7 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
     detach: Boolean = false,
     component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
-): MessageComponent<Button> {
+): MessageElement<Button, ButtonInteractionEvent> {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
     return localizedModalButton(name, color, label, emoji, title, localization, file, defer, detach, component, handler)
 }
@@ -177,7 +178,7 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     detach: Boolean = false,
     component: ModalComponent<T>,
     noinline handler: ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
-): MessageComponent<Button> {
+): MessageElement<Button, ButtonInteractionEvent> {
     val currentState = if (detach) 0 else currentState()
     val modal = createModal(name, title, modalLocalization, defer, detach, component, handler)
 

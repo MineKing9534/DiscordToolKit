@@ -108,4 +108,4 @@ fun <C : Component, E : GenericComponentInteractionCreateEvent> createMessageEle
     name: String,
     handler: ComponentHandler<*, E> = {},
     renderer: (MenuConfig<*, *>, String) -> C
-): MessageComponent<C> = MessageElement<C, E>(name, handler, renderer)
+) = MessageElement<C, E>(name, handler, renderer)
