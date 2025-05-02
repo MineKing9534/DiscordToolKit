@@ -110,4 +110,4 @@ fun <C : Component> createLayoutComponent(
 
 fun <C : Component> createMessageComponent(
     renderer: (MenuConfig<*, *>, String) -> C
-) = createLayoutComponent { config, id -> renderer(config, id.nextId("::")) }
+) = createLayoutComponent { config, id -> renderer(config, "::") }
