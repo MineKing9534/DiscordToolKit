@@ -3,6 +3,8 @@ package de.mineking.discord.ui.builder.components
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
+import de.mineking.discord.ui.builder.TextElementBuilder
+import de.mineking.discord.ui.builder.text
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
@@ -106,7 +108,9 @@ fun thumbnail(file: FileUpload) = thumbnail { file }
 
 fun thumbnail(url: String) = createMessageComponent { _, _ -> Thumbnail.fromUrl(url) }
 
-fun textDisplay(content: String) = createMessageComponent { _, _ -> TextDisplay.create(content) }
+fun textDisplay(content: () -> String) = createMessageComponent { _, _ -> TextDisplay.create(content()) }
+fun textDisplay(content: String) = textDisplay { content }
+fun buildTextDisplay(content: TextElementBuilder) = textDisplay { content.text() }
 
 fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageComponent { config, _ ->
     TextDisplay.create(config.readLocalizedString(localization, name, path, "content") ?: ZERO_WIDTH_SPACE)
