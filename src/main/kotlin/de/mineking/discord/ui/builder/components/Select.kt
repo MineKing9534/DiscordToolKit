@@ -35,7 +35,7 @@ class SelectOption(
 
     fun build(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
         JDASelectOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
-            .withDescription(config.readLocalizedString(localization, value, description, "description", postfix = "options.$value"))
+            .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", postfix = "options.$value"))
             .withEmoji(emoji)
             .withDefault(default)
             .withValue(value)
@@ -69,7 +69,7 @@ fun stringSelect(
         .setMaxValues(max)
         .addOptions(options.filter { it.visible }.map { it.build(name, localization, config) })
 
-    if (options.isEmpty()) select.addOption("---", "---").setDisabled(true)
+    if (options.isEmpty()) select.addOption("---", "---").isDisabled = true
 
     ActionRow.of(select.build())
 }
