@@ -89,14 +89,14 @@ class MessageElement<C : Component, E : GenericComponentInteractionCreateEvent>(
 fun <C : Component> createLayoutComponent(
     vararg children: MessageComponent<*>,
     renderer: (MenuConfig<*, *>, IdGenerator) -> C
-) = createLayoutComponent(children.toList(), renderer)
+) = createLayoutComponent(children.toList()) { config, id -> listOf(renderer(config, id)) }
 
 fun <C : Component> createLayoutComponent(
     children: List<MessageComponent<*>>,
-    renderer: (MenuConfig<*, *>, IdGenerator) -> C
+    renderer: (MenuConfig<*, *>, IdGenerator) -> List<C>
 ) = object : MessageComponent<C> {
     override fun elements() = children.flatMap { it.elements() }
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator))
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator)
     override fun toString() = "MessageComponent"
 }
 

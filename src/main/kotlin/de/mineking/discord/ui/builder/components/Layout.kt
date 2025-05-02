@@ -31,7 +31,37 @@ fun label(
 
 fun actionRow(vararg components: MessageComponent<out ActionRowChildComponent>) = actionRow(components.toList())
 fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent(components) { config, id ->
-    ActionRow.of(components.flatMap { it.render(config, id) })
+    listOf(
+        ActionRow.of(components.flatMap { it.render(config, id) })
+    )
+}
+
+private const val MAX_PER_ROW = 5
+
+fun actionRows(vararg component: MessageComponent<out ActionRowChildComponent>) = actionRows(component.toList())
+fun actionRows(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent<ActionRow>(components) { config, id ->
+    val temp = mutableListOf<ActionRowChildComponent>()
+    var currentSize = 0
+
+    val rows = mutableListOf<ActionRow>()
+
+    for (component in components.flatMap { it.render(config, id) }) {
+        val size = MAX_PER_ROW + 1 - ActionRow.getMaxAllowed(component.type)
+
+        if (currentSize + size > MAX_PER_ROW && temp.isNotEmpty()) {
+            rows += ActionRow.of(temp)
+
+            temp.clear()
+            currentSize = 0
+        }
+
+        temp += component
+        currentSize += size
+    }
+
+    if (temp.isNotEmpty()) rows += ActionRow.of(temp)
+
+    rows
 }
 
 fun separator(invisible: Boolean = false, spacing: Separator.Spacing = Separator.Spacing.SMALL) = createMessageComponent { _, _ -> Separator.create(!invisible, spacing) }
@@ -47,9 +77,11 @@ fun container(
     spoiler: Boolean = false,
     color: Color? = null
 ) = createLayoutComponent(components) { config, id ->
-    Container.of(components.flatMap { it.render(config, id) })
-        .withSpoiler(spoiler)
-        .withAccentColor(color)
+    listOf(
+        Container.of(components.flatMap { it.render(config, id) })
+            .withSpoiler(spoiler)
+            .withAccentColor(color)
+    )
 }
 
 fun section(
@@ -61,9 +93,11 @@ fun section(
     accessory: MessageComponent<out SectionAccessoryComponent>,
     components: List<MessageComponent<out SectionContentComponent>>
 ) = createLayoutComponent(components + accessory) { config, id ->
-    Section.of(
-        accessory.render(config, id).single(),
-        components.flatMap { it.render(config, id) }
+    listOf(
+        Section.of(
+            accessory.render(config, id).single(),
+            components.flatMap { it.render(config, id) }
+        )
     )
 }
 
