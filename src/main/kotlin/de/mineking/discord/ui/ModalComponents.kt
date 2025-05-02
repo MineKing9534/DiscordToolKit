@@ -55,6 +55,7 @@ fun <T> createModalElement(
     override fun toString() = "ModalElement[$name]"
 }
 
+@MenuMarker
 class ModalComponentBuilder<T>(override val phase: MenuConfigPhase) : IMenuContext {
     internal val components = mutableListOf<ModalComponent<*>>()
     internal var producer: (ModalContext<*>.() -> T)? = null
@@ -88,4 +89,13 @@ fun <T> createModalArrayComponent(vararg inputs: ModalComponent<T>) = createModa
 inline fun <reified T : Any> createModalComponentFor(vararg inputs: ModalComponent<*>) = createModalComponent {
     val values = inputs.map { +it }
     produce { T::class.primaryConstructor!!.call(*values.map { it() }.toTypedArray()) }
+}
+
+private data class MenuContext(override val phase: MenuConfigPhase) : IMenuContext
+fun <T> createLazyModalComponent(component: IMenuContext.() -> ModalComponent<T>) = object : ModalComponent<T> {
+    val renderComponent by lazy { MenuContext(MenuConfigPhase.RENDER).component() }
+    val handleComponent by lazy { MenuContext(MenuConfigPhase.COMPONENTS).component() }
+
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderComponent.render(config, generator)
+    override fun handle(context: ModalContext<*>) = handleComponent.handle(context)
 }
