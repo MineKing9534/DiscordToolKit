@@ -132,9 +132,6 @@ fun MenuConfig<out GenericInteractionCreateEvent, *>.event(): Parameter<GenericI
 
 enum class MenuConfigPhase { BUILD, COMPONENTS, RENDER }
 
-//TODO
-class MenuContext(override val phase: MenuConfigPhase) : IMenuContext
-
 interface IMenuContext {
     val phase: MenuConfigPhase
 
