@@ -4,7 +4,7 @@ import de.mineking.discord.ui.MessageComponent
 import de.mineking.discord.ui.State
 import de.mineking.discord.ui.createMessageComponent
 import de.mineking.discord.ui.disabled
-import net.dv8tion.jda.api.components.button.Button
+import net.dv8tion.jda.api.components.buttons.Button
 
 fun counter(
     name: String,

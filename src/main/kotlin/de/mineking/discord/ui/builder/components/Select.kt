@@ -5,8 +5,8 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.actionrow.ActionRow
-import net.dv8tion.jda.api.components.selects.EntitySelectMenu
-import net.dv8tion.jda.api.components.selects.StringSelectMenu
+import net.dv8tion.jda.api.components.selections.EntitySelectMenu
+import net.dv8tion.jda.api.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
@@ -16,7 +16,7 @@ import java.util.*
 typealias StringSelectHandler = ComponentHandler<*, StringSelectInteractionEvent>
 typealias EntitySelectHandler = ComponentHandler<*, EntitySelectInteractionEvent>
 
-typealias JDASelectOption = net.dv8tion.jda.api.components.selects.SelectOption
+typealias JDASelectOption = net.dv8tion.jda.api.components.selections.SelectOption
 
 class SelectOption(
     val value: String,
@@ -34,7 +34,7 @@ class SelectOption(
     fun hide(hide: Boolean) = show(!hide)
 
     fun build(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
-        JDASelectOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "placeholder", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
+        JDASelectOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
             .withDescription(config.readLocalizedString(localization, value, description, "description", postfix = "options.$value"))
             .withEmoji(emoji)
             .withDefault(default)

@@ -2,7 +2,7 @@ package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.components.button.Button
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.entities.channel.Channel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
