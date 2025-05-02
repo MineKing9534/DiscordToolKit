@@ -85,7 +85,7 @@ fun <T> createModalArrayComponent(vararg inputs: ModalComponent<T>) = createModa
     produce { values.map { it() } }
 }
 
-inline fun <reified T : Any> createModalComponentFor(vararg inputs: ModalComponent<T>) = createModalComponent {
+inline fun <reified T : Any> createModalComponentFor(vararg inputs: ModalComponent<*>) = createModalComponent {
     val values = inputs.map { +it }
     produce { T::class.primaryConstructor!!.call(*values.map { it() }.toTypedArray()) }
 }
