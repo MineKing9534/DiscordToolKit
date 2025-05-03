@@ -113,7 +113,7 @@ fun textDisplay(content: String) = textDisplay { content }
 fun buildTextDisplay(content: TextElementBuilder) = textDisplay { content.text() }
 
 fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageComponent { config, _ ->
-    TextDisplay.create(config.readLocalizedString(localization, name, path, "content") ?: ZERO_WIDTH_SPACE)
+    TextDisplay.create(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
 }
 
 fun fileDisplay(file: () -> FileUpload) = createMessageComponent { _, _ -> FileDisplay.fromFile(file()) }
