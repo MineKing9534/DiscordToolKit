@@ -134,7 +134,7 @@ fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral
 
 typealias JDAMessage = net.dv8tion.jda.api.entities.Message
 
-fun JDAMessage.decodeState() = componentTree.findAll(ActionComponent::class.java).mapNotNull { it.customId }.joinToString("") { it.split(":", limit = 3)[2] }
+fun JDAMessage.decodeState() = componentTree.findAll(ActionComponent::class.java).mapNotNull { it.customId }.decodeState(3)
 fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
     val context = TransferContext(menu.info, StateData.decode(decodeState()), event, this)
     return editMessage(menu.render(context))
@@ -151,6 +151,7 @@ class Lazy<T>(var active: Boolean = false, val default: T, provider: () -> T) {
 }
 
 interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessage {
+    fun <C : MessageComponent<*>> registerParameterized(component: C): C
     operator fun MessageComponent<out MessageTopLevelComponent>.unaryPlus()
 
     fun <T> lazy(default: T, provider: () -> T): Lazy<T>
@@ -201,6 +202,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
     internal val components = mutableListOf<MessageComponent<out MessageTopLevelComponent>>()
 
+    override fun <C : MessageComponent<*>> registerParameterized(component: C) = component
     override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
         components += this
     }
@@ -309,15 +311,16 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
     var handler: ComponentHandler<*, *>? = null
         private set
 
-    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
-        elements().forEach {
-            if (it.name == component) {
-                @Suppress("UNCHECKED_CAST")
-                this@MessageMenuComponentFinder.handler = it.handler as ComponentHandler<*, *>
-                throw ComponentFinderResult
-            }
+    private fun findHandler(component: MessageComponent<*>) = component.elements().forEach {
+        if (it.name == this.component) {
+            @Suppress("UNCHECKED_CAST")
+            this@MessageMenuComponentFinder.handler = it.handler as ComponentHandler<*, *>
+            throw ComponentFinderResult
         }
     }
+
+    override fun <C : MessageComponent<*>> registerParameterized(component: C) = component.also { findHandler(component) }
+    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() = findHandler(this)
 }
 
 private object ComponentFinderResult : RuntimeException() {

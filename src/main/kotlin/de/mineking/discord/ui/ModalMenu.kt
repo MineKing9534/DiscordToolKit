@@ -40,7 +40,7 @@ class ModalMenu<M, L : LocalizationFile?>(
     override fun handle(event: ModalInteractionEvent) {
         if (defer == DeferMode.ALWAYS) event.deferEdit().queue()
 
-        val data = (listOf(event.modalId) + event.values.map { it.customId }).joinToString("") { it.split(":", limit = 2)[1] }
+        val data = (listOf(event.modalId) + event.values.map { it.customId }).decodeState(2)
         val context = ModalContext(info, StateData.decode(data), event)
 
         val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, context, this.info)

@@ -27,10 +27,10 @@ class ModalContext<M>(menu: MenuInfo<M>, stateData: StateData, event: ModalInter
 interface ModalComponent<T> : IComponent<TextInput> {
     fun handle(context: ModalContext<*>): T
 
-    override fun transform(mapper: (() -> List<TextInput>) -> List<TextInput>) = object : ModalComponent<T> {
+    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<TextInput>) -> List<TextInput>) = object : ModalComponent<T> {
         override fun handle(context: ModalContext<*>) = this@ModalComponent.handle(context)
 
-        override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper { this@ModalComponent.render(config, generator) }
+        override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper(generator) { this@ModalComponent.render(config, it) }
 
         override fun toString() = this@ModalComponent.toString()
     }

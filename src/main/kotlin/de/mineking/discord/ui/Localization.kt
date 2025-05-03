@@ -64,7 +64,7 @@ class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
                 file.register(key, config.args.mapValues { it.value.second }, typeOf<String>())
                 file.readString(key, locale, config.args.mapValues { it.value.first })
             }
-            !base.isDefault() -> base.toString()
+            base != null && !base.isDefault() -> base.toString()
             else -> null
         }
     }

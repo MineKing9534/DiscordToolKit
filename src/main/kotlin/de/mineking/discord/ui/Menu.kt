@@ -80,10 +80,11 @@ sealed class Menu<M, E : GenericInteractionCreateEvent, L : LocalizationFile?>(
 
 class IdGenerator(private val state: String) {
     private var pos = 0
+    var postfix = ""
 
     fun nextId(base: String): String {
-        val length = clamp(Button.ID_MAX_LENGTH - base.length, 0, state.length - pos)
-        val result = base + state.substring(pos, pos + length)
+        val length = clamp(Button.ID_MAX_LENGTH - base.length - postfix.length - 2, 0, state.length - pos)
+        val result = base + String.format("%02d", length) + state.substring(pos, pos + length) + postfix
 
         pos += length
         return result

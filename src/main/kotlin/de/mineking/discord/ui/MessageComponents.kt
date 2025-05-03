@@ -4,6 +4,7 @@ import de.mineking.discord.ui.builder.components.BackReference
 import net.dv8tion.jda.api.components.Component
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
+import kotlin.reflect.typeOf
 
 typealias ComponentHandler<M, E> = ComponentContext<M, E>.() -> Unit
 
@@ -67,9 +68,9 @@ fun <C : Component> createMessageComponent(components: List<MessageComponent<C>>
 
 interface MessageComponent<C : Component> : IComponent<C> {
     fun elements(): List<MessageElement<*, *>>
-    override fun transform(mapper: (() -> List<C>) -> List<C>) = object : MessageComponent<C> {
+    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>) = object : MessageComponent<C> {
         override fun elements() = this@MessageComponent.elements()
-        override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper { this@MessageComponent.render(config, generator) }
+        override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper(generator) { this@MessageComponent.render(config, it) }
         override fun toString() = this@MessageComponent.toString()
     }
 }
@@ -77,13 +78,11 @@ interface MessageComponent<C : Component> : IComponent<C> {
 class MessageElement<C : Component, E : GenericComponentInteractionCreateEvent>(
     val name: String,
     val handler: ComponentHandler<*, E>,
-    val renderer: (MenuConfig<*, *>, String) -> C?
+    val renderer: (MenuConfig<*, *>, IdGenerator) -> C?
 ) : MessageComponent<C> {
-    private fun render(config: MenuConfig<*, *>, id: String) = renderer(config, id)?.let { listOf(it) } ?: emptyList()
-
     override fun elements() = listOf(this)
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = render(config, generator.nextId("${config.menuInfo.name}:$name:"))
-    override fun transform(mapper: (() -> List<C>) -> List<C>) = MessageElement(name, handler) { config, id -> mapper { render(config, id) }.firstOrNull() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator)?.let { listOf(it) } ?: emptyList()
+    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>) = MessageElement(name, handler) { config, id -> mapper(id) { render(config, it) }.firstOrNull() }
 
     override fun toString() = "MessageElement[$name]"
 }
@@ -92,7 +91,7 @@ fun <C : Component, E : GenericComponentInteractionCreateEvent> createMessageEle
     name: String,
     handler: ComponentHandler<*, E> = {},
     renderer: (MenuConfig<*, *>, String) -> C?
-) = MessageElement<C, E>(name, handler, renderer)
+) = MessageElement(name, handler) { config, id -> renderer(config, id.nextId("${config.menuInfo.name}:$name:")) }
 
 fun <C : Component> createLayoutComponent(
     vararg children: MessageComponent<*>,
@@ -111,3 +110,19 @@ fun <C : Component> createLayoutComponent(
 fun <C : Component> createMessageComponent(
     renderer: (MenuConfig<*, *>, String) -> C
 ) = createLayoutComponent { config, id -> renderer(config, "::") }
+
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T, C : Component, W : IComponent<C>> W.withParameter(parameter: T) = transform { id, render ->
+    require(id.postfix.isEmpty())
+
+    id.postfix = StateData.encodeSingle(typeOf<T>(), parameter)
+    render(id).also { id.postfix = "" }
+} as W
+
+inline fun <reified T> ComponentContext<*, *>.parameter(): T {
+    val base = event.componentId.split(":", limit = 3)[2]
+    val length = base.take(2).toInt()
+    val value = base.drop(2 + length)
+
+    return StateData.decodeSingle(typeOf<T>(), value) as T
+}

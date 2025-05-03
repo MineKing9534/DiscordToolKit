@@ -174,3 +174,9 @@ interface StateConfig {
 
 inline fun <reified T> StateConfig.state(initial: T, noinline handler: StateHandler<T>? = null) = state(typeOf<T>(), initial, handler)
 inline fun <reified T> StateConfig.state(noinline handler: StateHandler<T?>? = null) = state(null, handler)
+
+internal fun List<String>.decodeState(parts: Int) = joinToString("") {
+    val original = it.split(":", limit = parts)[parts - 1]
+    val length = original.take(2).toInt()
+    original.drop(2).take(length)
+}
