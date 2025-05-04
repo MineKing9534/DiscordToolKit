@@ -136,8 +136,8 @@ enum class MenuConfigPhase { BUILD, COMPONENTS, RENDER }
 interface IMenuContext {
     val phase: MenuConfigPhase
 
-    fun <T> render(default: T, handler: () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
-    fun <T> render(handler: () -> T) = render(null, handler)
+    fun <T> renderValue(default: T, handler: () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
+    fun <T> renderValue(handler: () -> T) = renderValue(null, handler)
 }
 
 @MenuMarker

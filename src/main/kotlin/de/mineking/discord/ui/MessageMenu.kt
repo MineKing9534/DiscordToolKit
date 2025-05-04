@@ -154,6 +154,8 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
     fun <C : MessageComponent<*>> register(component: C): C
     operator fun MessageComponent<out MessageTopLevelComponent>.unaryPlus()
 
+    fun render(handler: () -> Unit)
+
     fun <T> lazy(default: T, provider: () -> T): Lazy<T>
     fun <T> lazy(provider: () -> T) = lazy(null, provider)
 
@@ -207,6 +209,10 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
         components += this
     }
 
+    override fun render(handler: () -> Unit) {
+        if (phase == MenuConfigPhase.RENDER) handler()
+    }
+
     override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
         @Suppress("UNCHECKED_CAST")
         return setup {
@@ -219,8 +225,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                         val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                             var currentSetup = 0
 
-                            override fun <T> render(default: T, handler: () -> T) = default
-
+                            override fun render(handler: () -> Unit) {}
                             override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedMenu.lazy(default, provider)
 
                             override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
@@ -266,7 +271,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                         val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                             var currentSetup = 0
 
-                            override fun <T> render(default: T, handler: () -> T) = default
+                            override fun render(handler: () -> Unit) {}
                             override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedModal.lazy(default, provider)
 
                             override fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
