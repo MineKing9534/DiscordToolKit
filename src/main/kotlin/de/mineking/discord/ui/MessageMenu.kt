@@ -151,7 +151,7 @@ class Lazy<T>(var active: Boolean = false, val default: T, provider: () -> T) {
 }
 
 interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessage {
-    fun <C : MessageComponent<*>> registerParameterized(component: C): C
+    fun <C : MessageComponent<*>> register(component: C): C
     operator fun MessageComponent<out MessageTopLevelComponent>.unaryPlus()
 
     fun <T> lazy(default: T, provider: () -> T): Lazy<T>
@@ -202,7 +202,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
     internal val components = mutableListOf<MessageComponent<out MessageTopLevelComponent>>()
 
-    override fun <C : MessageComponent<*>> registerParameterized(component: C) = component
+    override fun <C : MessageComponent<*>> register(component: C) = component
     override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
         components += this
     }
@@ -319,7 +319,7 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
         }
     }
 
-    override fun <C : MessageComponent<*>> registerParameterized(component: C) = component.also { findHandler(component) }
+    override fun <C : MessageComponent<*>> register(component: C) = component.also { findHandler(component) }
     override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() = findHandler(this)
 }
 
