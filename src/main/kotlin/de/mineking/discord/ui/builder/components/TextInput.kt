@@ -17,7 +17,7 @@ fun <T> typedTextInput(
     maxLength: Int = TextInput.MAX_VALUE_LENGTH,
     value: T? = null,
     localization: LocalizationFile? = null,
-    formatter: (value: T) -> String = { it.toString() },
+    formatter: (value: T) -> String? = { it?.toString() },
     parser: ParseContext<*>.(value: String) -> T
 ) = createModalElement(name, {
     val temp = event.values.first { it.customId.split(":", limit = 2)[0] == name }.asString
@@ -65,24 +65,24 @@ fun intInput(
     label: CharSequence = DEFAULT_LABEL,
     placeholder: CharSequence? = DEFAULT_LABEL,
     required: Boolean = true,
-    min: Int = 0,
-    max: Int = TextInput.MAX_VALUE_LENGTH,
+    min: Int? = null,
+    max: Int? = null,
     value: Int? = null,
     localization: LocalizationFile? = null,
     handler: ResultHandler<IntParseResult> = {}
-) = typedTextInput(name, label, placeholder, TextInputStyle.SHORT, required, value = value, localization = localization) {
+) = typedTextInput(name, label, placeholder, TextInputStyle.SHORT, required, value = value?.let { IntParseResult(it, false) }, localization = localization, formatter = { it.value?.toString() }) {
     val result = try {
-        IntParseResult(it.toInt(), false)
+        IntParseResult(it.takeIf { it.isNotBlank() }?.toInt(), false)
     } catch (_: NumberFormatException) {
         IntParseResult(null, true)
     }
 
     if (result.value != null) {
-        check { result.value >= min && result.value <= max }
+        check { (min == null || result.value >= min) && (max == null || result.value <= max) }
     }
 
     handler(this, result)
-    value
+    result
 }
 
 fun statefulTextInput(
@@ -104,17 +104,17 @@ fun statefulTextInput(
     }
 }
 
-fun StateContext<*>.statefulIntInput(
+fun statefulIntInput(
     name: String,
     label: CharSequence = DEFAULT_LABEL,
     placeholder: CharSequence? = DEFAULT_LABEL,
     required: Boolean = true,
-    min: Int = 0,
-    max: Int = TextInput.MAX_VALUE_LENGTH,
+    min: Int? = null,
+    max: Int? = null,
     localization: LocalizationFile? = null,
     ref: State<Int>,
     handler: ResultHandler<IntParseResult> = {}
-): ModalComponent<Int?> {
+): ModalComponent<IntParseResult> {
     var value by ref
     return intInput(name, label, placeholder, required, min, max, value, localization) {
         if (it.value != null) value = it.value

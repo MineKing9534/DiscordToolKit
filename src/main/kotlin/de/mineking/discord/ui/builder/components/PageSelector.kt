@@ -29,7 +29,7 @@ fun MessageMenuConfig<*, *>.pageSelector(
         if (modal)
             modalButton(
                 name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max", title = title, localization = localization,
-                component = intInput("page", label = label, localization = localization, value = page, placeholder = "$page").map { it ?: terminateRender() }
+                component = intInput("page", label = label, localization = localization, value = page, placeholder = "$page").unbox().map { it ?: terminateRender() }
             ) { page = clamp(it, 1, max) }
         else label(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max"),
         button("$name-next", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("➡\uFE0F")) { page++ }.disabled(page >= max),
