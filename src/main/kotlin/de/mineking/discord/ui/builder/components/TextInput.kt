@@ -23,8 +23,8 @@ fun <T> typedTextInput(
     val temp = event.values.first { it.customId.split(":", limit = 2)[0] == name }.asString
     ParseContext(this).parser(temp)
 }) { config, id ->
-    TextInput.create(id, config.readLocalizedString(localization, name, label, "label", prefix = "inputs") ?: ZERO_WIDTH_SPACE, style)
-        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = "inputs"))
+    TextInput.create(id, config.readLocalizedString(localization, name, label, "label", prefix = "inputs")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE, style)
+        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = "inputs")?.takeIf { it.isNotBlank() })
         .setValue(value?.let(formatter)?.takeIf { it.isNotBlank() })
         .setMinLength(minLength)
         .setMaxLength(maxLength)
