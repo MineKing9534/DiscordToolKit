@@ -22,7 +22,7 @@ interface MenuCommandConfig<L : LocalizationFile?> : MessageMenuConfig<SlashComm
         default: T = if (this is RichOption && this.default != null) this.default!! else error("You need to provide a default value or use createUninitializedState"),
         handler: StateHandler<T>? = null
     ): State<T> {
-        val (_, setValue, state) = state<T>(type, default, handler)
+        val (_, setValue, state) = state(type, default, handler)
         initialize { setValue(this@createState(it)) }
 
         return state
@@ -48,7 +48,7 @@ class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: Command
         options += data
         return object : RichOption<OptionalOption<T>> {
             override val data: OptionInfo = data
-            override fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
+            override suspend fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
         }
     }
 

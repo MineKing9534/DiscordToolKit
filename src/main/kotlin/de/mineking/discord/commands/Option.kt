@@ -86,7 +86,7 @@ data class CommandOptions(val data: Map<String, Any?>) : OptionContext {
     override fun <T> parseOption(name: String) = data[name] as T
 }
 
-typealias Option<T> = SlashCommandContext.() -> T
+typealias Option<T> = suspend SlashCommandContext.() -> T
 
 interface RichOption<T> : Option<T> {
     val data: OptionInfo
@@ -129,26 +129,27 @@ class OptionalOption<out T>(private val value: T?, private val present: Boolean)
     fun orNull(): T? = if (present) value else null
 
     fun get(): T = if (present) value as T else error("")
-    fun <U> map(mapper: (value: T) -> U): OptionalOption<U> = if (present) OptionalOption(mapper(value as T), true) else EMPTY
-    fun filter(filter: (value: T) -> Boolean): OptionalOption<T> = if (present && filter(value as T)) OptionalOption(value, true) else EMPTY
+
+    inline fun <U> map(mapper: (value: T) -> U): OptionalOption<U> = if (isPresent()) OptionalOption(mapper(get()), true) else EMPTY
+    inline fun filter(filter: (value: T) -> Boolean): OptionalOption<T> = if (isPresent() && filter(get())) OptionalOption(get(), true) else EMPTY
 }
 
 fun <T> OptionalOption<T>.orElse(other: T) = if (isPresent()) get() else other
 fun <T> OptionalOption<T>.or(other: OptionalOption<T>) = if (isPresent()) this else other
 
-inline fun <T, reified U> Option<T>.map(noinline mapper: SlashCommandContext.(value: T) -> U): Option<U> = map(typeOf<U>(), mapper)
-fun <T, U> Option<T>.map(type: KType?, mapper: SlashCommandContext.(value: T) -> U): Option<U> = if (this is RichOption<*>) object : RichOption<U> {
+inline fun <T, reified U> Option<T>.map(noinline mapper: suspend SlashCommandContext.(value: T) -> U): Option<U> = map(typeOf<U>(), mapper)
+fun <T, U> Option<T>.map(type: KType?, mapper: suspend SlashCommandContext.(value: T) -> U): Option<U> = if (this is RichOption<*>) object : RichOption<U> {
     override val data: OptionInfo = this@map.data
     override val type: KType = type!!
 
     @Suppress("UNCHECKED_CAST")
     override val default: U? = if (type == this@map.type) this@map.default as U? else null
 
-    override fun invoke(context: SlashCommandContext): U = context.mapper(this@map(context))
+    override suspend fun invoke(context: SlashCommandContext): U = context.mapper(this@map(context))
 } else { { mapper(this@map()) } }
 
-fun <T, U> Option<OptionalOption<T>>.mapValue(mapper: SlashCommandContext.(value: T) -> U): Option<OptionalOption<U>> = map { it.map { mapper(it) } }
-fun <T> Option<OptionalOption<T>>.filterValue(filter: SlashCommandContext.(value: T) -> Boolean): Option<OptionalOption<T>> = map { it.filter { filter(it) } }
+fun <T, U> Option<OptionalOption<T>>.mapValue(mapper: suspend SlashCommandContext.(value: T) -> U): Option<OptionalOption<U>> = map { it.map { mapper(it) } }
+fun <T> Option<OptionalOption<T>>.filterValue(filter: suspend SlashCommandContext.(value: T) -> Boolean): Option<OptionalOption<T>> = map { it.filter { filter(it) } }
 
 fun <T> Option<OptionalOption<T>>.get(): Option<T> = map(if (this is RichOption) type else null) { it.get() }
 fun <T> Option<OptionalOption<T>>.orNull(): Option<T?> = map(if (this is RichOption) type.withNullability(true) else null) { it.orNull() }
@@ -165,7 +166,7 @@ fun <T> Option<OptionalOption<T>>.orElse(type: KType?, value: T): Option<T> = if
 
     override val default: T = value
 
-    override fun invoke(context: SlashCommandContext): T = this@orElse(context).orElse(value)
+    override suspend fun invoke(context: SlashCommandContext): T = this@orElse(context).orElse(value)
 } else { { this@orElse().orElse(value) } }
 
 @Suppress("UNCHECKED_CAST")
@@ -205,7 +206,7 @@ interface OptionConfig {
         choices: List<Choice> = emptyList(),
         configurator: OptionConfigurator = {},
         autocomplete: AutocompleteHandler<T>? = null
-    ) = option<T>(type, name, description, true, localization, choices, configurator, autocomplete).get()
+    ) = option(type, name, description, true, localization, choices, configurator, autocomplete).get()
 }
 
 inline fun <reified T> OptionConfig.option(
@@ -216,7 +217,7 @@ inline fun <reified T> OptionConfig.option(
     choices: List<Choice> = emptyList(),
     noinline configurator: OptionConfigurator = {},
     noinline autocomplete: AutocompleteHandler<T>? = null
-) = option<T>(typeOf<T>(), name, description, required, localization, choices, configurator, autocomplete)
+) = option(typeOf<T>(), name, description, required, localization, choices, configurator, autocomplete)
 
 inline fun <reified T> OptionConfig.nullableOption(
     name: String,
@@ -225,7 +226,7 @@ inline fun <reified T> OptionConfig.nullableOption(
     choices: List<Choice> = emptyList(),
     noinline configurator: OptionConfigurator = {},
     noinline autocomplete: AutocompleteHandler<T>? = null
-) = nullableOption<T>(typeOf<T>(), name, description, localization, choices, configurator, autocomplete)
+) = nullableOption(typeOf<T>(), name, description, localization, choices, configurator, autocomplete)
 
 inline fun <reified T> OptionConfig.requiredOption(
     name: String,
@@ -234,7 +235,7 @@ inline fun <reified T> OptionConfig.requiredOption(
     choices: List<Choice> = emptyList(),
     noinline configurator: OptionConfigurator = {},
     noinline autocomplete: AutocompleteHandler<T>? = null
-) = requiredOption<T>(typeOf<T>(), name, description, localization, choices, configurator, autocomplete)
+) = requiredOption(typeOf<T>(), name, description, localization, choices, configurator, autocomplete)
 
 inline fun <reified E : Enum<E>> OptionConfig.enumOption(
     name: String,

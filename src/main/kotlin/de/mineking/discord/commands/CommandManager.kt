@@ -33,7 +33,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         this.localization = localization
     }
 
-    override fun onGenericCommandInteraction(event: GenericCommandInteractionEvent) {
+    override fun onGenericCommandInteraction(event: GenericCommandInteractionEvent) = manager.runSuspending {
         val command = getCommand(event.fullCommandName) ?: error("Got command interaction event for unknown command ${event.fullCommandName}")
 
         try {
@@ -60,7 +60,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
                 else -> error("Unknown command event")
             }
 
-            fun <C : ICommandContext<*>> execute(context: C) {
+            suspend fun <C : ICommandContext<*>> execute(context: C) {
                 @Suppress("UNCHECKED_CAST")
                 (command as CommandImpl<C, *>).handle(context)
             }
@@ -69,7 +69,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         } catch (_: CommandTermination) {}
     }
 
-    override fun onCommandAutoCompleteInteraction(event: CommandAutoCompleteInteractionEvent) {
+    override fun onCommandAutoCompleteInteraction(event: CommandAutoCompleteInteractionEvent) = manager.runSuspending {
         val command = getCommand(event.fullCommandName) ?: error("Got autocomplete interaction event for unknown command ${event.fullCommandName}")
         require(command is SlashCommandImpl) //Should always be true
 
