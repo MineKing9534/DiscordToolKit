@@ -52,8 +52,6 @@ class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
             val manager = instance(it)
             manager.config()
 
-            jda.addEventListener(manager)
-
             manager
         }
 
