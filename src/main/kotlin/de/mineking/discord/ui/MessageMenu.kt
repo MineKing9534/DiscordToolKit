@@ -4,6 +4,7 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.builder.IMessage
 import de.mineking.discord.ui.builder.Message
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.components.ActionComponent
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
 import net.dv8tion.jda.api.components.attribute.IDisableable
@@ -55,7 +56,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         return components
     }
 
-    fun render(state: StateContext<M>): MessageEditData {
+    suspend fun render(state: StateContext<M>): MessageEditData {
         @Suppress("UNCHECKED_CAST")
         val renderer = MessageMenuConfigImpl(MenuConfigPhase.RENDER, state, info, localization, config)
         renderer.config(localization)
@@ -67,7 +68,7 @@ class MessageMenu<M, L : LocalizationFile?>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun handle(event: GenericComponentInteractionCreateEvent) {
+    override suspend fun handle(event: GenericComponentInteractionCreateEvent) {
         if (defer == DeferMode.ALWAYS) event.disableComponents(event.message).queue()
 
         val name = event.componentId.split(":", limit = 3)[1]
@@ -105,7 +106,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         context.after.forEach { it() }
     }
 
-    fun update(context: HandlerContext<M, *>) {
+    suspend fun update(context: HandlerContext<M, *>) {
         try {
             if (defer != DeferMode.NEVER) {
                 if (defer == DeferMode.UNLESS_PREVENTED && !context.event.isAcknowledged) context.disableComponents(context.message).queue()
@@ -116,32 +117,37 @@ class MessageMenu<M, L : LocalizationFile?>(
         }
     }
 
-    fun createInitial(param: M): MessageEditData = render(SendState(info, StateData.createInitial(states), param))
+    suspend fun createInitial(param: M): MessageEditData = render(SendState(info, StateData.createInitial(states), param))
 }
 
 fun MessageEditData.toCreateData() = MessageCreateData.fromEditData(this)
 
-fun MessageChannel.sendMenu(menu: MessageMenu<Unit, *>) = sendMenu(menu, Unit)
-fun <C : MessageChannel> C.sendChannelMenu(menu: MessageMenu<in C, *>) = sendMenu(menu, this)
-fun <M> MessageChannel.sendMenu(menu: MessageMenu<in M, *>, param: M) = sendMessage(menu.createInitial(param).toCreateData())
+suspend fun MessageChannel.sendMenu(menu: MessageMenu<Unit, *>) = sendMenu(menu, Unit)
+suspend fun <C : MessageChannel> C.sendChannelMenu(menu: MessageMenu<in C, *>) = sendMenu(menu, this)
+suspend fun <M> MessageChannel.sendMenu(menu: MessageMenu<in M, *>, param: M) = sendMessage(menu.createInitial(param).toCreateData())
 
-fun IReplyCallback.replyMenu(menu: MessageMenu<Unit, *>, ephemeral: Boolean = true) = replyMenu(menu, Unit, ephemeral)
-fun IReplyCallback.replyChannelMenu(menu: MessageMenu<in MessageChannel, *>, ephemeral: Boolean = true) = replyMenu(menu, messageChannel, ephemeral)
-fun <C : IReplyCallback> C.replyEventMenu(menu: MessageMenu<in C, *>, ephemeral: Boolean = true) = replyMenu(menu, this, ephemeral)
-fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral: Boolean = true): RestAction<*> =
+suspend fun IReplyCallback.replyMenu(menu: MessageMenu<Unit, *>, ephemeral: Boolean = true) = replyMenu(menu, Unit, ephemeral)
+suspend fun IReplyCallback.replyChannelMenu(menu: MessageMenu<in MessageChannel, *>, ephemeral: Boolean = true) = replyMenu(menu, messageChannel, ephemeral)
+suspend fun <C : IReplyCallback> C.replyEventMenu(menu: MessageMenu<in C, *>, ephemeral: Boolean = true) = replyMenu(menu, this, ephemeral)
+suspend fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral: Boolean = true): RestAction<*> =
     if (isAcknowledged) hook.sendMessage(menu.createInitial(param).toCreateData()).setEphemeral(true)
     else reply(menu.createInitial(param).toCreateData()).setEphemeral(ephemeral)
 
 typealias JDAMessage = net.dv8tion.jda.api.entities.Message
 
 fun JDAMessage.decodeState() = componentTree.findAll(ActionComponent::class.java).mapNotNull { it.customId }.decodeState(3)
-fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
+
+fun <M, E> JDAMessage.rerenderBlocking(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback = runBlocking {
+    rerender(menu, event)
+}
+
+suspend fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
     val context = TransferContext(menu.info, StateData.decode(decodeState()), event, this)
     return editMessage(menu.render(context))
 }
 
-typealias MessageMenuConfigurator<M> = MessageMenuConfig<M, *>.() -> Unit
-typealias LocalizedMessageMenuConfigurator<M, L> = MessageMenuConfig<M, L>.(localization: L) -> Unit
+typealias MessageMenuConfigurator<M> = suspend MessageMenuConfig<M, *>.() -> Unit
+typealias LocalizedMessageMenuConfigurator<M, L> = suspend MessageMenuConfig<M, L>.(localization: L) -> Unit
 
 class Lazy<T>(var active: Boolean = false, val default: T, provider: () -> T) {
     private val _value by lazy(provider)
@@ -159,23 +165,23 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
     fun <T> lazy(default: T, provider: () -> T): Lazy<T>
     fun <T> lazy(provider: () -> T) = lazy(null, provider)
 
-    fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
-    fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
+    suspend fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
+    suspend fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
         return localizedSubmenu(name, defer, useComponentsV2, localization, detach) { init() }
     }
 
-    fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: L, detach: Boolean = false, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L>
-    fun modal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: LocalizationFile? = null, detach: Boolean = false, init: ModalConfigurator<M>): ModalMenu<M, LocalizationFile?> {
+    suspend fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: L, detach: Boolean = false, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L>
+    suspend fun modal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: LocalizationFile? = null, detach: Boolean = false, init: ModalConfigurator<M>): ModalMenu<M, LocalizationFile?> {
         return localizedModal(name, defer, localization, detach) { init() }
     }
 }
 
-inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, detach: Boolean = false, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+suspend inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, detach: Boolean = false, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
     return localizedSubmenu(name, defer, useComponentsV2, file, detach, init)
 }
 
-inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, detach: Boolean = false, noinline init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
+suspend inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, detach: Boolean = false, noinline init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
     return localizedModal(name, defer, file, detach, init)
 }
@@ -213,7 +219,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
         if (phase == MenuConfigPhase.RENDER) handler()
     }
 
-    override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
+    override suspend fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
         @Suppress("UNCHECKED_CAST")
         return setup {
             menuInfo.manager.registerLocalizedMenu<M, CL>(
@@ -228,13 +234,13 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             override fun render(handler: () -> Unit) {}
                             override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedMenu.lazy(default, provider)
 
-                            override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+                            override suspend fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
                                 if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
                                 return super.localizedSubmenu(name, defer, useComponentsV2, localization, detach, init)
                             }
 
                             @Suppress("UNCHECKED_CAST")
-                            override fun <T> setup(value: () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
+                            override suspend fun <T> setup(value: suspend () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
 
                             override val stateData: StateData = this@registerLocalizedMenu.stateData
 
@@ -260,7 +266,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <CL : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedModalConfigurator<M, CL>): ModalMenu<M, CL> {
+    override suspend fun <CL : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedModalConfigurator<M, CL>): ModalMenu<M, CL> {
         return setup {
             menuInfo.manager.registerLocalizedModal(
                 "${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init
@@ -274,13 +280,13 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             override fun render(handler: () -> Unit) {}
                             override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedModal.lazy(default, provider)
 
-                            override fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
+                            override suspend fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
                                 if (this@registerLocalizedModal.menuInfo.name.menuName() == name) end(init)
                                 return super.localizedModal(name, defer, localization, detach, init)
                             }
 
                             @Suppress("UNCHECKED_CAST")
-                            override fun <T> setup(value: () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
+                            override suspend fun <T> setup(value: suspend () -> T): T = this@MessageMenuConfigImpl.setup[currentSetup++] as T
 
                             override val stateData: StateData = this@registerLocalizedModal.stateData
 
