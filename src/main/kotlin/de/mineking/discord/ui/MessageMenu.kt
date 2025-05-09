@@ -4,46 +4,46 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.builder.IMessage
 import de.mineking.discord.ui.builder.Message
-import de.mineking.discord.ui.builder.components.BREAKPOINT
+import net.dv8tion.jda.api.components.ActionComponent
+import net.dv8tion.jda.api.components.MessageTopLevelComponent
+import net.dv8tion.jda.api.components.attribute.IDisableable
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.callbacks.IMessageEditCallback
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
-import net.dv8tion.jda.api.interactions.components.ActionComponent
-import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
-fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities.Message) = editComponents(message.components.map { ActionRow.of(it.actionComponents.map { it.asDisabled() }) })
-
-const val MAX_COMPONENTS = 5
+fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities.Message) = editComponents(message.components.map {
+    if (it is IDisableable) it.asDisabled() as MessageTopLevelComponent
+    else it
+}).useComponentsV2(message.isUsingComponentsV2)
 
 @Suppress("UNCHECKED_CAST")
 fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>, force: Boolean = false) = config.components
     .map { if (force) it.show() else it }
     .flatMap {
         try {
-            it.render(config.menuInfo.menu as MessageMenu, id)
+            it.render(config, id)
         } catch (e: Exception) {
-            throw RuntimeException("Error rendering component ${it.format()}", e)
+            throw RuntimeException("Error rendering component $it", e)
         }
     }
-    .mapNotNull { (component, element) -> (element as MessageElement<ActionComponent, *>).finalize(component())?.let { element to it } }
-    .map { (element, component) -> config.menuInfo.manager.localization.localize(config, element, component) }
 
 class MessageMenu<M, L : LocalizationFile?>(
     manager: UIManager, name: String, defer: DeferMode,
+    val useComponentsV2: Boolean,
     localization: L,
     setup: List<*>,
     states: List<InternalState<*>>,
     private val config: LocalizedMessageMenuConfigurator<M, L>
 ) : Menu<M, GenericComponentInteractionCreateEvent, L>(manager, name, defer, localization, setup, states) {
-    private fun buildComponents(renderer: MessageMenuConfigImpl<M, L>): List<ActionRow> {
+    private fun buildComponents(renderer: MessageMenuConfigImpl<M, L>): List<MessageTopLevelComponent> {
         val generator = IdGenerator(renderer.stateData.encode())
 
         @Suppress("UNCHECKED_CAST")
@@ -52,30 +52,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         val left = generator.left()
         if (left != 0) error("Not enough component id space to store state. $left characters left")
 
-        val temp = mutableListOf<ActionComponent>()
-        var currentSize = 0
-
-        val rows = mutableListOf<ActionRow>()
-
-        for (component in components) {
-            val size = 6 - component.maxPerRow
-
-            if (component == BREAKPOINT || currentSize + size > MAX_COMPONENTS && temp.isNotEmpty()) {
-                rows += ActionRow.of(temp)
-
-                temp.clear()
-                currentSize = 0
-            }
-
-            if (component != BREAKPOINT) {
-                temp += component
-                currentSize += size
-            }
-        }
-
-        if (temp.isNotEmpty()) rows += ActionRow.of(temp)
-
-        return rows
+        return components
     }
 
     fun render(state: StateContext<M>): MessageEditData {
@@ -84,6 +61,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         renderer.config(localization)
 
         return renderer.build()
+            .useComponentsV2(useComponentsV2)
             .setComponents(buildComponents(renderer))
             .build()
     }
@@ -97,14 +75,18 @@ class MessageMenu<M, L : LocalizationFile?>(
         val data = event.message.decodeState()
         val context = ComponentContext(info, StateData.decode(data), event)
 
-        val renderer = MessageMenuConfigImpl(MenuConfigPhase.COMPONENTS, context, info, localization, config)
-        renderer.config(localization)
+        val renderer = MessageMenuComponentFinder(name, context, info, localization, config)
 
-        renderer.activate() //Activate lazy values => Allow them to load in the handler
-        val element = renderer.components.flatMap { it.elements() }.firstOrNull { it.name == name } as MessageElement<*, GenericComponentInteractionCreateEvent>? ?: error("Component $name not found")
+        val handler = try {
+            renderer.config(localization)
+            error("Component $name not found")
+        } catch (_: ComponentFinderResult) {
+            renderer.handler!!
+        }
 
         try {
-            element.handle(context)
+            renderer.activate() //Activate lazy values => Allow them to load in the handler
+            context.handler()
         } catch (_: RenderTermination) {
             return
         }
@@ -152,7 +134,7 @@ fun <M> IReplyCallback.replyMenu(menu: MessageMenu<in M, *>, param: M, ephemeral
 
 typealias JDAMessage = net.dv8tion.jda.api.entities.Message
 
-fun JDAMessage.decodeState() = components.flatMap { it.components.filterIsInstance<ActionComponent>().map { it.id } }.filterNotNull().joinToString("") { it.split(":", limit = 3)[2] }
+fun JDAMessage.decodeState() = componentTree.findAll(ActionComponent::class.java).mapNotNull { it.customId }.decodeState(3)
 fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
     val context = TransferContext(menu.info, StateData.decode(decodeState()), event, this)
     return editMessage(menu.render(context))
@@ -169,14 +151,17 @@ class Lazy<T>(var active: Boolean = false, val default: T, provider: () -> T) {
 }
 
 interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessage {
-    operator fun IMessageComponent.unaryPlus()
+    fun <C : MessageComponent<*>> register(component: C): C
+    operator fun MessageComponent<out MessageTopLevelComponent>.unaryPlus()
+
+    fun render(handler: () -> Unit)
 
     fun <T> lazy(default: T, provider: () -> T): Lazy<T>
     fun <T> lazy(provider: () -> T) = lazy(null, provider)
 
-    fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
-    fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
-        return localizedSubmenu(name, defer, localization, detach) { init() }
+    fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
+    fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
+        return localizedSubmenu(name, defer, useComponentsV2, localization, detach) { init() }
     }
 
     fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: L, detach: Boolean = false, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L>
@@ -185,9 +170,9 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
     }
 }
 
-inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, detach: Boolean = false, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, detach: Boolean = false, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
     val file = menuInfo.manager.manager.localizationManager.read<L>()
-    return localizedSubmenu(name, defer, file, detach, init)
+    return localizedSubmenu(name, defer, useComponentsV2, file, detach, init)
 }
 
 inline fun <M, reified L : LocalizationFile> MessageMenuConfig<M, *>.localizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, detach: Boolean = false, noinline init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
@@ -217,17 +202,22 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
         }
     }
 
-    internal val components = mutableListOf<IMessageComponent>()
+    internal val components = mutableListOf<MessageComponent<out MessageTopLevelComponent>>()
 
-    override fun IMessageComponent.unaryPlus() {
+    override fun <C : MessageComponent<*>> register(component: C) = component
+    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
         components += this
     }
 
-    override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
+    override fun render(handler: () -> Unit) {
+        if (phase == MenuConfigPhase.RENDER) handler()
+    }
+
+    override fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
         @Suppress("UNCHECKED_CAST")
         return setup {
             menuInfo.manager.registerLocalizedMenu<M, CL>(
-                "${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init
+                "${menuInfo.name}.$name", defer, useComponentsV2, localization ?: this.localization as CL, if (detach) init
                 else { localization ->
                     require(this is MessageMenuConfigImpl)
 
@@ -235,13 +225,12 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                         val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                             var currentSetup = 0
 
-                            override fun <T> render(default: T, handler: () -> T) = default
-
+                            override fun render(handler: () -> Unit) {}
                             override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedMenu.lazy(default, provider)
 
-                            override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+                            override fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
                                 if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
-                                return super.localizedSubmenu(name, defer, localization, detach, init)
+                                return super.localizedSubmenu(name, defer, useComponentsV2, localization, detach, init)
                             }
 
                             @Suppress("UNCHECKED_CAST")
@@ -282,7 +271,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                         val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                             var currentSetup = 0
 
-                            override fun <T> render(default: T, handler: () -> T) = default
+                            override fun render(handler: () -> Unit) {}
                             override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedModal.lazy(default, provider)
 
                             override fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
@@ -315,4 +304,30 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                 })
         }
     }
+}
+
+class MessageMenuComponentFinder<M, L : LocalizationFile?>(
+    val component: String,
+    state: StateContext<M>?,
+    menu: MenuInfo<M>,
+    localization: L,
+    config: LocalizedMessageMenuConfigurator<M, L>
+) : MessageMenuConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, state, menu, localization, config) {
+    var handler: ComponentHandler<*, *>? = null
+        private set
+
+    private fun findHandler(component: MessageComponent<*>) = component.elements().forEach {
+        if (it.name == this.component) {
+            @Suppress("UNCHECKED_CAST")
+            this@MessageMenuComponentFinder.handler = it.handler as ComponentHandler<*, *>
+            throw ComponentFinderResult
+        }
+    }
+
+    override fun <C : MessageComponent<*>> register(component: C) = component.also { findHandler(component) }
+    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() = findHandler(this)
+}
+
+private object ComponentFinderResult : RuntimeException() {
+    private fun readResolve(): Any = ComponentFinderResult
 }

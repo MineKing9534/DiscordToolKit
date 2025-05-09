@@ -1,16 +1,23 @@
 package de.mineking.discord.ui
 
+import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
+import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IModalCallback
-import net.dv8tion.jda.api.interactions.components.ActionRow
 import net.dv8tion.jda.api.interactions.modals.Modal
+import net.dv8tion.jda.api.interactions.modals.ModalTopLevelComponent
 
 fun renderModalComponents(id: IdGenerator, config: ModalConfigImpl<*, *>, force: Boolean = false) = config.components
     .map { if (force) it.show() else it }
-    .flatMap { it.render(id) }
-    .mapNotNull { (component, element) -> element.finalize(component)?.let { element to it } }
-    .map { (element, component) -> config.menuInfo.manager.localization.localize(config, element, component) }
+    .flatMap {
+        try {
+            it.render(config, id)
+        } catch (e: Exception) {
+            throw RuntimeException("Error rendering component $it", e)
+        }
+    }
 
 class ModalMenu<M, L : LocalizationFile?>(
     manager: UIManager, name: String, defer: DeferMode,
@@ -19,7 +26,7 @@ class ModalMenu<M, L : LocalizationFile?>(
     states: List<InternalState<*>>,
     private val config: LocalizedModalConfigurator<M, L>
 ) : Menu<M, ModalInteractionEvent, L>(manager, name, defer, localization, setup, states) {
-    private fun buildComponents(generator: IdGenerator, renderer: ModalConfigImpl<M, L>): List<ActionRow> {
+    private fun buildComponents(generator: IdGenerator, renderer: ModalConfigImpl<M, L>): List<ModalTopLevelComponent> {
         val components = renderModalComponents(generator, renderer)
 
         val rows = components.map { ActionRow.of(it) }
@@ -33,7 +40,7 @@ class ModalMenu<M, L : LocalizationFile?>(
     override fun handle(event: ModalInteractionEvent) {
         if (defer == DeferMode.ALWAYS) event.deferEdit().queue()
 
-        val data = (listOf(event.modalId) + event.values.map { it.id }).joinToString("") { it.split(":", limit = 2)[1] }
+        val data = (listOf(event.modalId) + event.values.map { it.customId }).decodeState(2)
         val context = ModalContext(info, StateData.decode(data), event)
 
         val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, context, this.info)
@@ -55,11 +62,9 @@ class ModalMenu<M, L : LocalizationFile?>(
 
         val generator = IdGenerator(state.stateData.encode())
 
-        return manager.localization.localize(
-            renderer, null, Modal.create(generator.nextId("$name:"), renderer.title)
-                .addComponents(buildComponents(generator, renderer))
-                .build()
-        )
+        return Modal.create(generator.nextId("$name:"), renderer.readLocalizedString(localization, null, renderer.title, "title") ?: ZERO_WIDTH_SPACE)
+            .addComponents(buildComponents(generator, renderer))
+            .build()
     }
 
     fun createInitial(param: M): Modal {
@@ -76,9 +81,9 @@ typealias ModalConfigurator<M> = ModalConfig<M, *>.() -> Unit
 typealias LocalizedModalConfigurator<M, L> = ModalConfig<M, L>.(localization: L) -> Unit
 
 interface ModalConfig<M, L : LocalizationFile?> : MenuConfig<M, L> {
-    operator fun <T> IModalComponent<T>.unaryPlus(): ModalResult<M, T>
+    operator fun <T> ModalComponent<T>.unaryPlus(): ModalResult<M, T>
 
-    fun title(title: String)
+    fun title(title: CharSequence)
     fun execute(handler: ModalHandler<M>)
 }
 
@@ -87,17 +92,17 @@ class ModalConfigImpl<M, L : LocalizationFile?>(
     state: StateContext<M>?,
     menu: MenuInfo<M>
 ) : MenuConfigImpl<M, L>(phase, state, menu), ModalConfig<M, L> {
-    val components = mutableListOf<IModalComponent<*>>()
+    val components = mutableListOf<ModalComponent<*>>()
 
-    var title: String = DEFAULT_LABEL
+    var title: CharSequence = DEFAULT_LABEL
     val handlers = mutableListOf<ModalHandler<M>>()
 
-    override fun <T> IModalComponent<T>.unaryPlus(): ModalResult<M, T> {
+    override fun <T> ModalComponent<T>.unaryPlus(): ModalResult<M, T> {
         components += this
         return { handle(this) }
     }
 
-    override fun title(title: String) {
+    override fun title(title: CharSequence) {
         this.title = title
     }
 

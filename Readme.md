@@ -1,5 +1,6 @@
 ![[Kotlin CI]](https://github.com/MineKing9534/DiscordToolKit/actions/workflows/beta.yml/badge.svg)
 ![[Latest Version]](https://maven.mineking.dev/api/badge/latest/releases/de/mineking/DiscordToolKit?prefix=v&name=Latest%20Version&color=0374b5)
+![[Components V2]](https://img.shields.io/badge/Components_v2-supported-green)
 
 # Introduction
 DTK ("Discord Tool Kit") is a library built around [JDA](https://github.com/discord-jda/JDA) that aims to simplify creating and handling application commands and user interfaces with message components or modals.
@@ -35,7 +36,7 @@ There are some examples available in `src/test/kotlin/examples` if you want to s
     * [Components](#components)
       * [Buttons](#buttons)
       * [Selects](#selects)
-      * [Layout](#layout)
+    * [Components V2](#components-v2)
     * [Submenus and Menu components](#submenus-and-menu-components)
     * [Pagination](#pagination)
     * [Text Builders](#text-builders)
@@ -363,7 +364,7 @@ val menu = registerMenu<Int>("test") {
     
     content("Count: $count")
     
-    +button("inc", label = "+") { count++ }
+    +actionRow(button("inc", label = "+") { count++ })
 }
 
 //Send two menu instances, one with parameter 5 and one with parameter 10
@@ -386,7 +387,7 @@ registerMenu<Unit>("test") {
     
     content("Count: $count")
     
-    +button("inc", label = "+") { count++ }
+    +actionRow(button("inc", label = "+") { count++ })
 }
 ```
 For more detailed information about states see [States](#states).
@@ -425,11 +426,13 @@ registerMenu<Unit>("test") {
     
     content("**Current Count:** $count")
     
-    +button("inc", label = "+", color = ButtonColor.BLUE) { count++ }
-    +button("dec", label = "-", color = ButtonColor.BLUE) { count-- }
+  +actionRow(
+    button("inc", label = "+", color = ButtonColor.BLUE) { count++ },
+    button("dec", label = "-", color = ButtonColor.BLUE) { count-- },
 
     //Only show reset button if the state value is not already 0
-    +button("rst", label = "Reset", color = ButtonColor.RED) { count = 0 }.hide(count == 0)
+    button("rst", label = "Reset", color = ButtonColor.RED) { count = 0 }.hide(count == 0)   
+  )
 }
 ```
 
@@ -453,13 +456,17 @@ The handler context also allows you to:
 You can create buttons with the `button` function. You can pass a label, emoji and color, next to the general name and handler. 
 You can also use `link` to create a link button (Cannot have a handler or custom color).
 
+Buttons can not directly be added to a menu. They always have to be wrapped in an `actionRow`. Discord allows up to five buttons in a single action row.
+You can call `actionRow` with more than five buttons. However, if more than 5 buttons are rendered in an action row, an exception is thrown.
+This means, that if you create an action row with more than five buttons, you have to ensure that at most five buttons are actually visible at a time using the `hide` or `show` methods.
+
 There are also default implementations for `toggleButton` (toggles boolean state) and `enumToggleButton` (cycles through enum constants) available:
 ```kt
 enum class Enum { A, B, C }
 
 val (value, _, ref) = state(Enum.A)
 
-+enumToggleButton("button", label = "${value()}", ref = ref)
++actionRow(enumToggleButton("button", label = "${value()}", ref = ref))
 ```
 
 #### Selects
@@ -485,15 +492,42 @@ val ref = state(EnumSet.noneOf(Enum::class.java))
 +statefulMultiEnumSelect<Enum>("select", ref = ref)
 ```
 
-#### Layout
-In some scenarios you might want to use a button as label, only showing some text but non-pressable. 
-While you can achieve this by using a normal button and disabling it, this might be a little confusing to read.
-Therefore, there is a `label` function available, that does that while having a more descriptive name.
-Additionally, you can use the `blank` function to create an empty label, that can be used as spacer.
+> [!NOTE]
+> While theoretically select menus have to be wrapped in action rows like buttons before they can be used, DTK will automatically do that for select menus because a select menu always takes up a full action row.
 
-By default, the renderer tries to fit the components in order of addition in a single row and uses the next row once the first one is full (also works for select menus).
-If you want to customize when a new action row is used, you can add the `endRow` component. 
-This is a "virtual" component that does not actually display anything new but only forces the renderer to start a new action row.
+### Components V2
+DiscordToolKit supports discords new `Components V2 Feature`. To enable it you can either set the global variable `DEFAULT_COMPONENTS_V2` to `true` or manually pass `useComponentsV2 = true` to your registerMenu call.
+The variable `DEFAULT_COMPONENTS_V2` also defaults to `MessageReference.isDefaultUseComponentsV2()` so you could also change that if you want to enable it globally for all messages sent by your JDA instance.
+
+When a menu uses components v2, it cannot have regular contents like `content` or `embeds`. Calling functions to configure such fields on a menu with components v2 will throw exceptions when rendering the menu (because discord does not allow such messages).
+Instead, your message content should be displayed using text displays. You can create these using the `textDisplay` factory function. You can also use `localizedTextDisplay` to create a text display with localized content.
+
+All other components also have factory functions, like `container`, `section`, `thumbnail`, `fileDisplay` and `mediaGallery`. They can be nested as supported by discord. Example:
+```kt
+registerMenu("menu", useComponentsV2 = true) {
+  var count by state(0)
+  var text by state("")
+
+  +container(
+    section(
+      modalButton("text", label = "Modal", title = "Enter Text", component =
+        textInput("text", label = "Enter Text", placeholder = "Hello World!", value = text)
+      ) {
+        text = it
+      },
+      textDisplay("Current Text: $text"),
+      textDisplay("Current Count: **$count**")
+    ),
+    separator(),
+    actionRow(
+      button("inc", label = "+", color = ButtonColor.GREEN) { count++ },
+      button("dec", label = "-", color = ButtonColor.RED) { count-- }
+    ),
+    color = Color.decode("#00FF00")
+  )
+}
+```
+Localization is also supported as usual.
 
 ### Submenus and Menu components
 In a lot of scenarios you might want to have some sort of submenu, for example a sub-category for a configuration menu. 
@@ -509,13 +543,13 @@ val menu = registerMenu<Unit>("menu") {
     
     //...
     
-    +button("child", label = "Child") { switchMenu(getMessageMenu("submenu")) {
+    +actionRow(button("child", label = "Child") { switchMenu(getMessageMenu("submenu")) {
         copyAll() //Copy all state values to the child menu
         pushDefaults() //USe default child state values for remaining state
         
         //copyAll(); pushDefaults() is the default state builder. So if you want to have this behavior you can also just not pass any value (See back button below)
         //You can also have more advanced state transfers. See examples below
-    } }
+    } })
 }
 
 registerMenu<Unit>("submenu") {
@@ -525,7 +559,7 @@ registerMenu<Unit>("submenu") {
 
     //...
 
-    +button("back", label = "Back") { switchMenu(menu) }
+    +actionRow(button("back", label = "Back") { switchMenu(menu) })
 }
 ```
 The above example shows how the parent menu can switch to a different menu while still preserving the parent state. For example, changing the parent state to a value of 5, then going to the child menu, and then back again will keep the parent state at value 5.
@@ -547,20 +581,24 @@ registerMenu<Unit>("menu") {
             +line("Parent: $parent")
             +line("Child: $child")
         }
-        
-        //Parent states are automatically inherited, and you can use the parent state accessors
-        //All changes to parent states will be preserved when going back to the parent menu. Child states will be lost because they only exist in the child menu
-        +button("p-inc", label = "Parent +") { parent++ }
-        +button("c-inc", label = "Child +") { child++ }
-        
-        //The parameter provides an easy-to-read way to create a back button (
-        +back.asButton("back", label = "Back")
+      
+        +actionRow( 
+          //Parent states are automatically inherited, and you can use the parent state accessors
+          //All changes to parent states will be preserved when going back to the parent menu. Child states will be lost because they only exist in the child menu
+          button("p-inc", label = "Parent +") { parent++ },
+          button("c-inc", label = "Child +") { child++ },
+
+          //The parameter provides an easy-to-read way to create a back button (
+          back.asButton("back", label = "Back")   
+        )
     }
     
-    +button("inc", label = "+") { parent++ }
-    
-    +button("child", label = "Child") { switchMenu(submenu) }
-    +button("child5", label = "Child with value") { switchMenu(submenu) { copyAll(); push(5) } } //Use 5 as initial value for the child state
+    +actionRow(
+      button("inc", label = "+") { parent++ },
+
+      button("child", label = "Child") { switchMenu(submenu) },
+      button("child5", label = "Child with value") { switchMenu(submenu) { copyAll(); push(5) } } //Use 5 as initial value for the child state   
+    )
 }
 ```
 
@@ -579,14 +617,16 @@ registerMenu<Unit>("menu") {
     }
     
     //Button that switches to the specified menu. Useful if you don't want to manually write the switchMenu handler but want to use the same submenu from different components (e.g. with different initial states). Also has an optional state builder parameter.
-    +switchMenuButton(submenu, label = "Manual Submenu")
+    val a = switchMenuButton(submenu, label = "Manual Submenu")
     
     //Combine submenu declaration and component for switching to it
-    +menuButton("submenu-button", label = "Submenu Button") { back ->
+    val b = menuButton("submenu-button", label = "Submenu Button") { back ->
         //You can do everything you can do in a submenu config (define states, use parent states, etc.)
         
         //...
     }
+  
+    +actionRow(a, b)
 }
 ```
 The most relevant components for this are `menuButton` and `menuSelectOption`.
@@ -633,6 +673,9 @@ registerMenu<Unit>("paginate", defer = DeferMode.UNLESS_PREVENTED) {
 ```
 
 This menu will paginate 100 entries on 10 pages: ![](assets/paginate2.gif)
+
+> [!NOTE]
+> Because a page select already shows 5 buttons, the `pageSelector` will already wrap them in an action row, so you can add it to a menu directly.
 
 ### Text Builders
 discordToolKit provides a functional style message builder that allows you to create markdown formatted messages in a functional style. For example:
@@ -742,7 +785,7 @@ menuCommand("menu") {
     var state by state(0)
     content("Count: $state")  
   
-    +button("inc", label = "+") { state++ }
+    +actionRow(button("inc", label = "+") { state++ })
 }
 ```
 Inside the menu command config block you can configure both the menu (as seen above) and the command itself:
@@ -771,7 +814,7 @@ menuCommand("menu") {
     var optionState by option<Int>("state").orElse(0).createState()
 
     content("Count: $optionState")
-    +button("inc", label = "+") { optionState++ }
+    +actionRow(button("inc", label = "+") { optionState++ })
 }
 ```
 You can define options as you would in a normal slash command (See [Options](#options) for more information). You can also create a state from an option using `createState`.

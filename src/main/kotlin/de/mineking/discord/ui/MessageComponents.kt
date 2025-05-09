@@ -1,10 +1,10 @@
 package de.mineking.discord.ui
 
-import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.components.BackReference
+import net.dv8tion.jda.api.components.Component
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
-import net.dv8tion.jda.api.interactions.components.ActionComponent
+import kotlin.reflect.typeOf
 
 typealias ComponentHandler<M, E> = ComponentContext<M, E>.() -> Unit
 
@@ -59,65 +59,70 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
     }) = switchMenu(menu.menu, state)
 }
 
-fun createMessageComponent(components: List<IMessageComponent>) = MessageComponent(components)
-fun createMessageComponent(vararg components: IMessageComponent) = createMessageComponent(components.toList())
+fun <C : Component> createMessageComponent(vararg components: MessageComponent<C>) = createMessageComponent(components.toList())
+fun <C : Component> createMessageComponent(components: List<MessageComponent<C>>) = object : MessageComponent<C> {
+    override fun elements() = components.flatMap { it.elements() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = components.flatMap { it.render(config, generator) }
+    override fun toString() = "MessageComponent"
+}
 
-typealias ComponentProvider = () -> ActionComponent?
-
-interface IMessageComponent {
-    fun children(): List<IMessageComponent>
-    fun elements(): List<MessageElement<*, *>> = children().flatMap { if (it is MessageElement<*, *>) listOf(it) else it.elements() }
-
-    fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>>
-    fun transform(transform: (component: ComponentProvider) -> ComponentProvider): IMessageComponent = object : IMessageComponent {
-        override fun children() = this@IMessageComponent.children()
-        override fun elements() = this@IMessageComponent.elements()
-
-        override fun render(menu: MessageMenu<*, *>, generator: IdGenerator) = this@IMessageComponent.render(menu, generator).map { (component, element) -> transform(component) to element }
-
-        override fun format() = this@IMessageComponent.format()
+interface MessageComponent<C : Component> : IComponent<C> {
+    fun elements(): List<MessageElement<*, *>>
+    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>) = object : MessageComponent<C> {
+        override fun elements() = this@MessageComponent.elements()
+        override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper(generator) { this@MessageComponent.render(config, it) }
+        override fun toString() = this@MessageComponent.toString()
     }
-
-    fun disabled(state: Boolean = true) = transform { { it()?.let { it.withDisabled(state || it.isDisabled) } } }
-    fun enabled(state: Boolean = true) = disabled(!state)
-
-    fun hide(hide: Boolean = true) = show(!hide)
-    fun show(show: Boolean = true) = if (show) this else transform { { null } }
-
-    fun format() = children().toString()
 }
 
-abstract class MessageElement<C : ActionComponent, E : GenericComponentInteractionCreateEvent>(override val name: String, override val localization: LocalizationFile?) : Element, IMessageComponent {
-    override fun children() = listOf(this)
+class MessageElement<C : Component, E : GenericComponentInteractionCreateEvent>(
+    val name: String,
+    val handler: ComponentHandler<*, E>,
+    val renderer: (MenuConfig<*, *>, IdGenerator) -> C?
+) : MessageComponent<C> {
+    override fun elements() = listOf(this)
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator)?.let { listOf(it) } ?: emptyList()
+    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>) = MessageElement(name, handler) { config, id -> mapper(id) { render(config, it) }.firstOrNull() }
 
-    abstract fun handle(context: ComponentContext<*, E>)
-    open fun finalize(component: C?): C? = component
-
-    override fun toString(): String = "MessageElement[$name]"
+    override fun toString() = "MessageElement[$name]"
 }
 
-internal fun <C : ActionComponent, E : GenericComponentInteractionCreateEvent> createElement(
+fun <C : Component, E : GenericComponentInteractionCreateEvent> createMessageElement(
     name: String,
-    localization: LocalizationFile? = null,
-    renderer: (menu: MessageMenu<*, *>, id: IdGenerator) -> List<ComponentProvider>,
-    handler: ComponentHandler<*, E>,
-    finalizer: C?.() -> C?
-): MessageElement<C, E> = object : MessageElement<C, E>(name, localization) {
-    override fun handle(context: ComponentContext<*, E>) = context.handler()
-    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>> = renderer(menu, generator).map { it to this }
-    override fun transform(transform: (component: ComponentProvider) -> ComponentProvider): IMessageComponent = createElement(name, localization, { menu, id -> render(menu, id).map { (component) -> transform(component) } }, handler, finalizer)
-    override fun finalize(component: C?): C? = finalizer(component)
+    handler: ComponentHandler<*, E> = {},
+    renderer: (MenuConfig<*, *>, String) -> C?
+) = MessageElement(name, handler) { config, id -> renderer(config, id.nextId("${config.menuInfo.name}:$name:")) }
+
+fun <C : Component> createLayoutComponent(
+    vararg children: MessageComponent<*>,
+    renderer: (MenuConfig<*, *>, IdGenerator) -> C
+) = createLayoutComponent(children.toList()) { config, id -> listOf(renderer(config, id)) }
+
+fun <C : Component> createLayoutComponent(
+    children: List<MessageComponent<*>>,
+    renderer: (MenuConfig<*, *>, IdGenerator) -> List<C>
+) = object : MessageComponent<C> {
+    override fun elements() = children.flatMap { it.elements() }
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator)
+    override fun toString() = "MessageComponent"
 }
 
-fun <C : ActionComponent, E : GenericComponentInteractionCreateEvent> element(
-    name: String,
-    localization: LocalizationFile?,
-    render: (menu: MessageMenu<*, *>, id: String) -> ActionComponent?,
-    handler: ComponentHandler<*, E>,
-    finalizer: C?.() -> C? = { this }
-): MessageElement<C, E> = createElement(name, localization, { menu, id -> listOf({ render(menu, id.nextId("${menu.name}:$name:")) }) }, handler, finalizer)
+fun <C : Component> createMessageComponent(
+    renderer: (MenuConfig<*, *>, String) -> C
+) = createLayoutComponent { config, id -> renderer(config, "::") }
 
-class MessageComponent(private val children: List<IMessageComponent>) : IMessageComponent {
-    override fun children(): List<IMessageComponent> = children
-    override fun render(menu: MessageMenu<*, *>, generator: IdGenerator): List<Pair<ComponentProvider, MessageElement<*, *>>> = elements().flatMap { it.render(menu, generator) }
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T, C : Component, W : IComponent<C>> W.withParameter(parameter: T) = transform { id, render ->
+    require(id.postfix.isEmpty())
+
+    id.postfix = StateData.encodeSingle(typeOf<T>(), parameter)
+    render(id).also { id.postfix = "" }
+} as W
+
+inline fun <reified T> ComponentContext<*, *>.parameter(): T {
+    val base = event.componentId.split(":", limit = 3)[2]
+    val length = base.take(2).toInt()
+    val value = base.drop(2 + length)
+
+    return StateData.decodeSingle(typeOf<T>(), value) as T
 }

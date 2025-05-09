@@ -89,6 +89,7 @@ fun heading(i: Int, text: String) = line("${"#".repeat(i)} $text")
 fun h1(text: String) = heading(1, text)
 fun h2(text: String) = heading(2, text)
 fun h3(text: String) = heading(3, text)
+fun h4(text: String) = line(bold(text))
 
 fun heading(i: Int, init: TextElementBuilder) = heading(i, init.text())
 fun h1(init: TextElementBuilder) = heading(1, init)

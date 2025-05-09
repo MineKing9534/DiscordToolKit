@@ -7,8 +7,6 @@ import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.Command.Type
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.*
-import net.dv8tion.jda.api.interactions.commands.build.attributes.IRestrictedCommandData
-import net.dv8tion.jda.api.interactions.commands.build.attributes.IScopedCommandData
 
 class CommandTermination : RuntimeException()
 
@@ -20,7 +18,7 @@ typealias ContextCommand<C> = Command<ContextCommandImpl<C>>
 typealias EntrypointCommand = Command<EntryPointCommandImpl>
 typealias SlashCommand = Command<SlashCommandImpl>
 
-sealed class CommandImpl<C : ICommandContext<*>, D>(
+sealed class CommandImpl<C : ICommandContext<*>, D : CommandData>(
     val name: String,
     val parent: CommandImpl<C, D>? = null,
     val localization: LocalizationFile? = null,
@@ -29,7 +27,7 @@ sealed class CommandImpl<C : ICommandContext<*>, D>(
     val defaultMemberPermissions: DefaultMemberPermissions?,
     val contexts: Set<InteractionContextType>,
     val types: Set<IntegrationType>
-) : IMentionable where D : IScopedCommandData, D : IRestrictedCommandData {
+) : IMentionable {
     internal var idLong: Long? = null
 
     val root: CommandImpl<*, *> = parent?.root ?: this
@@ -72,12 +70,12 @@ abstract class EntryPointCommandImpl(
     defaultMemberPermissions: DefaultMemberPermissions?,
     contexts: Set<InteractionContextType>,
     types: Set<IntegrationType>,
-    val handler: EntryPointCommandData.Handler
-) : CommandImpl<EntrypointCommandContext, EntryPointCommandData>(name, null, localization, setup, conditions, defaultMemberPermissions, contexts, types) {
-    override fun build(manager: CommandManager): EntryPointCommandData {
+    val handler: PrimaryEntryPointCommandData.Handler
+) : CommandImpl<EntrypointCommandContext, PrimaryEntryPointCommandData>(name, null, localization, setup, conditions, defaultMemberPermissions, contexts, types) {
+    override fun build(manager: CommandManager): PrimaryEntryPointCommandData {
         val localization = manager.localization?.getCommandDescription(effectiveLocalization(), this)
 
-        val result = Commands.entryPoint(name, localization?.default ?: description)
+        val result = Commands.primaryEntryPoint(name, localization?.default ?: description)
         if (localization != null) result.setDescriptionLocalizations(localization.localization)
 
         result.setHandler(handler)

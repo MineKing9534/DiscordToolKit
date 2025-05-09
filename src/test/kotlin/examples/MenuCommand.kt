@@ -4,6 +4,7 @@ import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.commands.requiredOption
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.ButtonColor
+import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.state
@@ -29,10 +30,12 @@ fun main() {
                     +line("Option: $optionState")
                 }
 
-                +button("inc", color = ButtonColor.BLUE, label = "Increase Values") {
-                    state++
-                    optionState++
-                }
+                +actionRow(
+                    button("inc", color = ButtonColor.BLUE, label = "Increase Values") {
+                        state++
+                        optionState++
+                    }
+                )
             }
 
             updateCommands().queue()

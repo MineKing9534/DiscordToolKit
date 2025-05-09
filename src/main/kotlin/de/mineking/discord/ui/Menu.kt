@@ -2,6 +2,7 @@ package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.entities.channel.Channel
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -12,7 +13,6 @@ import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.callbacks.IMessageEditCallback
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
-import net.dv8tion.jda.api.interactions.components.buttons.Button
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -22,7 +22,7 @@ annotation class MenuMarker
 
 enum class DeferMode { NEVER, ALWAYS, UNLESS_PREVENTED }
 
-val DEFAULT_DEFER_MODE = DeferMode.ALWAYS
+var DEFAULT_DEFER_MODE = DeferMode.NEVER
 
 @MenuMarker
 abstract class HandlerContext<M, out E>(
@@ -67,11 +67,6 @@ class TransferContext<M, E>(
     override val cache: MutableList<Any?> = mutableListOf()
 }
 
-sealed interface Element {
-    val name: String
-    val localization: LocalizationFile?
-}
-
 sealed class Menu<M, E : GenericInteractionCreateEvent, L : LocalizationFile?>(
     val manager: UIManager, val name: String, val defer: DeferMode,
     val localization: L,
@@ -85,10 +80,11 @@ sealed class Menu<M, E : GenericInteractionCreateEvent, L : LocalizationFile?>(
 
 class IdGenerator(private val state: String) {
     private var pos = 0
+    var postfix = ""
 
     fun nextId(base: String): String {
-        val length = clamp(Button.ID_MAX_LENGTH - base.length, 0, state.length - pos)
-        val result = base + state.substring(pos, pos + length)
+        val length = clamp(Button.ID_MAX_LENGTH - base.length - postfix.length - 2, 0, state.length - pos)
+        val result = base + String.format("%02d", length) + state.substring(pos, pos + length) + postfix
 
         pos += length
         return result
@@ -137,13 +133,11 @@ fun MenuConfig<out GenericInteractionCreateEvent, *>.event(): Parameter<GenericI
 
 enum class MenuConfigPhase { BUILD, COMPONENTS, RENDER }
 
-class MenuContext(override val phase: MenuConfigPhase) : IMenuContext
-
 interface IMenuContext {
     val phase: MenuConfigPhase
 
-    fun <T> render(default: T, handler: () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
-    fun <T> render(handler: () -> T) = render(null, handler)
+    fun <T> renderValue(default: T, handler: () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
+    fun <T> renderValue(handler: () -> T) = renderValue(null, handler)
 }
 
 @MenuMarker
