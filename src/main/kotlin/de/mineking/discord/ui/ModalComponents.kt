@@ -5,15 +5,15 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import kotlin.reflect.full.primaryConstructor
 
-typealias ModalResult<M, T> = ModalContext<M>.() -> T
+typealias ModalResult<M, T> = suspend ModalContext<M>.() -> T
 
-typealias ModalHandler<M> = ModalContext<M>.() -> Unit
+typealias ModalHandler<M> = suspend ModalContext<M>.() -> Unit
 
 @MenuMarker
 class ModalContext<M>(menu: MenuInfo<M>, stateData: StateData, event: ModalInteractionEvent) : HandlerContext<M, ModalInteractionEvent>(menu, stateData, event) {
     override val message: Message get() = event.message!!
 
-    fun <N> switchMenu(menu: MessageMenu<N, *>, builder: StateBuilderConfig = DEFAULT_STATE_BUILDER) {
+    suspend fun <N> switchMenu(menu: MessageMenu<N, *>, builder: StateBuilderConfig = DEFAULT_STATE_BUILDER) {
         val state = StateBuilder(this, menu)
         state.builder()
 
@@ -25,20 +25,20 @@ class ModalContext<M>(menu: MenuInfo<M>, stateData: StateData, event: ModalInter
 }
 
 interface ModalComponent<T> : IComponent<TextInput> {
-    fun handle(context: ModalContext<*>): T
+    suspend fun handle(context: ModalContext<*>): T
 
     override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<TextInput>) -> List<TextInput>) = object : ModalComponent<T> {
-        override fun handle(context: ModalContext<*>) = this@ModalComponent.handle(context)
+        override suspend fun handle(context: ModalContext<*>) = this@ModalComponent.handle(context)
 
         override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper(generator) { this@ModalComponent.render(config, it) }
 
         override fun toString() = this@ModalComponent.toString()
     }
 
-    fun <O> map(handler: (value: T) -> O) = object : ModalComponent<O> {
+    fun <O> map(handler: suspend (value: T) -> O) = object : ModalComponent<O> {
         override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = this@ModalComponent.render(config, generator)
 
-        override fun handle(context: ModalContext<*>): O = handler.invoke(this@ModalComponent.handle(context))
+        override suspend fun handle(context: ModalContext<*>): O = handler.invoke(this@ModalComponent.handle(context))
 
         override fun toString() = this@ModalComponent.toString()
     }
@@ -50,7 +50,7 @@ fun <T> createModalElement(
     renderer: (MenuConfig<*, *>, String) -> TextInput
 ) = object : ModalComponent<T> {
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("$name:")))
-    override fun handle(context: ModalContext<*>) = handler.invoke(context)
+    override suspend fun handle(context: ModalContext<*>) = handler.invoke(context)
 
     override fun toString() = "ModalElement[$name]"
 }
@@ -58,14 +58,14 @@ fun <T> createModalElement(
 @MenuMarker
 class ModalComponentBuilder<T>(override val phase: MenuConfigPhase) : IMenuContext {
     internal val components = mutableListOf<ModalComponent<*>>()
-    internal var producer: (ModalContext<*>.() -> T)? = null
+    internal var producer: ModalResult<*, T>? = null
 
-    operator fun <T> ModalComponent<T>.unaryPlus(): ModalContext<*>.() -> T {
+    operator fun <T> ModalComponent<T>.unaryPlus(): ModalResult<*, T> {
         components.add(this)
         return this::handle
     }
 
-    fun produce(handler: ModalContext<*>.() -> T) {
+    fun produce(handler: ModalResult<*, T>) {
         require(producer == null)
         producer = handler
     }
@@ -76,7 +76,7 @@ fun <T> createModalComponent(config: ModalComponentBuilder<T>.() -> Unit) = obje
     val handle by lazy { ModalComponentBuilder<T>(MenuConfigPhase.COMPONENTS).apply(config) }
 
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = render.components.flatMap { it.render(config, generator) }
-    override fun handle(context: ModalContext<*>) = handle.producer!!.invoke(context)
+    override suspend fun handle(context: ModalContext<*>) = handle.producer!!.invoke(context)
 
     override fun toString() = "ModalComponent"
 }
@@ -97,5 +97,5 @@ fun <T> createLazyModalComponent(component: IMenuContext.() -> ModalComponent<T>
     val handleComponent by lazy { MenuContext(MenuConfigPhase.COMPONENTS).component() }
 
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderComponent.render(config, generator)
-    override fun handle(context: ModalContext<*>) = handleComponent.handle(context)
+    override suspend fun handle(context: ModalContext<*>) = handleComponent.handle(context)
 }

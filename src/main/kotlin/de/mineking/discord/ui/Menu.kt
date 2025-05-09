@@ -75,7 +75,7 @@ sealed class Menu<M, E : GenericInteractionCreateEvent, L : LocalizationFile?>(
 ) {
     val info = MenuInfo.create(this)
 
-    abstract fun handle(event: E)
+    abstract suspend fun handle(event: E)
 }
 
 class IdGenerator(private val state: String) {
@@ -144,8 +144,8 @@ interface IMenuContext {
 interface MenuConfig<M, L : LocalizationFile?> : StateContext<M>, StateConfig, IMenuContext {
     val localizationConfig: LocalizationConfig?
 
-    fun <T> setup(value: () -> T): T
-    fun initialize(handler: (param: M) -> Unit)
+    suspend fun <T> setup(value: suspend () -> T): T
+    suspend fun initialize(handler: suspend (param: M) -> Unit)
 
     fun <T> cache(value: () -> T): T
 
@@ -223,11 +223,11 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> setup(value: () -> T): T =
+    override suspend fun <T> setup(value: suspend () -> T): T =
         if (phase == MenuConfigPhase.BUILD) value().apply { setup += this }
         else menuInfo.menu.setup[currentSetup++] as T
 
-    override fun initialize(handler: (param: M) -> Unit) {
+    override suspend fun initialize(handler: suspend (param: M) -> Unit) {
         if (state is SendState<M>) handler(state.param) else Unit
     }
 

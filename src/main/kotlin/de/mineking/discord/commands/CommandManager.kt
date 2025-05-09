@@ -26,6 +26,11 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
     var localization: CommandLocalizationHandler? = null
         private set
 
+    init {
+        manager.listen<GenericCommandInteractionEvent>(this::handleCommand)
+        manager.listen<CommandAutoCompleteInteractionEvent>(this::handleAutocomplete)
+    }
+
     fun getOptionMapper(type: KType): OptionMapper<*>? = optionMappers.findLast { it.accepts(this, type) }
     inline fun <reified T> getOptionMapper() = getOptionMapper(typeOf<T>())
 
@@ -33,7 +38,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         this.localization = localization
     }
 
-    override fun onGenericCommandInteraction(event: GenericCommandInteractionEvent) {
+    private suspend fun handleCommand(event: GenericCommandInteractionEvent) {
         val command = getCommand(event.fullCommandName) ?: error("Got command interaction event for unknown command ${event.fullCommandName}")
 
         try {
@@ -60,7 +65,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
                 else -> error("Unknown command event")
             }
 
-            fun <C : ICommandContext<*>> execute(context: C) {
+            suspend fun <C : ICommandContext<*>> execute(context: C) {
                 @Suppress("UNCHECKED_CAST")
                 (command as CommandImpl<C, *>).handle(context)
             }
@@ -69,7 +74,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         } catch (_: CommandTermination) {}
     }
 
-    override fun onCommandAutoCompleteInteraction(event: CommandAutoCompleteInteractionEvent) {
+    private suspend fun handleAutocomplete(event: CommandAutoCompleteInteractionEvent) {
         val command = getCommand(event.fullCommandName) ?: error("Got autocomplete interaction event for unknown command ${event.fullCommandName}")
         require(command is SlashCommandImpl) //Should always be true
 

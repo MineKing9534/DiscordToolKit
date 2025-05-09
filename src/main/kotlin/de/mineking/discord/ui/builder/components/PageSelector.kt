@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.entities.emoji.Emoji
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-fun MessageMenuConfig<*, *>.pageSelector(
+suspend fun MessageMenuConfig<*, *>.pageSelector(
     name: String,
     max: Int,
     ref: State<Int>,
@@ -53,7 +53,7 @@ fun pageFocusSelector(
 
 data class PaginationResult(val text: TextElement, val component: MessageComponent<ActionRow>)
 
-fun <T> MessageMenuConfig<*, *>.pagination(
+suspend fun <T> MessageMenuConfig<*, *>.pagination(
     name: String,
     entries: List<T>,
     display: T.(index: Int) -> TextElement = { index -> text("$index. ") + text(this) },

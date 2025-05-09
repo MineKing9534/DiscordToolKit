@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.PrimaryEntryPointCommandData
 
-typealias CommandHandler<C> = C.() -> Unit
+typealias CommandHandler<C> = suspend C.() -> Unit
 
 interface BeforeHandler<C> : CommandHandler<C> {
     val inherit: Boolean get() = true
@@ -42,7 +42,7 @@ interface CommandConfig<C> {
     fun before(handler: BeforeHandler<in C>)
     fun before(inherit: Boolean = false, handler: CommandHandler<C>) = before(object : BeforeHandler<C> {
         override val inherit: Boolean get() = inherit
-        override fun invoke(context: C) = context.handler()
+        override suspend fun invoke(context: C) = context.handler()
     })
 }
 
@@ -104,7 +104,7 @@ class SlashCommandBuilder(manager: CommandManager, command: SlashCommandImpl?) :
         if (command == null) options += data
         return object : RichOption<OptionalOption<T>> {
             override val data: OptionInfo = data
-            override fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
+            override suspend fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
         }
     }
 
@@ -130,7 +130,7 @@ fun slashCommand(
 
     lateinit var command: SlashCommandImpl
     command = object : SlashCommandImpl(name, description, parent, localization, options, subcommands, builder.setup, builder.before, builder.inheritConditions, builder.handlers.isNotEmpty(), builder.defaultMemberPermission, builder.contexts, builder.types) {
-        override fun handle(context: SlashCommandContext) {
+        override suspend fun handle(context: SlashCommandContext) {
             val executor = SlashCommandBuilder(manager, this)
             executor.config()
 
@@ -158,7 +158,7 @@ fun <C : ContextCommandContext<*, *>> contextCommand(
 
     lateinit var command: ContextCommandImpl<C>
     command = object : ContextCommandImpl<C>(type, name, localization, builder.setup, builder.before, builder.defaultMemberPermission, builder.contexts, builder.types) {
-        override fun handle(context: C) {
+        override suspend fun handle(context: C) {
             val executor = GenericCommandBuilder(manager, this)
             executor.config()
 
@@ -190,7 +190,7 @@ fun entrypointCommand(
     localization: LocalizationFile? = null
 ): EntrypointCommand = {
     object : EntryPointCommandImpl(name, description, localization, emptyList(), emptyList(), permission, contexts ?: defaultInteractionContextTypes.toMutableSet(), types ?: defaultIntegrationTypes.toMutableSet(), PrimaryEntryPointCommandData.Handler.DISCORD_LAUNCH_ACTIVITY) {
-        override fun handle(context: EntrypointCommandContext) {}
+        override suspend fun handle(context: EntrypointCommandContext) {}
     }
 }
 
@@ -207,7 +207,7 @@ fun entrypointCommand(
 
     lateinit var command: EntryPointCommandImpl
     command = object : EntryPointCommandImpl(name, description, localization, builder.setup, builder.before, builder.defaultMemberPermission, builder.contexts, builder.types, PrimaryEntryPointCommandData.Handler.APP_HANDLER) {
-        override fun handle(context: EntrypointCommandContext) {
+        override suspend fun handle(context: EntrypointCommandContext) {
             val executor = GenericCommandBuilder(manager, this)
             executor.config()
 

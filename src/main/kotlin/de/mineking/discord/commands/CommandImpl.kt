@@ -50,7 +50,7 @@ sealed class CommandImpl<C : ICommandContext<*>, D : CommandData>(
     override fun getIdLong() = root.idLong ?: error("Command has no id yet. Register it first and trigger a command update")
     override fun getAsMention() = "</${getDiscordPath()}:$id>"
 
-    abstract fun handle(context: C)
+    abstract suspend fun handle(context: C)
     abstract fun build(manager: CommandManager): D
 
     protected fun finalize(data: D) {
