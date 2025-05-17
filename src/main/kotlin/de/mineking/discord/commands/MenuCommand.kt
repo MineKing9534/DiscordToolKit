@@ -3,6 +3,7 @@ package de.mineking.discord.commands
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.*
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent
 import net.dv8tion.jda.api.interactions.IntegrationType
@@ -11,18 +12,18 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.requests.RestAction
 import kotlin.reflect.KType
 
-typealias MenuCommandConfigurator = MenuCommandConfig<*>.(localization: LocalizationFile?) -> Unit
-typealias LocalizedMenuCommandConfigurator<L> = MenuCommandConfig<L>.(localization: L) -> Unit
+typealias MenuCommandConfigurator = suspend MenuCommandConfig<*>.(localization: LocalizationFile?) -> Unit
+typealias LocalizedMenuCommandConfigurator<L> = suspend MenuCommandConfig<L>.(localization: L) -> Unit
 
 @CommandMarker
 interface MenuCommandConfig<L : LocalizationFile?> : MessageMenuConfig<SlashCommandContext, L>, OptionConfig, CommandConfig<SlashCommandContext> {
-    fun <T> Option<T>.createUninitializedState(type: KType, handler: StateHandler<T?>? = null) = createState(type, null, handler)
-    fun <T> Option<T>.createState(
+    suspend fun <T> Option<T>.createUninitializedState(type: KType, handler: StateHandler<T?>? = null) = createState(type, null, handler)
+    suspend fun <T> Option<T>.createState(
         type: KType = if (this is RichOption) this.type else error("You need to provide a type"),
         default: T = if (this is RichOption && this.default != null) this.default!! else error("You need to provide a default value or use createUninitializedState"),
         handler: StateHandler<T>? = null
     ): State<T> {
-        val (_, setValue, state) = state<T>(type, default, handler)
+        val (_, setValue, state) = state(type, default, handler)
         initialize { setValue(this@createState(it)) }
 
         return state
@@ -48,7 +49,7 @@ class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: Command
         options += data
         return object : RichOption<OptionalOption<T>> {
             override val data: OptionInfo = data
-            override fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
+            override suspend fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
         }
     }
 
@@ -73,7 +74,7 @@ class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: Command
     }
 }
 
-enum class MenuCommandResponseType(val action: SlashCommandContext.(menu: MessageMenu<SlashCommandContext, *>) -> RestAction<*>) {
+enum class MenuCommandResponseType(val action: suspend SlashCommandContext.(menu: MessageMenu<SlashCommandContext, *>) -> RestAction<*>) {
     REPLY({ menu -> replyMenu(menu, this, false) }),
     EPHEMERAL_REPLY({ menu -> replyMenu(menu, this, true) }),
     CHANNEL({ menu -> channel.sendMenu(menu, this) })
@@ -119,7 +120,7 @@ fun <L : LocalizationFile?> localizedMenuCommand(
 
     val ui = manager.manager.get<UIManager>()
     val builder = MenuCommandConfigImpl(this, MessageMenuConfigImpl(MenuConfigPhase.BUILD, null, MenuInfo.create(menuName, ui), localization) { MenuCommandConfigImpl(manager, this).config(localization) })
-    builder.config(localization)
+    runBlocking { builder.config(localization) }
 
     @Suppress("UNCHECKED_CAST")
     val menu = ui.registerLocalizedMenu(menuName, defer, useComponentsV2, localization, builder) { MenuCommandConfigImpl(manager, this).config(localization) }

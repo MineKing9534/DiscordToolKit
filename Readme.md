@@ -16,6 +16,9 @@ If you don't provide an instance of your main class, `Unit` is used implicitly.
 
 There are some examples available in `src/test/kotlin/examples` if you want to see some features in action. If you want to run them you have to add the `-DTOKEN=<YOUR BOT TOKEN>` flag.
 
+> [!NOTE]
+> DiscordToolKit uses kotlin coroutines. Therefore, some public methods are marked as `suspend` and therefore have to be called from a coroutine context. If you don't use coroutines in your project, you can use the `runBlocking` function to call these methods.
+
 # Table of Contents
 <!-- TOC -->
 * [Introduction](#introduction)

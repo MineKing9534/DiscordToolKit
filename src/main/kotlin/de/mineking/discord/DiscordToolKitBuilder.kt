@@ -5,26 +5,45 @@ import de.mineking.discord.localization.AdvancedLocalizationManager
 import de.mineking.discord.localization.LocalizationManager
 import de.mineking.discord.localization.SimpleLocalizationManager
 import de.mineking.discord.ui.UIManager
+import de.mineking.discord.utils.CoroutineEventListener
+import de.mineking.discord.utils.CoroutineEventManager
+import de.mineking.discord.utils.createCoroutineScope
+import de.mineking.discord.utils.listen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.DiscordLocale
 
 typealias ManagerConfigurator<M> = M.() -> Unit
 
-open class Manager(val manager: DiscordToolKit<*>) : ListenerAdapter()
+open class Manager(val manager: DiscordToolKit<*>)
 
-class DiscordToolKit<B> internal constructor(val jda: JDA, val bot: B, val managers: Set<Manager>) {
+class DiscordToolKit<B> internal constructor(
+    val jda: JDA,
+    val bot: B,
+    val managers: Set<Manager>,
+    val coroutineScope: CoroutineScope
+) {
     lateinit var localizationManager: LocalizationManager internal set
 
     inline fun <reified T : Manager> get(): T = managers.filterIsInstance<T>().first()
+    internal inline fun <reified T : GenericEvent> listen(crossinline consumer: suspend T.() -> Unit) = jda.listen(consumer)
 }
 
 fun <B> discordToolKit(jda: JDA, bot: B) = DiscordToolKitBuilder(jda, bot)
 fun discordToolKit(jda: JDA) = discordToolKit(jda, Unit)
 
+private val logger = KotlinLogging.logger {}
+
 class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
     val managers = mutableListOf<(manager: DiscordToolKit<B>) -> Manager>()
     var localizationManager: (manager: DiscordToolKit<B>) -> LocalizationManager = { SimpleLocalizationManager(it) }
+
+    var coroutineScope: CoroutineScope = createCoroutineScope(logger, Dispatchers.Default)
 
     inline fun <reified T : Manager> get(): T = managers.filterIsInstance<T>().first()
 
@@ -32,8 +51,6 @@ class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
         managers += {
             val manager = instance(it)
             manager.config()
-
-            jda.addEventListener(manager)
 
             manager
         }
@@ -62,8 +79,10 @@ class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
     fun withUIManager(config: ManagerConfigurator<UIManager> = {}) = addManager({ UIManager(it) }, config)
 
     fun build(): DiscordToolKit<B> {
+        jda.setEventManager(CoroutineEventManager(coroutineScope))
+
         val managers = hashSetOf<Manager>()
-        val manager = DiscordToolKit<B>(jda, bot, managers)
+        val manager = DiscordToolKit(jda, bot, managers, coroutineScope)
 
         manager.localizationManager = localizationManager(manager)
         this.managers.forEach { managers += it(manager) }

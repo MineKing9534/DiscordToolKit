@@ -37,7 +37,7 @@ class ModalMenu<M, L : LocalizationFile?>(
         return rows
     }
 
-    override fun handle(event: ModalInteractionEvent) {
+    override suspend fun handle(event: ModalInteractionEvent) {
         if (defer == DeferMode.ALWAYS) event.deferEdit().queue()
 
         val data = (listOf(event.modalId) + event.values.map { it.customId }).decodeState(2)
@@ -56,7 +56,7 @@ class ModalMenu<M, L : LocalizationFile?>(
         context.after.forEach { it() }
     }
 
-    fun build(state: StateContext<M>): Modal {
+    suspend fun build(state: StateContext<M>): Modal {
         val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.RENDER, state, info)
         renderer.config(localization)
 
@@ -67,18 +67,18 @@ class ModalMenu<M, L : LocalizationFile?>(
             .build()
     }
 
-    fun createInitial(param: M): Modal {
+    suspend fun createInitial(param: M): Modal {
         val state = SendState(info, StateData.createInitial(states), param)
         return build(state)
     }
 }
 
-fun IModalCallback.replyModal(menu: ModalMenu<Unit, *>) = replyModal(menu, Unit)
-fun <C : IModalCallback> C.replyEventModal(menu: ModalMenu<in C, *>) = replyModal(menu, this)
-fun <M> IModalCallback.replyModal(menu: ModalMenu<M, *>, param: M) = replyModal(menu.createInitial(param))
+suspend fun IModalCallback.replyModal(menu: ModalMenu<Unit, *>) = replyModal(menu, Unit)
+suspend fun <C : IModalCallback> C.replyEventModal(menu: ModalMenu<in C, *>) = replyModal(menu, this)
+suspend fun <M> IModalCallback.replyModal(menu: ModalMenu<M, *>, param: M) = replyModal(menu.createInitial(param))
 
-typealias ModalConfigurator<M> = ModalConfig<M, *>.() -> Unit
-typealias LocalizedModalConfigurator<M, L> = ModalConfig<M, L>.(localization: L) -> Unit
+typealias ModalConfigurator<M> = suspend ModalConfig<M, *>.() -> Unit
+typealias LocalizedModalConfigurator<M, L> = suspend ModalConfig<M, L>.(localization: L) -> Unit
 
 interface ModalConfig<M, L : LocalizationFile?> : MenuConfig<M, L> {
     operator fun <T> ModalComponent<T>.unaryPlus(): ModalResult<M, T>
