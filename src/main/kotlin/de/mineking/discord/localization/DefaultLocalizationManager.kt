@@ -238,31 +238,27 @@ class AdvancedLocalizationManager(
 
             defaultValues.forEach { (name, type) -> providedProperties(name to type) }
             args.forEach { (name, type) -> providedProperties(name to type) }
-        }).onSuccess {
+        }).onSuccess { compiled ->
+            val scriptClass = compiled.getClass(null).valueOrThrow().java
+            val constructor = scriptClass.constructors.first()
+
+            val resultField = scriptClass.getDeclaredField(compiled.resultField!!.first).apply { isAccessible = true }
+
             element = Element(script.trim()) { args ->
                 runBlocking {
+                    val config = ScriptEvaluationConfiguration {
+                        providedProperties("LOCALE" to locale)
+                        providedProperties("FILE" to file.first)
+                        providedProperties("ARGS" to ArgumentMap(args))
+                        providedProperties("MANAGER" to this@AdvancedLocalizationManager)
+
+                        defaultValues.forEach { (name, _, value) -> providedProperties(name to value(this@AdvancedLocalizationManager, args)) }
+                        args.forEach { (name, value) -> providedProperties(name to value) }
+                    }
+
                     try {
-                        val value = engine.evaluator(it, ScriptEvaluationConfiguration {
-                            providedProperties("LOCALE" to locale)
-                            providedProperties("FILE" to file.first)
-                            providedProperties("ARGS" to ArgumentMap(args))
-                            providedProperties("MANAGER" to this@AdvancedLocalizationManager)
-
-                            defaultValues.forEach { (name, _, value) -> providedProperties(name to value(this@AdvancedLocalizationManager, args)) }
-                            args.forEach { (name, value) -> providedProperties(name to value) }
-                        }).onFailure { result ->
-                            val report = result.reports.find { it.isError() }
-                            if (report == null) return@onFailure
-
-                            if (report.exception != null) logger.error("Error executing $location#$key for $locale", report.exception)
-                            else logger.error("Error executing $location$key for $locale: ${report.message}")
-                        }.valueOrNull()?.returnValue
-
-                        when (value) {
-                            is ResultValue.Value -> value.value
-                            is ResultValue.Error -> throw value.error
-                            else -> error("Invalid result")
-                        }
+                        val wrappedResult = constructor.newInstance(*config[ScriptEvaluationConfiguration.providedProperties]!!.map { it.value }.toTypedArray())
+                        resultField.get(wrappedResult)
                     } catch (e: Exception) {
                         logger.error("Error executing $location#$key for $locale", e)
                         createDefaultValue("\${EXECUTION ERROR}", type)
