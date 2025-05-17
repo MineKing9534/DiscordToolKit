@@ -19,7 +19,7 @@ interface OptionMapper<T> {
     fun accepts(manager: CommandManager, type: KType): Boolean
     fun getType(manager: CommandManager, type: KType): OptionType
 
-    fun read(manager: CommandManager, type: KType, context: IOptionContext<*>, name: String): T
+    suspend fun read(manager: CommandManager, type: KType, context: IOptionContext<*>, name: String): T
 
     fun configure(manager: CommandManager, command: SlashCommandImpl, info: OptionInfo, type: KType, option: OptionData)
 }
@@ -64,7 +64,7 @@ inline fun <reified T> optionMapper(
     override fun accepts(manager: CommandManager, type: KType): Boolean = type.isSubtypeOf(typeOf<T>())
     override fun getType(manager: CommandManager, type: KType): OptionType = optionType
 
-    override fun read(manager: CommandManager, type: KType, context: IOptionContext<*>, name: String): T = context.parser(name, type)
+    override suspend fun read(manager: CommandManager, type: KType, context: IOptionContext<*>, name: String): T = context.parser(name, type)
 
     override fun configure(manager: CommandManager, command: SlashCommandImpl, info: OptionInfo, type: KType, option: OptionData) = option.configure(manager, command, info, type)
 
@@ -91,7 +91,7 @@ inline fun <reified T, reified D> optionMapper(
     override fun accepts(manager: CommandManager, type: KType): Boolean = type.isSubtypeOf(typeOf<T>())
     override fun getType(manager: CommandManager, type: KType): OptionType = mapper.getType(manager, type)
 
-    override fun read(manager: CommandManager, type: KType, context: IOptionContext<*>, name: String): T = context.parser(mapper.read(manager, type, context, name), type)
+    override suspend fun read(manager: CommandManager, type: KType, context: IOptionContext<*>, name: String): T = context.parser(mapper.read(manager, type, context, name), type)
 
     override fun configure(manager: CommandManager, command: SlashCommandImpl, info: OptionInfo, type: KType, option: OptionData) {
         mapper.configure(manager, command, info, type, option)

@@ -15,7 +15,8 @@ fun main() {
                 val amount = option<Int>("amount", description = "The amount to repeat the given text").orElse(1)
 
                 execute {
-                    reply((1..amount()).joinToString("\n") { text() }).queue()
+                    val text = text()
+                    reply((1..amount()).joinToString("\n") { text }).queue()
                 }
             }
 

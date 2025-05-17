@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import kotlin.reflect.typeOf
 
-typealias ComponentHandler<M, E> = ComponentContext<M, E>.() -> Unit
+typealias ComponentHandler<M, E> = suspend ComponentContext<M, E>.() -> Unit
 
 @MenuMarker
 class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: MenuInfo<M>, stateData: StateData, event: E) : HandlerContext<M, E>(menu, stateData, event) {
@@ -25,14 +25,14 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
         event.deferEdit().queue()
     }
 
-    fun render() = (menuInfo.menu as MessageMenu).render(this)
-    fun update() = (menuInfo.menu as MessageMenu).update(this)
+    suspend fun render() = (menuInfo.menu as MessageMenu).render(this)
+    suspend fun update() = (menuInfo.menu as MessageMenu).update(this)
 
-    fun cloneMenu(ephemeral: Boolean = true) =
+    suspend fun cloneMenu(ephemeral: Boolean = true) =
         if (isAcknowledged) hook.sendMessage(render().toCreateData()).setEphemeral(ephemeral).queue()
         else reply(render().toCreateData()).setEphemeral(ephemeral).queue()
 
-    fun <N> switchMenu(menu: Menu<N, *, *>, builder: StateBuilderConfig = DEFAULT_STATE_BUILDER) {
+    suspend fun <N> switchMenu(menu: Menu<N, *, *>, builder: StateBuilderConfig = DEFAULT_STATE_BUILDER) {
         preventUpdate()
 
         val state = StateBuilder(this, menu)
@@ -53,7 +53,7 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
         }
     }
 
-    operator fun BackReference.invoke(state: StateBuilderConfig = {
+    suspend operator fun BackReference.invoke(state: StateBuilderConfig = {
         copy(stateCount)
         pushDefaults()
     }) = switchMenu(menu.menu, state)
