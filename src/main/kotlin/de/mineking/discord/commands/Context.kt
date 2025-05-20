@@ -251,7 +251,7 @@ class AutocompleteContext<out T>(
     override fun <T : Any?> getOption(name: String, fallback: Supplier<out T?>?, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, fallback, resolver)
 }
 
-typealias AutocompleteHandler<T> = AutocompleteContext<T>.() -> Unit
+typealias AutocompleteHandler<T> = suspend AutocompleteContext<T>.() -> Unit
 
 @Suppress("UNCHECKED_CAST")
 fun <T, U> AutocompleteHandler<T>.map(mapper: (value: U?) -> T?): AutocompleteHandler<U> = { this@map(AutocompleteContext(manager, event, mapper(currentValue), options, command, option)) }

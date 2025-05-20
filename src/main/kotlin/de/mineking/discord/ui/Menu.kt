@@ -136,8 +136,8 @@ enum class MenuConfigPhase { BUILD, COMPONENTS, RENDER }
 interface IMenuContext {
     val phase: MenuConfigPhase
 
-    fun <T> renderValue(default: T, handler: () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
-    fun <T> renderValue(handler: () -> T) = renderValue(null, handler)
+    suspend fun <T> renderValue(default: T, handler: suspend () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
+    suspend fun <T> renderValue(handler: suspend () -> T) = renderValue(null, handler)
 }
 
 @MenuMarker
@@ -248,3 +248,4 @@ object RenderTermination : RuntimeException() {
 }
 
 fun MenuConfig<*, *>.terminateRender(): Nothing = throw RenderTermination
+fun ComponentContext<*, *>.terminateRender(): Nothing = throw RenderTermination
