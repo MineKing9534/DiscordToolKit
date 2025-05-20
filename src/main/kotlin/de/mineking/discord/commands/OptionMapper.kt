@@ -1,5 +1,6 @@
 package de.mineking.discord.commands
 
+import jdk.internal.net.http.frame.Http2Frame.asString
 import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message.Attachment
@@ -44,11 +45,19 @@ object DefaultOptionMappers {
     val INPUT_STREAM = nullSafeOptionMapper<InputStream>(OptionType.ATTACHMENT) { asAttachment.proxy.download().get() }
     val BYTE_ARRAY = nullSafeOptionMapper<ByteArray>(OptionType.ATTACHMENT) { asAttachment.proxy.download().get().readAllBytes() }
 
-    val ENUM = nullSafeOptionMapper<Enum<*>>(OptionType.STRING, { manager, command, option, type -> type.jvmErasure.java.enumConstants
-        .map { it as Enum<*> }
-        .mapNotNull { enum -> enum.declaringJavaClass.getField(enum.name).getAnnotation(EnumChoice::class.java)?.let { annotation ->
-            choice(enum.name, annotation.name.takeIf { it.isNotBlank() } ?: enum.name, localize = annotation.localize).build(manager, command, option, OptionType.STRING)
-        } }
+    val ENUM = nullSafeOptionMapper<Enum<*>>(OptionType.STRING, { manager, command, option, type ->
+        val temp = type.jvmErasure.java.enumConstants
+            .map { it as Enum<*> }
+            .associateWith { enum -> enum.declaringJavaClass.getField(enum.name).getAnnotation(EnumChoice::class.java) }
+
+        val entries =
+            if (temp.any { it.value != null }) temp.filterValues { it != null }
+            else temp
+
+        entries.mapNotNull { (enum, annotation) ->
+            choice(enum.name, annotation?.name?.takeIf { it.isNotBlank() } ?: enum.name, localize = annotation?.localize ?: ((command.localization ?: option.localization) != null))
+                .build(manager, command, option, OptionType.STRING)
+        }
         .forEach { addChoices(it) }
     }) { type -> type.jvmErasure.java.enumConstants
         .map { it as Enum<*> }
