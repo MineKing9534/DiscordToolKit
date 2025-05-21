@@ -164,8 +164,6 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
     fun <C : MessageComponent<*>> register(component: C): C
     operator fun MessageComponent<out MessageTopLevelComponent>.unaryPlus()
 
-    fun render(handler: () -> Unit)
-
     fun <T> lazy(default: T, provider: suspend () -> T): Lazy<T>
     fun <T> lazy(provider: suspend () -> T) = lazy(null, provider)
 
@@ -219,10 +217,6 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
         components += this
     }
 
-    override fun render(handler: () -> Unit) {
-        if (phase == MenuConfigPhase.RENDER) handler()
-    }
-
     override suspend fun <CL : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: CL, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, CL>): MessageMenu<M, CL> {
         @Suppress("UNCHECKED_CAST")
         return setup {
@@ -235,7 +229,8 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                         val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                             var currentSetup = 0
 
-                            override fun render(handler: () -> Unit) {}
+                            override suspend fun render(handler: suspend () -> Unit) {}
+
                             override fun <T> lazy(default: T, provider: suspend () -> T) = this@registerLocalizedMenu.lazy(default, provider)
 
                             override suspend fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
@@ -252,7 +247,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             override fun skipState(amount: Int) = this@registerLocalizedMenu.skipState(amount)
                             override fun <T> state(type: KType, initial: T, handler: StateHandler<T>?): State<T> = this@registerLocalizedMenu.state(type, initial, handler)
 
-                            override fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit) {
+                            override suspend fun localize(locale: DiscordLocale, init: suspend LocalizationConfig.() -> Unit) {
                                 super.localize(locale, init)
                                 this@registerLocalizedMenu.localize(locale, init)
                             }
@@ -281,7 +276,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                         val context = object : MessageMenuConfigImpl<M, L>(phase, state, this@MessageMenuConfigImpl.menuInfo, this@MessageMenuConfigImpl.localization, this@MessageMenuConfigImpl.config) {
                             var currentSetup = 0
 
-                            override fun render(handler: () -> Unit) {}
+                            override suspend fun render(handler: suspend () -> Unit) {}
                             override fun <T> lazy(default: T, provider: suspend () -> T) = this@registerLocalizedModal.lazy(default, provider)
 
                             override suspend fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
@@ -298,7 +293,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             override fun skipState(amount: Int) = this@registerLocalizedModal.skipState(amount)
                             override fun <T> state(type: KType, initial: T, handler: StateHandler<T>?): State<T> = this@registerLocalizedModal.state(type, initial, handler)
 
-                            override fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit) {
+                            override suspend fun localize(locale: DiscordLocale, init: suspend LocalizationConfig.() -> Unit) {
                                 super.localize(locale, init)
                                 this@registerLocalizedModal.localize(locale, init)
                             }

@@ -138,6 +138,10 @@ interface IMenuContext {
 
     suspend fun <T> renderValue(default: T, handler: suspend () -> T) = if (phase == MenuConfigPhase.RENDER) handler() else default
     suspend fun <T> renderValue(handler: suspend () -> T) = renderValue(null, handler)
+
+    suspend fun render(handler: suspend () -> Unit) {
+        if (phase == MenuConfigPhase.RENDER) handler()
+    }
 }
 
 @MenuMarker
@@ -152,7 +156,7 @@ interface MenuConfig<M, L : LocalizationFile?> : StateContext<M>, StateConfig, I
     fun <T> parameter(initial: (param: M) -> T, render: HandlerContext<M, *>.() -> T): Parameter<T> = parameter({ error("Render-Only param value used during build") }, initial, render)
     fun <T> parameter(default: () -> T, initial: (param: M) -> T, render: HandlerContext<M, *>.() -> T): Parameter<T>
 
-    fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit = {})
+    suspend fun localize(locale: DiscordLocale, init: suspend LocalizationConfig.() -> Unit = {})
 }
 
 interface MenuConfigData {
@@ -238,8 +242,10 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
         else error("")
     }
 
-    override fun localize(locale: DiscordLocale, init: LocalizationConfig.() -> Unit) {
-        localizationConfig = LocalizationConfig(locale).apply(init)
+    override suspend fun localize(locale: DiscordLocale, init: suspend LocalizationConfig.() -> Unit) = render {
+        val config = LocalizationConfig(locale)
+        config.init()
+        localizationConfig = config
     }
 }
 

@@ -96,7 +96,7 @@ fun MenuConfig<out GuildChannel, *>.channelLocale() = parameter(
     { event.guildLocale }
 )
 
-fun MenuConfig<out GuildChannel, *>.localizeForChannel(config: LocalizationConfig.() -> Unit = {}) = localize(channelLocale, config)
+suspend fun MenuConfig<out GuildChannel, *>.localizeForChannel(config: suspend LocalizationConfig.() -> Unit = {}) = localize(channelLocale, config)
 
 val MenuConfig<out Interaction, *>.guildLocale get() = guildLocale()()
 fun MenuConfig<out Interaction, *>.guildLocale() = parameter(
@@ -105,7 +105,7 @@ fun MenuConfig<out Interaction, *>.guildLocale() = parameter(
     { event.guildLocale }
 )
 
-fun MenuConfig<out Interaction, *>.localizeForGuild(config: LocalizationConfig.() -> Unit = {}) = localize(guildLocale, config)
+suspend fun MenuConfig<out Interaction, *>.localizeForGuild(config: suspend LocalizationConfig.() -> Unit = {}) = localize(guildLocale, config)
 
 val MenuConfig<out Interaction, *>.userLocale get() = userLocale()()
 fun MenuConfig<out Interaction, *>.userLocale() = parameter(
@@ -114,4 +114,4 @@ fun MenuConfig<out Interaction, *>.userLocale() = parameter(
     { event.userLocale }
 )
 
-fun MenuConfig<out Interaction, *>.localizeForUser(config: LocalizationConfig.() -> Unit = {}) = localize(userLocale, config)
+suspend fun MenuConfig<out Interaction, *>.localizeForUser(config: suspend LocalizationConfig.() -> Unit = {}) = localize(userLocale, config)
