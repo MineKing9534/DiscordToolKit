@@ -83,8 +83,8 @@ fun <T> MenuConfig<*, *>.read(function: KFunction<T>): T {
 }
 
 data class LocalizationConfig(val locale: DiscordLocale, val args: MutableMap<String, Pair<Any?, KType>> = mutableMapOf()) {
-    inline fun <reified T> argument(name: String, value: T) = argument(name, typeOf<T>(), value)
-    fun argument(name: String, type: KType, value: Any?) {
+    inline fun <reified T> bindParameter(name: String, value: T) = bindParameter(name, typeOf<T>(), value)
+    fun bindParameter(name: String, type: KType, value: Any?) {
         args[name] = value to type
     }
 }

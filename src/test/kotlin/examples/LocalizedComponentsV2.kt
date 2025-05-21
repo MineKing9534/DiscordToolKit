@@ -25,8 +25,8 @@ fun main() {
                 var text by state("")
 
                 localizeForUser {
-                    argument("count", count)
-                    argument("text", text)
+                    bindParameter("count", count)
+                    bindParameter("text", text)
                 }
 
                 +container(

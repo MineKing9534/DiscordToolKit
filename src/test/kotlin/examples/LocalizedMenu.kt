@@ -24,7 +24,7 @@ fun main() {
                 var state by state(0)
 
                 localizeForUser {
-                    argument("a", state)
+                    bindParameter("a", state)
                 }
 
                 embed(read(localization::testEmbed))
