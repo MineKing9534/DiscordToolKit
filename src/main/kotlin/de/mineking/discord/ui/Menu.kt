@@ -180,8 +180,8 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
 
     internal val lazy = mutableListOf<Lazy<*>>()
 
-    open fun <T> lazy(default: T, provider: () -> T): Lazy<T> {
-        val lazy = Lazy(phase == MenuConfigPhase.RENDER, default, provider)
+    open fun <T> lazy(default: T, provider: suspend () -> T): Lazy<T> {
+        val lazy = Lazy(menuInfo, phase == MenuConfigPhase.RENDER, default, provider)
         this.lazy += lazy
 
         return lazy

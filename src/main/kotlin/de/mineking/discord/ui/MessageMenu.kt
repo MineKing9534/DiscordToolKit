@@ -4,6 +4,8 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.builder.IMessage
 import de.mineking.discord.ui.builder.Message
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.components.ActionComponent
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
@@ -149,10 +151,12 @@ suspend fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestA
 typealias MessageMenuConfigurator<M> = suspend MessageMenuConfig<M, *>.() -> Unit
 typealias LocalizedMessageMenuConfigurator<M, L> = suspend MessageMenuConfig<M, L>.(localization: L) -> Unit
 
-class Lazy<T>(var active: Boolean = false, val default: T, provider: () -> T) {
-    private val _value by lazy(provider)
+class Lazy<T>(val menu: MenuInfo<*>, var active: Boolean = false, val default: T, provider: suspend () -> T) {
+    private val _value = menu.manager.manager.coroutineScope.async(start = CoroutineStart.LAZY) { provider() }
 
-    val value get() = if (active) _value else default
+    suspend fun lazyValue() = _value.await()
+
+    val value get() = if (active) runBlocking { _value.await() } else default
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = value
 }
 
@@ -162,8 +166,8 @@ interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessa
 
     fun render(handler: () -> Unit)
 
-    fun <T> lazy(default: T, provider: () -> T): Lazy<T>
-    fun <T> lazy(provider: () -> T) = lazy(null, provider)
+    fun <T> lazy(default: T, provider: suspend () -> T): Lazy<T>
+    fun <T> lazy(provider: suspend () -> T) = lazy(null, provider)
 
     suspend fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: L, detach: Boolean = false, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L>
     suspend fun submenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: LocalizationFile? = null, detach: Boolean = false, init: MessageMenuConfigurator<M>): MessageMenu<M, LocalizationFile?> {
@@ -232,7 +236,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             var currentSetup = 0
 
                             override fun render(handler: () -> Unit) {}
-                            override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedMenu.lazy(default, provider)
+                            override fun <T> lazy(default: T, provider: suspend () -> T) = this@registerLocalizedMenu.lazy(default, provider)
 
                             override suspend fun <L : LocalizationFile?> localizedSubmenu(name: String, defer: DeferMode, useComponentsV2: Boolean?, localization: L, detach: Boolean, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
                                 if (this@registerLocalizedMenu.menuInfo.name.menuName() == name) end(init)
@@ -278,7 +282,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                             var currentSetup = 0
 
                             override fun render(handler: () -> Unit) {}
-                            override fun <T> lazy(default: T, provider: () -> T) = this@registerLocalizedModal.lazy(default, provider)
+                            override fun <T> lazy(default: T, provider: suspend () -> T) = this@registerLocalizedModal.lazy(default, provider)
 
                             override suspend fun <L : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: L, detach: Boolean, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> {
                                 if (this@registerLocalizedModal.menuInfo.name.menuName() == name) end(init)
