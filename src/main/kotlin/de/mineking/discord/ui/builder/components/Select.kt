@@ -33,7 +33,7 @@ class SelectOption(
     fun show(visible: Boolean) = SelectOption(value, label, description, default, emoji, localization, visible, handler)
     fun hide(hide: Boolean) = show(!hide)
 
-    fun build(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
+    suspend fun build(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
         JDASelectOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
             .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", postfix = "options.$value"))
             .withEmoji(emoji)
@@ -195,7 +195,7 @@ fun entitySelect(
     max: Int = 1,
     localization: LocalizationFile? = null,
     handler: EntitySelectHandler = {}
-) = createMessageElement<ActionRow, EntitySelectInteractionEvent>(name, handler) { config, id ->
+) = createMessageElement(name, handler) { config, id ->
     val select = EntitySelectMenu.create(id, targets.toList())
         .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder"))
         .setMinValues(min)

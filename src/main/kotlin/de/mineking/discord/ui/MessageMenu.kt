@@ -28,7 +28,7 @@ fun IMessageEditCallback.disableComponents(message: net.dv8tion.jda.api.entities
 }).useComponentsV2(message.isUsingComponentsV2)
 
 @Suppress("UNCHECKED_CAST")
-fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>, force: Boolean = false) = config.components
+suspend fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigImpl<*, *>, force: Boolean = false) = config.components
     .map { if (force) it.show() else it }
     .flatMap {
         try {
@@ -46,7 +46,7 @@ class MessageMenu<M, L : LocalizationFile?>(
     states: List<InternalState<*>>,
     private val config: LocalizedMessageMenuConfigurator<M, L>
 ) : Menu<M, GenericComponentInteractionCreateEvent, L>(manager, name, defer, localization, setup, states) {
-    private fun buildComponents(renderer: MessageMenuConfigImpl<M, L>): List<MessageTopLevelComponent> {
+    private suspend fun buildComponents(renderer: MessageMenuConfigImpl<M, L>): List<MessageTopLevelComponent> {
         val generator = IdGenerator(renderer.stateData.encode())
 
         @Suppress("UNCHECKED_CAST")
@@ -154,9 +154,9 @@ typealias LocalizedMessageMenuConfigurator<M, L> = suspend MessageMenuConfig<M, 
 class Lazy<T>(val menu: MenuInfo<*>, var active: Boolean = false, val default: T, provider: suspend () -> T) {
     private val _value = menu.manager.manager.coroutineScope.async(start = CoroutineStart.LAZY) { provider() }
 
-    suspend fun lazyValue() = _value.await()
+    suspend fun getValue() = if (active) _value.await() else default
 
-    val value get() = if (active) runBlocking { _value.await() } else default
+    val value get() = runBlocking { getValue() }
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = value
 }
 

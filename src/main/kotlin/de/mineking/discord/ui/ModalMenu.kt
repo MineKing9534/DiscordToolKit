@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.interactions.callbacks.IModalCallback
 import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.interactions.modals.ModalTopLevelComponent
 
-fun renderModalComponents(id: IdGenerator, config: ModalConfigImpl<*, *>, force: Boolean = false) = config.components
+suspend fun renderModalComponents(id: IdGenerator, config: ModalConfigImpl<*, *>, force: Boolean = false) = config.components
     .map { if (force) it.show() else it }
     .flatMap {
         try {
@@ -26,7 +26,7 @@ class ModalMenu<M, L : LocalizationFile?>(
     states: List<InternalState<*>>,
     private val config: LocalizedModalConfigurator<M, L>
 ) : Menu<M, ModalInteractionEvent, L>(manager, name, defer, localization, setup, states) {
-    private fun buildComponents(generator: IdGenerator, renderer: ModalConfigImpl<M, L>): List<ModalTopLevelComponent> {
+    private suspend fun buildComponents(generator: IdGenerator, renderer: ModalConfigImpl<M, L>): List<ModalTopLevelComponent> {
         val components = renderModalComponents(generator, renderer)
 
         val rows = components.map { ActionRow.of(it) }

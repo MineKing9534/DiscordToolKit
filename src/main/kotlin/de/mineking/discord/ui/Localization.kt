@@ -11,7 +11,7 @@ import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.typeOf
 
 interface MenuLocalizationHandler {
-    fun readLocalizedString(
+    suspend fun readLocalizedString(
         menu: MenuConfig<*, *>,
         localization: LocalizationFile?,
         element: String?,
@@ -23,7 +23,7 @@ interface MenuLocalizationHandler {
 }
 
 class UnlocalizedLocalizationHandler : MenuLocalizationHandler {
-    override fun readLocalizedString(
+    override suspend fun readLocalizedString(
         menu: MenuConfig<*, *>,
         localization: LocalizationFile?,
         element: String?,
@@ -39,7 +39,7 @@ class UnlocalizedLocalizationHandler : MenuLocalizationHandler {
 }
 
 class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
-    override fun readLocalizedString(
+    override suspend fun readLocalizedString(
         menu: MenuConfig<*, *>,
         localization: LocalizationFile?,
         element: String?,
@@ -54,7 +54,7 @@ class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
         return when {
             localize -> {
                 @Suppress("UNCHECKED_CAST")
-                val config = menu.localizationConfig ?: error("You have to configure the localization context for a localized menu (e.g. call localize(DiscordLocale) in the menu builder)")
+                val config = menu.getLocalizationConfig() ?: error("You have to configure the localization context for a localized menu (e.g. call localize(DiscordLocale) in the menu builder)")
                 val locale = config.locale.takeIf { it in menu.menuInfo.manager.manager.localizationManager.locales } ?: menu.menuInfo.manager.manager.localizationManager.defaultLocale
 
                 val key =
@@ -70,14 +70,15 @@ class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
     }
 }
 
-fun <T> MenuConfig<*, *>.read(function: KFunction<T>): T {
+suspend fun <T> MenuConfig<*, *>.read(function: KFunction<T>): T {
+    val localizationConfig = getLocalizationConfig()
     require(localizationConfig != null) { "Cannot read localization before localize() call" }
 
     return function.call(*function.parameters.map {
-        if (it.hasAnnotation<Locale>()) localizationConfig!!.locale
+        if (it.hasAnnotation<Locale>()) localizationConfig.locale
         else if (it.hasAnnotation<LocalizationParameter>()) {
             val name = it.findAnnotation<LocalizationParameter>()?.name?.takeIf { it.isNotBlank() } ?: it.name!!
-            localizationConfig?.args[name]?.first
+            localizationConfig.args[name]?.first
         } else null
     }.toTypedArray())
 }

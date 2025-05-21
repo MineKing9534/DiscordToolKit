@@ -1,6 +1,9 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.entities.*
@@ -13,6 +16,7 @@ import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.interactions.callbacks.IMessageEditCallback
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
+import kotlin.math.max
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -146,7 +150,7 @@ interface IMenuContext {
 
 @MenuMarker
 interface MenuConfig<M, L : LocalizationFile?> : StateContext<M>, StateConfig, IMenuContext {
-    val localizationConfig: LocalizationConfig?
+    suspend fun getLocalizationConfig(): LocalizationConfig?
 
     suspend fun <T> setup(value: suspend () -> T): T
     suspend fun initialize(handler: suspend (param: M) -> Unit)
@@ -169,7 +173,7 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
     val state: StateContext<M>?,
     override val menuInfo: MenuInfo<M>
 ) : MenuConfig<M, L>, MenuConfigData {
-    override var localizationConfig: LocalizationConfig? = null
+    private var localizationConfig: Deferred<LocalizationConfig>? = null
 
     override val stateData: StateData = state?.stateData ?: StateData(mutableListOf())
     private val stateAccess = stateData?.access() //This not-null check is required to allow stateData to be overridden
@@ -242,11 +246,15 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
         else error("")
     }
 
-    override suspend fun localize(locale: DiscordLocale, init: suspend LocalizationConfig.() -> Unit) = render {
-        val config = LocalizationConfig(locale)
-        config.init()
-        localizationConfig = config
+    override suspend fun localize(locale: DiscordLocale, init: suspend LocalizationConfig.() -> Unit) {
+        localizationConfig = menuInfo.manager.manager.coroutineScope.async(start = CoroutineStart.LAZY) {
+            val config = LocalizationConfig(locale)
+            config.init()
+            config
+        }
     }
+
+    override suspend fun getLocalizationConfig(): LocalizationConfig? = localizationConfig?.await()
 }
 
 object RenderTermination : RuntimeException() {

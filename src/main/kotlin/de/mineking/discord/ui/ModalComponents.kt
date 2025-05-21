@@ -27,16 +27,16 @@ class ModalContext<M>(menu: MenuInfo<M>, stateData: StateData, event: ModalInter
 interface ModalComponent<T> : IComponent<TextInput> {
     suspend fun handle(context: ModalContext<*>): T
 
-    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<TextInput>) -> List<TextInput>) = object : ModalComponent<T> {
+    override fun transform(mapper: suspend (IdGenerator, suspend (IdGenerator) -> List<TextInput>) -> List<TextInput>) = object : ModalComponent<T> {
         override suspend fun handle(context: ModalContext<*>) = this@ModalComponent.handle(context)
 
-        override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper(generator) { this@ModalComponent.render(config, it) }
+        override suspend fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper(generator) { this@ModalComponent.render(config, it) }
 
         override fun toString() = this@ModalComponent.toString()
     }
 
     fun <O> map(handler: suspend (value: T) -> O) = object : ModalComponent<O> {
-        override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = this@ModalComponent.render(config, generator)
+        override suspend fun render(config: MenuConfig<*, *>, generator: IdGenerator) = this@ModalComponent.render(config, generator)
 
         override suspend fun handle(context: ModalContext<*>): O = handler.invoke(this@ModalComponent.handle(context))
 
@@ -47,9 +47,9 @@ interface ModalComponent<T> : IComponent<TextInput> {
 fun <T> createModalElement(
     name: String,
     handler: ModalContext<*>.() -> T,
-    renderer: (MenuConfig<*, *>, String) -> TextInput
+    renderer: suspend (MenuConfig<*, *>, String) -> TextInput
 ) = object : ModalComponent<T> {
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("$name:")))
+    override suspend fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("$name:")))
     override suspend fun handle(context: ModalContext<*>) = handler.invoke(context)
 
     override fun toString() = "ModalElement[$name]"
@@ -75,7 +75,7 @@ fun <T> createModalComponent(config: ModalComponentBuilder<T>.() -> Unit) = obje
     val render by lazy { ModalComponentBuilder<T>(MenuConfigPhase.RENDER).apply(config) }
     val handle by lazy { ModalComponentBuilder<T>(MenuConfigPhase.COMPONENTS).apply(config) }
 
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = render.components.flatMap { it.render(config, generator) }
+    override suspend fun render(config: MenuConfig<*, *>, generator: IdGenerator) = render.components.flatMap { it.render(config, generator) }
     override suspend fun handle(context: ModalContext<*>) = handle.producer!!.invoke(context)
 
     override fun toString() = "ModalComponent"
@@ -96,6 +96,6 @@ fun <T> createLazyModalComponent(component: IMenuContext.() -> ModalComponent<T>
     val renderComponent by lazy { MenuContext(MenuConfigPhase.RENDER).component() }
     val handleComponent by lazy { MenuContext(MenuConfigPhase.COMPONENTS).component() }
 
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderComponent.render(config, generator)
+    override suspend fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderComponent.render(config, generator)
     override suspend fun handle(context: ModalContext<*>) = handleComponent.handle(context)
 }
