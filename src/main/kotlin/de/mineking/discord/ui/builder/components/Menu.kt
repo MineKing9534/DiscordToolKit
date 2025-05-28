@@ -13,7 +13,7 @@ class BackReference(val menu: MenuInfo<*>, val stateCount: Int) {
     fun asButton(
         name: String = menu.name.menuName(),
         color: ButtonColor = DEFAULT_BUTTON_COLOR,
-        label: CharSequence = DEFAULT_LABEL,
+        label: CharSequence? = DEFAULT_LABEL,
         emoji: Emoji? = null,
         localization: LocalizationFile? = null
     ) = switchMenuButton(menu, name, color, label, emoji, localization) {
@@ -37,7 +37,7 @@ fun switchMenuButton(
     menu: Menu<*, *, *>,
     name: String = menu.name.menuName(),
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
@@ -49,7 +49,7 @@ fun switchMenuButton(
     menu: MenuInfo<*>,
     name: String = menu.name.menuName(),
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
@@ -61,7 +61,7 @@ fun switchMenuButton(
     menu: String,
     name: String = menu.menuName(),
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     state: StateBuilderConfig = DEFAULT_STATE_BUILDER
@@ -72,7 +72,7 @@ fun switchMenuButton(
 suspend fun MessageMenuConfig<*, *>.menuButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     menuLocalization: LocalizationFile? = localization,
@@ -85,7 +85,7 @@ suspend fun MessageMenuConfig<*, *>.menuButton(
 suspend inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedMenuButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
@@ -100,7 +100,7 @@ suspend inline fun <reified L : LocalizationFile> MessageMenuConfig<*, *>.locali
 suspend fun <L : LocalizationFile?> MessageMenuConfig<*, *>.localizedMenuButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     @Suppress("UNCHECKED_CAST")
@@ -138,7 +138,7 @@ class ModalButtonContext<M, N>(val target: MessageMenu<N, *>, val context: Modal
 suspend inline fun <reified T> MessageMenuConfig<*, *>.modalButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
@@ -152,7 +152,7 @@ suspend inline fun <reified T> MessageMenuConfig<*, *>.modalButton(
 suspend inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.localizedModalButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,
@@ -168,7 +168,7 @@ suspend inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*
 suspend inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedModalButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     title: CharSequence = DEFAULT_LABEL,
     localization: LocalizationFile? = null,

@@ -23,11 +23,11 @@ typealias ButtonHandler = ComponentHandler<*, ButtonInteractionEvent>
 fun button(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     handler: ButtonHandler = {}
-) = createMessageElement<Button, _>(name, handler) { config, id ->
+) = createMessageElement(name, handler) { config, id ->
     Button.of(
         color.style,
         id,
@@ -38,7 +38,7 @@ fun button(
 
 fun link(
     name: String,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     url: String,
     localization: LocalizationFile? = null
@@ -54,7 +54,7 @@ fun link(
 fun toggleButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     ref: State<Boolean>,
@@ -67,7 +67,7 @@ fun toggleButton(
 inline fun <reified T : Enum<T>> enumToggleButton(
     name: String,
     color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
+    label: CharSequence? = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null,
     ref: State<T>,
