@@ -15,13 +15,14 @@ fun main() {
                 val amount = option<Int>("amount", description = "The amount to repeat the given text").orElse(1)
 
                 execute {
+                    println(amount())
                     val text = text()
                     reply((1..amount()).joinToString("\n") { text }).queue()
                 }
             }
 
-            slashCommand("test") {
-                val option = option<Int>("option", choices = listOf(
+            /*slashCommand("test") {
+                val option = option<String>("option", choices = listOf(
                     choice("value", label = "label")
                 ))
             }
@@ -50,7 +51,7 @@ fun main() {
                         reply("Subcommand. ${ command.subcommand("group", "group_subcommand_a")!!.asMention }").setEphemeral(true).queue()
                     }
                 }
-            }
+            }*/
 
             updateCommands().queue()
         }.build()

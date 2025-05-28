@@ -41,7 +41,7 @@ fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) =
 private const val MAX_PER_ROW = 5
 
 fun actionRows(vararg component: MessageComponent<out ActionRowChildComponent>) = actionRows(component.toList())
-fun actionRows(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent<ActionRow>(components) { config, id ->
+fun actionRows(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent(components) { config, id ->
     val temp = mutableListOf<ActionRowChildComponent>()
     var currentSize = 0
 
@@ -71,13 +71,13 @@ fun separator(invisible: Boolean = false, spacing: Separator.Spacing = Separator
 fun container(
     vararg components: MessageComponent<out ContainerChildComponent>,
     spoiler: Boolean = false,
-    color: Color? = null
+    color: Int? = null
 ) = container(components.toList(), spoiler, color)
 
 fun container(
     components: List<MessageComponent<out ContainerChildComponent>>,
     spoiler: Boolean = false,
-    color: Color? = null
+    color: Int? = null
 ) = createLayoutComponent(components) { config, id ->
     listOf(
         Container.of(components.flatMap { it.render(config, id) })
