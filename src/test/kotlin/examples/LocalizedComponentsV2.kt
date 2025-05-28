@@ -29,23 +29,24 @@ fun main() {
                     bindParameter("text", text)
                 }
 
-                +container(
-                    section(
-                        modalButton("modal", component =
-                            textInput("text", value = text, required = false)
+                +container(color = 0x00ff00) {
+                    +section(
+                        modalButton(
+                            "modal", component =
+                                textInput("text", value = text, required = false)
                         ) {
                             text = it
-                        },
-                        localizedTextDisplay("text"),
-                        localizedTextDisplay("count")
-                    ),
-                    separator(),
-                    actionRow(
-                        button("inc", color = ButtonColor.GREEN) { count++ },
-                        button("dec", color = ButtonColor.RED) { count-- }
-                    ),
-                    color = Color.decode("#00FF00")
-                )
+                        }
+                    ) {
+                        +localizedTextDisplay("text")
+                        +localizedTextDisplay("count")
+                    }
+                    +separator()
+                    +actionRow {
+                        +button("inc", color = ButtonColor.GREEN) { count++ }
+                        +button("dec", color = ButtonColor.RED) { count-- }
+                    }
+                }
             }
 
             updateCommands().queue()
