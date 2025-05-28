@@ -39,6 +39,9 @@ data class TextElement(internal var text: String) {
     operator fun plus(text: Any) = TextElement(this.text + text)
 }
 
+fun TextElement.append(element: TextElement) = +element
+fun TextElement.append(text: String) = +text
+
 fun raw(text: Any) = TextElement(text.toString())
 fun block(init: TextElementBuilder) = raw(init.text())
 fun empty() = raw("")
@@ -58,31 +61,39 @@ fun quote(text: String) = line("> $text")
 fun quote(text: TextElement) = quote(text.text)
 fun quote(init: TextElementBuilder) = quote(init.text())
 
-fun bold(text: Any) = raw("**$text**")
-fun bold(init: TextElementBuilder) = bold(init.text())
-fun bold(text: TextElement) = bold(text.text)
+fun String.styled(apply: Boolean = true, transform: (String) -> String) = raw(if (apply) transform(this) else this)
 
-fun italic(text: Any) = raw("*$text*")
-fun italic(init: TextElementBuilder) = italic(init.text())
-fun italic(text: TextElement) = italic(text.text)
+fun bold(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "**$it**" }
+fun bold(apply: Boolean = true, init: TextElementBuilder) = bold(init.text(), apply)
+fun bold(text: TextElement, apply: Boolean = true) = bold(text.text, apply)
+fun String.asBold(apply: Boolean = true) = bold(this, apply)
 
-fun underline(text: Any) = raw("__${text}__")
-fun underline(init: TextElementBuilder) = underline(init.text())
-fun underline(text: TextElement) = underline(text.text)
+fun italic(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "*$it*" }
+fun italic(apply: Boolean = true, init: TextElementBuilder) = italic(init.text(), apply)
+fun italic(text: TextElement, apply: Boolean = true) = italic(text.text, apply)
+fun String.asItalic(apply: Boolean = true) = italic(this, apply)
 
-fun strikethrough(text: Any) = raw("~~$text~~")
-fun strikethrough(init: TextElementBuilder) = strikethrough(init.text())
-fun strikethrough(text: TextElement) = strikethrough(text.text)
+fun underline(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "__${it}__" }
+fun underline(apply: Boolean = true, init: TextElementBuilder) = underline(init.text(), apply)
+fun underline(text: TextElement, apply: Boolean = true) = underline(text.text, apply)
+fun String.asUnderlined(apply: Boolean = true) = underline(this, apply)
 
-fun spoiler(text: Any) = raw("||$text||")
-fun spoiler(init: TextElementBuilder) = spoiler(init.text())
-fun spoiler(text: TextElement) = spoiler(text.text)
+fun strikethrough(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "~~$it~~" }
+fun strikethrough(apply: Boolean = true, init: TextElementBuilder) = strikethrough(init.text(), apply)
+fun strikethrough(text: TextElement, apply: Boolean = true) = strikethrough(text.text, apply)
+fun String.asStrikethrough(apply: Boolean = true) = strikethrough(this, apply)
+
+fun spoiler(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "||$it||" }
+fun spoiler(apply: Boolean = true, init: TextElementBuilder) = spoiler(init.text(), apply)
+fun spoiler(text: TextElement, apply: Boolean = true) = spoiler(text.text, apply)
+fun String.asSpoiler(apply: Boolean = true) = spoiler(this, apply)
 
 fun hyperlink(url: String, text: String) = raw("[$text]($url)")
 fun hyperlink(url: String, init: TextElementBuilder) = hyperlink(url, init.text())
 fun hyperlink(url: String, element: TextElement) = hyperlink(url, element.text)
 
-fun code(text: String) = raw("`$text`")
+fun code(text: String, apply: Boolean = true) = text.styled(apply) { "`$it`" }
+
 fun codeBlock(language: String, text: String) = raw("```$language\n$text```")
 
 fun heading(i: Int, text: String) = line("${"#".repeat(i)} $text")
