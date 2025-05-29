@@ -59,12 +59,23 @@ class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: 
     }) = switchMenu(menu.menu, state)
 }
 
-fun <C : Component> createMessageComponent(vararg components: MessageComponent<C>) = createMessageComponent(components.toList())
-fun <C : Component> createMessageComponent(components: List<MessageComponent<C>>) = object : MessageComponent<C> {
+fun <C : Component> createMessageComponent(vararg components: MessageComponent<out C>) = createMessageComponent(components.toList())
+fun <C : Component> createMessageComponent(components: List<MessageComponent<out C>>) = object : MessageComponent<C> {
     override fun elements() = components.flatMap { it.elements() }
     override suspend fun render(config: MenuConfig<*, *>, generator: IdGenerator) = components.flatMap { it.render(config, generator) }
     override fun toString() = "MessageComponent"
 }
+
+class MessageComponentBuilder<C : Component> {
+    internal val components = mutableListOf<MessageComponent<out C>>()
+
+    operator fun MessageComponent<out C>.unaryPlus() {
+        components += this
+    }
+}
+
+fun <C : Component> createMessageComponent(builder: MessageComponentBuilder<C>.() -> Unit) =
+    createMessageComponent(MessageComponentBuilder<C>().apply(builder).components)
 
 interface MessageComponent<C : Component> : IComponent<C> {
     fun elements(): List<MessageElement<*, *>>
