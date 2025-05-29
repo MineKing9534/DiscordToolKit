@@ -44,7 +44,6 @@ fun message(init: MessageBuilder): Message {
 
 interface IMessage {
     fun content(content: String)
-    fun content(init: TextElementBuilder) = content(init.text())
     fun content(content: TextElement) = content(content.toString())
 
     fun embed(embed: MessageEmbed)
@@ -61,3 +60,5 @@ interface IMessage {
 
     fun build(): MessageEditBuilder
 }
+
+inline fun IMessage.content(init: TextElementBuilder) = content(build(init))
