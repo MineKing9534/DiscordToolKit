@@ -6,6 +6,7 @@ import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.ButtonColor
 import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
+import de.mineking.discord.ui.builder.content
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.state
 import setup.createJDA

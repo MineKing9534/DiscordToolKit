@@ -9,6 +9,7 @@ import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
 import de.mineking.discord.ui.builder.components.counter
 import de.mineking.discord.ui.builder.components.label
+import de.mineking.discord.ui.builder.content
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.replyMenu
 import de.mineking.discord.ui.state

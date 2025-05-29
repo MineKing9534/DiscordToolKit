@@ -2,11 +2,8 @@ package examples
 
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.ui.builder.bold
+import de.mineking.discord.ui.builder.*
 import de.mineking.discord.ui.builder.components.*
-import de.mineking.discord.ui.builder.h1
-import de.mineking.discord.ui.builder.line
-import de.mineking.discord.ui.builder.text
 import de.mineking.discord.ui.jda
 import de.mineking.discord.ui.state
 import org.kodein.emoji.Emoji
