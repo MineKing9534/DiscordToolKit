@@ -12,8 +12,8 @@ open class Message : IMessage {
     private var embeds: MutableList<EmbedResult> = mutableListOf()
     private var attachments: MutableList<FileUpload> = mutableListOf()
 
-    override fun content(init: TextElementBuilder) {
-        content = init.text()
+    override fun content(content: String) {
+        this.content = content
     }
 
     override fun embed(embed: MessageEmbed) {
@@ -43,9 +43,9 @@ fun message(init: MessageBuilder): Message {
 }
 
 interface IMessage {
-    fun content(init: TextElementBuilder)
-    fun content(content: String) = content { +content }
-    fun content(content: TextElement) = content(content.text)
+    fun content(content: String)
+    fun content(init: TextElementBuilder) = content(init.text())
+    fun content(content: TextElement) = content(content.toString())
 
     fun embed(embed: MessageEmbed)
     fun embed(embed: Embed)

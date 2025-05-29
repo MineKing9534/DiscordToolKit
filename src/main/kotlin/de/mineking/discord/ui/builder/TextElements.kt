@@ -21,12 +21,12 @@ fun ElementListBuilder.entries(): List<String> {
 fun TextElementBuilder.text(): String {
     val element = TextElement("")
     this(element)
-    return element.text
+    return element.toString()
 }
 
 typealias TextElementBuilder = TextElement.() -> Unit
 
-data class TextElement(internal var text: String) {
+data class TextElement(private var text: String) {
     operator fun String.unaryPlus() {
         text += this
     }
@@ -37,6 +37,8 @@ data class TextElement(internal var text: String) {
 
     operator fun plus(element: TextElement) = TextElement(text + element.text)
     operator fun plus(text: Any) = TextElement(this.text + text)
+
+    override fun toString() = text
 }
 
 fun TextElement.append(element: TextElement) = +element
@@ -58,39 +60,39 @@ fun text(init: TextElementBuilder) = text(init.text())
 fun paragraph(init: TextElementBuilder) = raw(init.text() + "\n")
 
 fun quote(text: String) = line("> $text")
-fun quote(text: TextElement) = quote(text.text)
+fun quote(text: TextElement) = quote(text.toString())
 fun quote(init: TextElementBuilder) = quote(init.text())
 
 fun String.styled(apply: Boolean = true, transform: (String) -> String) = raw(if (apply) transform(this) else this)
 
 fun bold(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "**$it**" }
 fun bold(apply: Boolean = true, init: TextElementBuilder) = bold(init.text(), apply)
-fun bold(text: TextElement, apply: Boolean = true) = bold(text.text, apply)
+fun bold(text: TextElement, apply: Boolean = true) = bold(text.toString(), apply)
 fun String.asBold(apply: Boolean = true) = bold(this, apply)
 
 fun italic(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "*$it*" }
 fun italic(apply: Boolean = true, init: TextElementBuilder) = italic(init.text(), apply)
-fun italic(text: TextElement, apply: Boolean = true) = italic(text.text, apply)
+fun italic(text: TextElement, apply: Boolean = true) = italic(text.toString(), apply)
 fun String.asItalic(apply: Boolean = true) = italic(this, apply)
 
 fun underline(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "__${it}__" }
 fun underline(apply: Boolean = true, init: TextElementBuilder) = underline(init.text(), apply)
-fun underline(text: TextElement, apply: Boolean = true) = underline(text.text, apply)
+fun underline(text: TextElement, apply: Boolean = true) = underline(text.toString(), apply)
 fun String.asUnderlined(apply: Boolean = true) = underline(this, apply)
 
 fun strikethrough(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "~~$it~~" }
 fun strikethrough(apply: Boolean = true, init: TextElementBuilder) = strikethrough(init.text(), apply)
-fun strikethrough(text: TextElement, apply: Boolean = true) = strikethrough(text.text, apply)
+fun strikethrough(text: TextElement, apply: Boolean = true) = strikethrough(text.toString(), apply)
 fun String.asStrikethrough(apply: Boolean = true) = strikethrough(this, apply)
 
 fun spoiler(text: Any, apply: Boolean = true) = text.toString().styled(apply) { "||$it||" }
 fun spoiler(apply: Boolean = true, init: TextElementBuilder) = spoiler(init.text(), apply)
-fun spoiler(text: TextElement, apply: Boolean = true) = spoiler(text.text, apply)
+fun spoiler(text: TextElement, apply: Boolean = true) = spoiler(text.toString(), apply)
 fun String.asSpoiler(apply: Boolean = true) = spoiler(this, apply)
 
 fun hyperlink(url: String, text: String) = raw("[$text]($url)")
 fun hyperlink(url: String, init: TextElementBuilder) = hyperlink(url, init.text())
-fun hyperlink(url: String, element: TextElement) = hyperlink(url, element.text)
+fun hyperlink(url: String, element: TextElement) = hyperlink(url, element.toString())
 
 fun code(text: String, apply: Boolean = true) = text.styled(apply) { "`$it`" }
 

@@ -41,7 +41,7 @@ class Embed {
     }
 
     fun title(init: TextElementBuilder) = title(init.text())
-    fun title(text: TextElement) = title(text.text)
+    fun title(text: TextElement) = title(text.toString())
 
     fun url(url: String) {
         this.url = url
@@ -84,7 +84,7 @@ class Embed {
     }
 
     fun description(init: TextElementBuilder) = description(init.text())
-    fun description(text: TextElement) = description(text.text)
+    fun description(text: TextElement) = description(text.toString())
 
     fun field(field: EmbedField) {
         fields.add(field)
@@ -93,7 +93,7 @@ class Embed {
     fun blankField(inline: Boolean = true) = field(EmbedField(ZERO_WIDTH_SPACE, ZERO_WIDTH_SPACE, inline))
 
     fun field(name: String, value: String, inline: Boolean = true) = field(EmbedField(name, value, inline))
-    fun field(name: String, value: TextElement, inline: Boolean = true) = field(name, value.text, inline)
+    fun field(name: String, value: TextElement, inline: Boolean = true) = field(name, value.toString(), inline)
     fun field(name: String, value: TextElementBuilder, inline: Boolean = true) = field(name, value.text(), inline)
 
     fun image(image: EmbedImage?) {
