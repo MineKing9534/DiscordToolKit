@@ -110,6 +110,11 @@ fun h1(init: TextElementBuilder) = heading(1, init)
 fun h2(init: TextElementBuilder) = heading(2, init)
 fun h3(init: TextElementBuilder) = heading(3, init)
 
+fun heading(i: Int, element: TextElement) = heading(i, element.toString())
+fun h1(element: TextElement) = heading(1, element)
+fun h2(element: TextElement) = heading(2, element)
+fun h3(element: TextElement) = heading(3, element)
+
 fun sub(text: String) = line("-# $text")
 inline fun sub(init: TextElementBuilder) = sub(build(init))
 
