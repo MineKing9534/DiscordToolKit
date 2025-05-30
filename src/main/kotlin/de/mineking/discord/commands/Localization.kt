@@ -1,6 +1,8 @@
 package de.mineking.discord.commands
 
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.localization.isDefault
+import de.mineking.discord.localization.shouldLocalize
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -42,10 +44,9 @@ class DefaultCommandLocalizationHandler(val prefix: String, val args: Map<String
     }
 
     override fun getChoiceLabel(file: LocalizationFile?, command: CommandImpl<*, *>, option: OptionInfo, choice: Choice): LocalizationInfo {
-        val default = choice.label
-        if (file == null) return LocalizationInfo(default)
+        if (file == null || !choice.label.shouldLocalize()) return LocalizationInfo(choice.label.toString())
 
-        val key = "${optionPath(command, option)}.choices.$default"
+        val key = if (choice.label.isDefault()) "${optionPath(command, option)}.choices.${choice.value}" else choice.label.toString()
         return createLocalization(file, command, key)
     }
 }

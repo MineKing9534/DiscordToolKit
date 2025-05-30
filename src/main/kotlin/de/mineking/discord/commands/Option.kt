@@ -1,6 +1,8 @@
 package de.mineking.discord.commands
 
+import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.localization.shouldLocalize
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -19,16 +21,17 @@ import kotlin.reflect.typeOf
 typealias JDAChoice = net.dv8tion.jda.api.interactions.commands.Command.Choice
 
 data class Choice(
-    val label: String,
-    val value: Any,
-    val localize: Boolean = true
+    val label: CharSequence,
+    val value: Any
 ) {
     fun build(manager: CommandManager, command: SlashCommandImpl, option: OptionInfo, type: OptionType): JDAChoice {
-        val localization = manager.localization?.getChoiceLabel(if (localize) option.effectiveLocalization(command) else null, command, option, this)
+        val localization = manager.localization?.getChoiceLabel(if (label.shouldLocalize()) option.effectiveLocalization(command) else null, command, option, this)
+
+        val label = localization?.default ?: label.toString()
         val result = when (type) {
-            OptionType.INTEGER -> JDAChoice(localization?.default ?: label, (value as Number).toLong())
-            OptionType.NUMBER -> JDAChoice(localization?.default ?: label, value as Double)
-            else -> JDAChoice(localization?.default ?: label, value.toString())
+            OptionType.INTEGER -> JDAChoice(label, (value as Number).toLong())
+            OptionType.NUMBER -> JDAChoice(label, value as Double)
+            else -> JDAChoice(label, value.toString())
         }
 
         if (localization != null) result.setNameLocalizations(localization.localization)
@@ -37,8 +40,7 @@ data class Choice(
     }
 }
 
-fun choice(value: Any, label: String = value.toString(), localize: Boolean = true) = Choice(label, value, localize)
-fun autocompleteChoice(value: Any, label: String = value.toString(), localize: Boolean = false) = choice(value, label, localize)
+fun choice(value: Any, label: CharSequence = DEFAULT_LABEL) = Choice(label, value)
 
 typealias OptionConfigurator = OptionData.() -> Unit
 

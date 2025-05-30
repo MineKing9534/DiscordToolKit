@@ -59,7 +59,7 @@ class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
 
                 val key =
                     if (base.isDefault()) listOfNotNull(this.prefix, menu.menuInfo.name, prefix, element, postfix, name).joinToString(".")
-                    else (base as LocalizedString).name
+                    else base.toString()
 
                 file.register(key, config.args.mapValues { it.value.second }, typeOf<String>())
                 file.readString(key, locale, config.args.mapValues { it.value.first })
