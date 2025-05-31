@@ -6,6 +6,8 @@ import de.mineking.discord.ui.*
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.textinput.TextInput
 import net.dv8tion.jda.api.components.textinput.TextInputStyle
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 fun <T> typedTextInput(
     name: String,
@@ -57,8 +59,23 @@ fun textInput(
     it
 }
 
-data class IntParseResult(val value: Int?, val error: Boolean)
-fun ModalComponent<IntParseResult>.unbox() = map { it.value }
+sealed interface Result<out T> {
+    @JvmInline
+    value class Success<out T>(val value: T): Result<T>
+    object Error : Result<Nothing>
+}
+
+@OptIn(ExperimentalContracts::class)
+fun <T> Result<T>.isSuccess(): Boolean {
+    contract {
+        returns(true) implies (this@isSuccess is Result.Success<T>)
+    }
+    return this is Result.Success<T>
+}
+
+fun <T> Result<T>.valueOrNull() = if (isSuccess()) value else null
+
+fun <T> ModalComponent<Result<T>>.unbox() = map { it.valueOrNull() }
 
 fun intInput(
     name: String,
@@ -69,16 +86,15 @@ fun intInput(
     max: Int? = null,
     value: Int? = null,
     localization: LocalizationFile? = null,
-    handler: ResultHandler<IntParseResult> = {}
-) = typedTextInput(name, label, placeholder, TextInputStyle.SHORT, required, value = value?.let { IntParseResult(it, false) }, localization = localization, formatter = { it.value?.toString() }) {
+    handler: ResultHandler<Result<Int?>> = {}
+) = typedTextInput(name, label, placeholder, TextInputStyle.SHORT, required, value = value?.let { Result.Success(it) }, localization = localization, formatter = { it.valueOrNull()?.toString() }) {
     val result = try {
-        IntParseResult(it.takeIf { it.isNotBlank() }?.toInt(), false)
-    } catch (_: NumberFormatException) {
-        IntParseResult(null, true)
-    }
+        val value = it.takeIf { it.isNotBlank() }?.toInt()
+        if (value != null) check { (min == null || value >= min) && (max == null || value <= max) }
 
-    if (result.value != null) {
-        check { (min == null || result.value >= min) && (max == null || result.value <= max) }
+        Result.Success(value)
+    } catch (_: NumberFormatException) {
+        Result.Error
     }
 
     handler(this, result)
@@ -112,12 +128,12 @@ fun statefulIntInput(
     min: Int? = null,
     max: Int? = null,
     localization: LocalizationFile? = null,
-    ref: State<Int>,
-    handler: ResultHandler<IntParseResult> = {}
-): ModalComponent<IntParseResult> {
+    ref: State<Int?>,
+    handler: ResultHandler<Result<Int?>> = {}
+): ModalComponent<Result<Int?>> {
     var value by ref
     return intInput(name, label, placeholder, required, min, max, value, localization) {
-        if (it.value != null) value = it.value
+        if (it.isSuccess()) value = it.value
         handler(this, it)
     }
 }
