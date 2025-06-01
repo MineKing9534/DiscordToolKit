@@ -58,8 +58,8 @@ suspend fun MessageMenuConfig<*, *>.pageSelector(
         ) { page++ }.disabled(page >= max)
 
         +button("$name-last", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏩")) {
-            page = max
-        }.disabled(page == max)
+            page = parameter()
+        }.disabled(page == max).withParameter(max)
     }
 }
 
