@@ -243,7 +243,7 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
         if (phase == MenuConfigPhase.BUILD) default()
         else if (state is SendState) initial(state.param)
         else if (state is HandlerContext<M, *>) render(state)
-        else error("")
+        else error("Unknown state type ${state?.javaClass} ($state)")
     }
 
     override suspend fun localize(locale: DiscordLocale, init: suspend LocalizationConfig.() -> Unit) {
