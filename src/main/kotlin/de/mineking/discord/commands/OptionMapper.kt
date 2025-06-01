@@ -1,5 +1,6 @@
 package de.mineking.discord.commands
 
+import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.localize
 import jdk.internal.net.http.frame.Http2Frame.asString
 import net.dv8tion.jda.api.entities.IMentionable
@@ -56,8 +57,14 @@ object DefaultOptionMappers {
             else temp
 
         entries.mapNotNull { (enum, annotation) ->
-            val label = annotation?.name?.takeIf { it.isNotBlank() } ?: enum.name
-            choice(enum.name, label.localize(annotation?.localize ?: ((command.localization ?: option.localization) != null)))
+            val localization = command.localization ?: option.localization
+
+            val labelOverride = annotation?.name?.takeIf { it.isNotBlank() }
+            val label =
+                if (localization == null) labelOverride ?: enum.name
+                else labelOverride ?: DEFAULT_LABEL
+
+            choice(enum.name, label)
                 .build(manager, command, option, OptionType.STRING)
         }
         .forEach { addChoices(it) }
