@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
+import java.awt.SystemColor.menu
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
@@ -151,13 +152,17 @@ suspend fun <M, E> JDAMessage.rerender(menu: MessageMenu<M, *>, event: E): RestA
 typealias MessageMenuConfigurator<M> = suspend MessageMenuConfig<M, *>.() -> Unit
 typealias LocalizedMessageMenuConfigurator<M, L> = suspend MessageMenuConfig<M, L>.(localization: L) -> Unit
 
-class Lazy<T>(val menu: MenuInfo<*>, var active: Boolean = false, val default: T, provider: suspend () -> T) {
-    private val _value = menu.manager.manager.coroutineScope.async(start = CoroutineStart.LAZY) { provider() }
-
-    suspend fun getValue() = if (active) _value.await() else default
+fun interface Lazy<out T> {
+    suspend fun getValue(): T
 
     val value get() = runBlocking { getValue() }
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = value
+}
+
+class MenuLazyImpl<out T>(val menu: MenuInfo<*>, var active: Boolean = false, val default: T, provider: suspend () -> T) : Lazy<T> {
+    private val _value = menu.manager.manager.coroutineScope.async(start = CoroutineStart.LAZY) { provider() }
+
+    override suspend fun getValue() = if (active) _value.await() else default
 }
 
 interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L>, IMessage {
