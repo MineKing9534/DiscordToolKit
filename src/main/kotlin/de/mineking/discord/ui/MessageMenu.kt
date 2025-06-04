@@ -4,6 +4,7 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.builder.IMessage
 import de.mineking.discord.ui.builder.Message
+import de.mineking.discord.ui.builder.components.statefulMultiEnumSelect
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
@@ -19,7 +20,6 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditData
-import java.awt.SystemColor.menu
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 
@@ -39,15 +39,90 @@ suspend fun renderMessageComponents(id: IdGenerator, config: MessageMenuConfigIm
         }
     }
 
+interface MessageMenuHandler {
+    suspend fun <M, L : LocalizationFile?> handleComponent(state: ComponentContext<M, *>, oldState: String, name: String)
+    suspend fun <M, L : LocalizationFile?> render(state: StateContext<M>): MessageEditData
+
+    companion object {
+        val DEFAULT = object : MessageMenuHandler {
+            override suspend fun <M, L : LocalizationFile?> handleComponent(state: ComponentContext<M, *>, oldState: String, name: String) {
+                @Suppress("UNCHECKED_CAST")
+                val menu = state.menuInfo.menu as MessageMenu<M, L>
+
+                val renderer = MessageMenuComponentFinder(name, state, state.menuInfo, menu.localization, menu.config)
+
+                try {
+                    menu.config(renderer, menu.localization)
+                    error("Component $name not found")
+                } catch (_: ComponentFinderResult) {}
+
+                try {
+                    renderer.activate() //Activate lazy values => Allow them to load in the handler
+                    renderer.execute(state)
+                } catch (_: RenderTermination) {
+                    return
+                }
+
+                val newState = state.stateData.encode()
+                if (state.update != false) {
+                    //Rerender if: state changed, update forced
+                    if (oldState != newState || state.update == true) state.update()
+
+                    //Recreate previous state if we deferred but state didn't change
+                    else if (state.menuInfo.menu.defer == DeferMode.ALWAYS) state.hook.editOriginal(MessageEditData.fromMessage(state.message)).queue()
+
+                    else if (!state.isAcknowledged) state.defer()
+                }
+
+                state.after.forEach { it() }
+            }
+
+            override suspend fun <M, L : LocalizationFile?> render(state: StateContext<M>): MessageEditData {
+                @Suppress("UNCHECKED_CAST")
+                val menu = state.menuInfo.menu as MessageMenu<M, L>
+
+                @Suppress("UNCHECKED_CAST")
+                val renderer = MessageMenuConfigImpl(MenuConfigPhase.RENDER, state, state.menuInfo, menu.localization, menu.config)
+                menu.config(renderer, menu.localization)
+
+                return renderer.build()
+                    .useComponentsV2(menu.useComponentsV2)
+                    .setComponents(menu.buildComponents(renderer))
+                    .build()
+            }
+        }
+    }
+}
+
+inline fun <reified E: Throwable> MessageMenuHandler.handleException(
+    crossinline component: suspend ComponentContext<*, *>.(E) -> Unit,
+    crossinline render: suspend StateContext<*>.(E) -> MessageEditData
+) = object : MessageMenuHandler {
+    override suspend fun <M, L : LocalizationFile?> handleComponent(state: ComponentContext<M, *>, oldState: String, name: String) = try {
+        this@handleException.handleComponent<M, L>(state, oldState, name)
+    } catch (e: Throwable) {
+        if (e !is E) throw e
+        component(state, e)
+    }
+
+    override suspend fun <M, L : LocalizationFile?> render(state: StateContext<M>): MessageEditData = try {
+        this@handleException.render<M, L>(state)
+    } catch (e: Throwable) {
+        if (e !is E) throw e
+        render(state, e)
+    }
+}
+
 class MessageMenu<M, L : LocalizationFile?>(
     manager: UIManager, name: String, defer: DeferMode,
     val useComponentsV2: Boolean,
     localization: L,
     setup: List<*>,
     states: List<InternalState<*>>,
-    private val config: LocalizedMessageMenuConfigurator<M, L>
+    val config: LocalizedMessageMenuConfigurator<M, L>,
+    val handler: MessageMenuHandler
 ) : Menu<M, GenericComponentInteractionCreateEvent, L>(manager, name, defer, localization, setup, states) {
-    private suspend fun buildComponents(renderer: MessageMenuConfigImpl<M, L>): List<MessageTopLevelComponent> {
+    suspend fun buildComponents(renderer: MessageMenuConfigImpl<M, L>): List<MessageTopLevelComponent> {
         val generator = IdGenerator(renderer.stateData.encode())
 
         @Suppress("UNCHECKED_CAST")
@@ -59,16 +134,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         return components
     }
 
-    suspend fun render(state: StateContext<M>): MessageEditData {
-        @Suppress("UNCHECKED_CAST")
-        val renderer = MessageMenuConfigImpl(MenuConfigPhase.RENDER, state, info, localization, config)
-        renderer.config(localization)
-
-        return renderer.build()
-            .useComponentsV2(useComponentsV2)
-            .setComponents(buildComponents(renderer))
-            .build()
-    }
+    suspend fun render(state: StateContext<M>) = handler.render<M, L>(state)
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun handle(event: GenericComponentInteractionCreateEvent) {
@@ -79,34 +145,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         val data = event.message.decodeState()
         val context = ComponentContext(info, StateData.decode(data), event)
 
-        val renderer = MessageMenuComponentFinder(name, context, info, localization, config)
-
-        val handler = try {
-            renderer.config(localization)
-            error("Component $name not found")
-        } catch (_: ComponentFinderResult) {
-            renderer.handler!!
-        }
-
-        try {
-            renderer.activate() //Activate lazy values => Allow them to load in the handler
-            context.handler()
-        } catch (_: RenderTermination) {
-            return
-        }
-
-        val newData = context.stateData.encode()
-        if (context.update != false) {
-            //Rerender if: state changed, update forced
-            if (data != newData || context.update == true) context.update()
-
-            //Recreate previous state if we deferred but state didn't change
-            else if (defer == DeferMode.ALWAYS) event.hook.editOriginal(MessageEditData.fromMessage(event.message)).queue()
-
-            else if (!context.event.isAcknowledged) context.defer()
-        }
-
-        context.after.forEach { it() }
+        handler.handleComponent<M, L>(context, data, name)
     }
 
     suspend fun update(context: HandlerContext<M, *>) {
@@ -226,7 +265,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
         @Suppress("UNCHECKED_CAST")
         return setup {
             menuInfo.manager.registerLocalizedMenu<M, CL>(
-                "${menuInfo.name}.$name", defer, useComponentsV2, localization ?: this.localization as CL, if (detach) init
+                "${menuInfo.name}.$name", defer, useComponentsV2, localization ?: this.localization as CL, null, if (detach) init
                 else { localization ->
                     require(this is MessageMenuConfigImpl)
 
@@ -323,8 +362,7 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
     localization: L,
     config: LocalizedMessageMenuConfigurator<M, L>
 ) : MessageMenuConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, state, menu, localization, config) {
-    var handler: ComponentHandler<*, *>? = null
-        private set
+    private var handler: ComponentHandler<*, *>? = null
 
     private fun findHandler(component: MessageComponent<*>) = component.elements().forEach {
         if (it.name == this.component) {
@@ -336,6 +374,10 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
 
     override fun <C : MessageComponent<*>> register(component: C) = component.also { findHandler(component) }
     override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() = findHandler(this)
+
+    suspend fun execute(context: ComponentContext<*, *>) {
+        handler!!(context)
+    }
 }
 
 private object ComponentFinderResult : RuntimeException() {

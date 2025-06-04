@@ -23,6 +23,8 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
     var localization: MenuLocalizationHandler = UnlocalizedLocalizationHandler()
         private set
 
+    private var messageMenuHandler = MessageMenuHandler.DEFAULT
+
     init {
         manager.listen<GenericComponentInteractionCreateEvent>(this::handleComponent)
         manager.listen<ModalInteractionEvent>(this::handleModal)
@@ -30,6 +32,10 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
 
     fun localize(localization: MenuLocalizationHandler = DefaultLocalizationHandler("menu")) {
         this.localization = localization
+    }
+
+    fun handleMessageMenu(handler: MessageMenuHandler) {
+        this.messageMenuHandler = handler
     }
 
     private suspend fun prepareLocalization(config: MenuConfigData) {
@@ -41,37 +47,78 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
         }
     }
 
-    fun <M> registerMenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: LocalizationFile? = null, init: MessageMenuConfigurator<M>): MessageMenu<M, *> = runBlocking {
+    fun <M> registerMenu(
+        name: String,
+        defer: DeferMode = DEFAULT_DEFER_MODE,
+        useComponentsV2: Boolean? = null,
+        localization: LocalizationFile? = null,
+        handler: MessageMenuHandler? = null,
+        init: MessageMenuConfigurator<M>
+    ): MessageMenu<M, *> = runBlocking {
         val builder = MessageMenuConfigImpl(MenuConfigPhase.BUILD, null, MenuInfo.create(name, this@UIManager), localization) { init() }
         builder.init()
-        registerMenu(name, defer, useComponentsV2, localization, builder, init)
+        registerMenu(name, defer, useComponentsV2, localization, builder, handler, init)
     }
 
-    fun <M> registerMenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: LocalizationFile? = null, config: MenuConfigData, init: MessageMenuConfigurator<M>): MessageMenu<M, *> {
-        return registerLocalizedMenu(name, defer, useComponentsV2, localization, config) { init() }
-    }
+    fun <M> registerMenu(
+        name: String,
+        defer: DeferMode = DEFAULT_DEFER_MODE,
+        useComponentsV2: Boolean? = null,
+        localization: LocalizationFile? = null,
+        config: MenuConfigData,
+        handler: MessageMenuHandler? = null,
+        init: MessageMenuConfigurator<M>
+    ) = registerLocalizedMenu(name, defer, useComponentsV2, localization, config, handler) { init() }
 
-    inline fun <M, reified L : LocalizationFile> registerLocalizedMenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+    inline fun <M, reified L : LocalizationFile> registerLocalizedMenu(
+        name: String,
+        defer: DeferMode = DEFAULT_DEFER_MODE,
+        useComponentsV2: Boolean? = null,
+        handler: MessageMenuHandler? = null,
+        noinline init: LocalizedMessageMenuConfigurator<M, L>
+    ): MessageMenu<M, L> {
         val file = manager.localizationManager.read<L>()
-        return registerLocalizedMenu(name, defer, useComponentsV2, file, init)
+        return registerLocalizedMenu(name, defer, useComponentsV2, file, handler, init)
     }
 
-    fun <M, L : LocalizationFile?> registerLocalizedMenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: L, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> = runBlocking {
+    fun <M, L : LocalizationFile?> registerLocalizedMenu(
+        name: String,
+        defer: DeferMode = DEFAULT_DEFER_MODE,
+        useComponentsV2: Boolean? = null,
+        localization: L,
+        handler: MessageMenuHandler? = null,
+        init: LocalizedMessageMenuConfigurator<M, L>
+    ): MessageMenu<M, L> = runBlocking {
         @Suppress("UNCHECKED_CAST")
         val builder = MessageMenuConfigImpl(MenuConfigPhase.BUILD, null, MenuInfo.create(name, this@UIManager), localization, init as LocalizedMessageMenuConfigurator<M, LocalizationFile?>)
         builder.init(localization)
-        registerLocalizedMenu(name, defer, useComponentsV2, localization, builder, init)
+        registerLocalizedMenu(name, defer, useComponentsV2, localization, builder, handler, init)
     }
 
-    inline fun <M, reified L : LocalizationFile> registerLocalizedMenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, config: MenuConfigData, noinline init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> {
+    inline fun <M, reified L : LocalizationFile> registerLocalizedMenu(
+        name: String,
+        defer: DeferMode = DEFAULT_DEFER_MODE,
+        useComponentsV2: Boolean? = null,
+        config: MenuConfigData,
+        handler: MessageMenuHandler? = null,
+        noinline init: LocalizedMessageMenuConfigurator<M, L>
+    ): MessageMenu<M, L> {
         val file = manager.localizationManager.read<L>()
-        return registerLocalizedMenu(name, defer, useComponentsV2, file, config, init)
+        return registerLocalizedMenu(name, defer, useComponentsV2, file, config, handler, init)
     }
 
-    fun <M, L : LocalizationFile?> registerLocalizedMenu(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, useComponentsV2: Boolean? = null, localization: L, config: MenuConfigData, init: LocalizedMessageMenuConfigurator<M, L>): MessageMenu<M, L> = runBlocking {
-        require(!menus.containsKey(name)) { "Menu $name already defined" }
+    fun <M, L : LocalizationFile?> registerLocalizedMenu(
+        name: String,
+        defer: DeferMode = DEFAULT_DEFER_MODE,
+        useComponentsV2: Boolean? = null,
+        localization: L,
+        config: MenuConfigData,
+        handler: MessageMenuHandler? = null,
+        init: LocalizedMessageMenuConfigurator<M, L>
+    ): MessageMenu<M, L> = runBlocking {
+        require(name !in menus) { "Menu $name already defined" }
 
-        val menu = MessageMenu(this@UIManager, name, defer, useComponentsV2 ?: DEFAULT_COMPONENTS_V2, localization, config.setup, config.states, init)
+        val menu = MessageMenu(this@UIManager, name, defer, useComponentsV2 ?: DEFAULT_COMPONENTS_V2, localization, config.setup, config.states, init, handler ?: messageMenuHandler)
         menus[name] = menu
 
         prepareLocalization(config)
@@ -106,7 +153,7 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
     }
 
     fun <M, L : LocalizationFile?> registerLocalizedModal(name: String, defer: DeferMode = DEFAULT_DEFER_MODE, localization: L, config: MenuConfigData, init: LocalizedModalConfigurator<M, L>): ModalMenu<M, L> = runBlocking {
-        require(!menus.containsKey(name)) { "Menu $name already defined" }
+        require(name !in menus) { "Menu $name already defined" }
 
         val menu = ModalMenu(this@UIManager, name, defer, localization, config.setup, config.states, init)
         menus[name] = menu
