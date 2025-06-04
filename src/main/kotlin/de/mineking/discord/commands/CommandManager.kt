@@ -13,6 +13,18 @@ import kotlin.reflect.typeOf
 @DslMarker
 annotation class CommandMarker
 
+interface CommandExecutor {
+    suspend fun <C : ICommandContext<*>> CommandImpl<C, *>.execute(context: C)
+
+    companion object {
+        val DEFAULT = object : CommandExecutor {
+            override suspend fun <C : ICommandContext<*>> CommandImpl<C, *>.execute(context: C) {
+                handle(context)
+            }
+        }
+    }
+}
+
 class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(manager) {
     val commands: MutableMap<String, CommandImpl<*, out CommandData>> = hashMapOf()
     var entryPoint: EntryPointCommandImpl? = null
@@ -25,6 +37,8 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
 
     var localization: CommandLocalizationHandler? = null
         private set
+
+    var executor: CommandExecutor = CommandExecutor.DEFAULT
 
     init {
         manager.listen<GenericCommandInteractionEvent>(this::handleCommand)
@@ -66,8 +80,10 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
             }
 
             suspend fun <C : ICommandContext<*>> execute(context: C) {
-                @Suppress("UNCHECKED_CAST")
-                (command as CommandImpl<C, *>).handle(context)
+                with(executor) {
+                    @Suppress("UNCHECKED_CAST")
+                    (command as CommandImpl<C, *>).handle(context)
+                }
             }
 
             execute(context)
