@@ -39,6 +39,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         private set
 
     var executor: CommandExecutor = CommandExecutor.DEFAULT
+        private set
 
     init {
         manager.listen<GenericCommandInteractionEvent>(this::handleCommand)
@@ -50,6 +51,10 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
 
     fun localize(localization: CommandLocalizationHandler = DefaultCommandLocalizationHandler("command")) {
         this.localization = localization
+    }
+
+    fun execute(handler: CommandExecutor) {
+        this.executor = handler
     }
 
     private suspend fun handleCommand(event: GenericCommandInteractionEvent) {
