@@ -312,7 +312,7 @@ open class MessageMenuConfigImpl<M, L : LocalizationFile?>(
     override suspend fun <CL : LocalizationFile?> localizedModal(name: String, defer: DeferMode, localization: CL, detach: Boolean, init: LocalizedModalConfigurator<M, CL>): ModalMenu<M, CL> {
         return setup {
             menuInfo.manager.registerLocalizedModal(
-                "${menuInfo.name}.$name", defer, localization ?: this.localization as CL, if (detach) init
+                "${menuInfo.name}.$name", defer, localization ?: this.localization as CL, null, if (detach) init
                 else { localization ->
                     require(this is ModalConfigImpl)
 
