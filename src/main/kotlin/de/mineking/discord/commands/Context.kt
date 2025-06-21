@@ -23,7 +23,7 @@ sealed interface IContext<E : GenericInteractionCreateEvent> {
     val event: E
 }
 
-sealed interface ICommandContext<E : GenericCommandInteractionEvent> : IContext<E>, CommandInteractionPayload
+sealed interface ICommandContext<E : GenericCommandInteractionEvent> : IContext<E>, CommandInteraction
 
 sealed interface ContextCommandContext<T : Any, E : GenericContextInteractionEvent<T>> : ICommandContext<E>
 
