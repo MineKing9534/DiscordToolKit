@@ -73,7 +73,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         suspend fun <C : ICommandContext<*>> execute(context: C) {
             with(executor) {
                 @Suppress("UNCHECKED_CAST")
-                (command as CommandImpl<C, *>).handle(context)
+                context.execute(command as CommandImpl<C, *>)
             }
         }
 
