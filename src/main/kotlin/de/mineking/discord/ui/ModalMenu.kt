@@ -19,14 +19,73 @@ suspend fun renderModalComponents(id: IdGenerator, config: ModalConfigImpl<*, *>
         }
     }
 
+interface ModalMenuHandler {
+    suspend fun <M, L : LocalizationFile?> handle(state: ModalContext<M>)
+    suspend fun <M, L : LocalizationFile?> build(state: StateContext<M>): Modal
+
+    companion object {
+        val DEFAULT = object : ModalMenuHandler {
+            override suspend fun <M, L : LocalizationFile?> handle(state: ModalContext<M>) {
+                @Suppress("UNCHECKED_CAST")
+                val menu = state.menuInfo.menu as ModalMenu<M, L>
+
+                val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, state, state.menuInfo)
+                menu.config(renderer, menu.localization)
+
+                renderer.activate()
+
+                try {
+                    renderer.handlers.forEach { handler -> state.handler() }
+                } catch (_: RenderTermination) { }
+
+                state.after.forEach { it() }
+            }
+
+            override suspend fun <M, L : LocalizationFile?> build(state: StateContext<M>): Modal {
+                @Suppress("UNCHECKED_CAST")
+                val menu = state.menuInfo.menu as ModalMenu<M, L>
+
+                val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.RENDER, state, state.menuInfo)
+                menu.config(renderer, menu.localization)
+
+                val generator = IdGenerator(state.stateData.encode())
+
+                return Modal.create(generator.nextId("${menu.name}:"), renderer.readLocalizedString(menu.localization, null, renderer.title, "title") ?: ZERO_WIDTH_SPACE)
+                    .addComponents(menu.buildComponents(generator, renderer))
+                    .build()
+            }
+        }
+    }
+}
+
+inline fun <reified E: Throwable> ModalMenuHandler.handleException(
+    crossinline handle: suspend ModalContext<*>.(E) -> Unit,
+    crossinline build: suspend StateContext<*>.(E) -> Modal
+) = object : ModalMenuHandler {
+    override suspend fun <M, L : LocalizationFile?> handle(state: ModalContext<M>) = try {
+        this@handleException.handle<M, L>(state)
+    } catch (e: Throwable) {
+        if (e !is E) throw e
+        handle(state, e)
+    }
+
+    override suspend fun <M, L : LocalizationFile?> build(state: StateContext<M>) = try {
+        this@handleException.build<M, L>(state)
+    } catch (e: Throwable) {
+        if (e !is E) throw e
+        build(state, e)
+    }
+}
+
 class ModalMenu<M, L : LocalizationFile?>(
     manager: UIManager, name: String, defer: DeferMode,
     localization: L,
     setup: List<*>,
     states: List<InternalState<*>>,
-    private val config: LocalizedModalConfigurator<M, L>
+    val config: LocalizedModalConfigurator<M, L>,
+    val handler: ModalMenuHandler
 ) : Menu<M, ModalInteractionEvent, L>(manager, name, defer, localization, setup, states) {
-    private suspend fun buildComponents(generator: IdGenerator, renderer: ModalConfigImpl<M, L>): List<ModalTopLevelComponent> {
+    suspend fun buildComponents(generator: IdGenerator, renderer: ModalConfigImpl<M, L>): List<ModalTopLevelComponent> {
         val components = renderModalComponents(generator, renderer)
 
         val rows = components.map { ActionRow.of(it) }
@@ -43,29 +102,10 @@ class ModalMenu<M, L : LocalizationFile?>(
         val data = (listOf(event.modalId) + event.values.map { it.customId }).decodeState(2)
         val context = ModalContext(info, StateData.decode(data), event)
 
-        val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.COMPONENTS, context, this.info)
-        renderer.config(localization)
-
-        renderer.activate()
-
-        try {
-            renderer.handlers.forEach { handler -> context.handler() }
-        } catch (_: RenderTermination) {
-        }
-
-        context.after.forEach { it() }
+        handler.handle<M, L>(context)
     }
 
-    suspend fun build(state: StateContext<M>): Modal {
-        val renderer = ModalConfigImpl<M, L>(MenuConfigPhase.RENDER, state, info)
-        renderer.config(localization)
-
-        val generator = IdGenerator(state.stateData.encode())
-
-        return Modal.create(generator.nextId("$name:"), renderer.readLocalizedString(localization, null, renderer.title, "title") ?: ZERO_WIDTH_SPACE)
-            .addComponents(buildComponents(generator, renderer))
-            .build()
-    }
+    suspend fun build(state: StateContext<M>) = handler.build<M, L>(state)
 
     suspend fun createInitial(param: M): Modal {
         val state = SendState(info, StateData.createInitial(states), param)

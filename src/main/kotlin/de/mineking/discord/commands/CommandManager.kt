@@ -12,7 +12,6 @@ import kotlin.reflect.typeOf
 
 @DslMarker
 annotation class CommandMarker
-
 class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(manager) {
     val commands: MutableMap<String, CommandImpl<*, out CommandData>> = hashMapOf()
     var entryPoint: EntryPointCommandImpl? = null
@@ -24,6 +23,9 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
     val defaultIntegrationTypes = mutableSetOf(IntegrationType.GUILD_INSTALL)
 
     var localization: CommandLocalizationHandler? = null
+        private set
+
+    var executor: CommandExecutor = CommandExecutor.DEFAULT
         private set
 
     init {
@@ -38,40 +40,44 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         this.localization = localization
     }
 
+    fun execute(handler: CommandExecutor) {
+        this.executor = handler
+    }
+
     private suspend fun handleCommand(event: GenericCommandInteractionEvent) {
         val command = getCommand(event.fullCommandName) ?: error("Got command interaction event for unknown command ${event.fullCommandName}")
 
-        try {
-            val context = when (event) {
-                is SlashCommandInteractionEvent -> {
-                    require(command is SlashCommandImpl)
+        val context = when (event) {
+            is SlashCommandInteractionEvent -> {
+                require(command is SlashCommandImpl)
 
-                    val optionMap = hashMapOf<String, Any?>()
-                    val options = CommandOptions(optionMap)
+                val optionMap = hashMapOf<String, Any?>()
+                val options = CommandOptions(optionMap)
 
-                    val context = SlashCommandContext(this, event, options)
+                val context = SlashCommandContext(this, event, options)
 
-                    event.options.forEach {
-                        val option = command.options[it.name]!!
-                        optionMap += option.name to getOptionMapper(option.type)!!.read(this, option.type, context, option.name)
-                    }
-
-                    context
+                event.options.forEach {
+                    val option = command.options[it.name]!!
+                    optionMap += option.name to getOptionMapper(option.type)!!.read(this, option.type, context, option.name)
                 }
 
-                is MessageContextInteractionEvent -> MessageCommandContext(this, event)
-                is UserContextInteractionEvent -> UserCommandContext(this, event)
-                is PrimaryEntryPointInteractionEvent -> EntrypointCommandContext(this, event)
-                else -> error("Unknown command event")
+                context
             }
 
-            suspend fun <C : ICommandContext<*>> execute(context: C) {
+            is MessageContextInteractionEvent -> MessageCommandContext(this, event)
+            is UserContextInteractionEvent -> UserCommandContext(this, event)
+            is PrimaryEntryPointInteractionEvent -> EntrypointCommandContext(this, event)
+            else -> error("Unknown command event")
+        }
+
+        suspend fun <C : ICommandContext<*>> execute(context: C) {
+            with(executor) {
                 @Suppress("UNCHECKED_CAST")
-                (command as CommandImpl<C, *>).handle(context)
+                context.execute(command as CommandImpl<C, *>)
             }
+        }
 
-            execute(context)
-        } catch (_: CommandTermination) {}
+        execute(context)
     }
 
     private suspend fun handleAutocomplete(event: CommandAutoCompleteInteractionEvent) {
