@@ -30,7 +30,6 @@ dependencies {
     compileOnly("org.kodein.emoji:emoji-kt:2.0.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-common:2.0.20")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:2.0.20")
     implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:2.0.20")
 
