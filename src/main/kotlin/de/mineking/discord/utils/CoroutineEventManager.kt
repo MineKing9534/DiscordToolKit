@@ -17,18 +17,24 @@ fun interface CoroutineEventListener {
     suspend fun onEvent(event: GenericEvent)
 }
 
-fun createCoroutineScope(logger: KLogger, dispatcher: CoroutineDispatcher) = CoroutineScope(dispatcher + SupervisorJob() + CoroutineExceptionHandler { _, throwable ->
-    logger.error("Uncaught exception from coroutine", throwable)
-    if (throwable is Error) throw throwable
-})
+fun createCoroutineScope(logger: KLogger, dispatcher: CoroutineDispatcher): CoroutineScope {
+    val parent = SupervisorJob()
+    return CoroutineScope(dispatcher + parent + CoroutineExceptionHandler { _, throwable ->
+        logger.error("Uncaught exception from coroutine", throwable)
+        if (throwable is Error) {
+            parent.cancel()
+            throw throwable
+        }
+    })
+}
 
 class CoroutineEventManager(
-    scope: CoroutineScope = createCoroutineScope(logger, Dispatchers.Default)
-) : IEventManager, CoroutineScope by scope {
+    val scope: CoroutineScope = createCoroutineScope(logger, Dispatchers.Default)
+) : IEventManager {
     private val listeners = CopyOnWriteArrayList<Any>()
 
     override fun handle(event: GenericEvent) {
-        launch {
+        scope.launch {
             for (listener in listeners) try {
                 runListener(listener, event)
             } catch (ex: Exception) {
