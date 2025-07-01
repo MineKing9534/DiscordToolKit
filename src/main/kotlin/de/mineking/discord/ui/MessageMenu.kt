@@ -102,7 +102,9 @@ inline fun <reified E: Throwable> MessageMenuHandler.handleException(
         this@handleException.handleComponent<M, L>(state, oldState, name)
     } catch (e: Throwable) {
         if (e !is E) throw e
-        component(state, e)
+        try {
+            component(state, e)
+        } catch (_: RenderTermination) {}
     }
 
     override suspend fun <M, L : LocalizationFile?> render(state: StateContext<M>): MessageEditData = try {

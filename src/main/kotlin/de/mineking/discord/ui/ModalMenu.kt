@@ -66,7 +66,9 @@ inline fun <reified E: Throwable> ModalMenuHandler.handleException(
         this@handleException.handle<M, L>(state)
     } catch (e: Throwable) {
         if (e !is E) throw e
-        handle(state, e)
+        try {
+            handle(state, e)
+        } catch (_: RenderTermination) {}
     }
 
     override suspend fun <M, L : LocalizationFile?> build(state: StateContext<M>) = try {

@@ -27,6 +27,8 @@ inline fun <reified E: Throwable> CommandExecutor.handleException(
         }
     } catch (e: Throwable) {
         if (e !is E) throw e
-        handler(command, e)
+        try {
+            handler(command, e)
+        } catch (_: CommandTermination) {}
     }
 }
