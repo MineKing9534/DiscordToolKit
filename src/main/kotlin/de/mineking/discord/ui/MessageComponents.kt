@@ -11,7 +11,7 @@ typealias ComponentHandler<M, E> = suspend ComponentContext<M, E>.() -> Unit
 @MenuMarker
 class ComponentContext<M, out E : GenericComponentInteractionCreateEvent>(menu: MenuInfo<M>, stateData: StateData, event: E) : HandlerContext<M, E>(menu, stateData, event) {
     override val message: Message get() = event.message
-    internal var update: Boolean? = null
+    var update: Boolean? = null
 
     fun forceUpdate() {
         update = true

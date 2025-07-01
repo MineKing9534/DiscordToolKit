@@ -38,7 +38,7 @@ abstract class HandlerContext<M, out E>(
     override val cache: MutableList<Any?> = mutableListOf()
     abstract val message: Message
 
-    internal val after: MutableList<() -> Unit> = mutableListOf()
+    val after: MutableList<() -> Unit> = mutableListOf()
 
     fun then(handler: () -> Unit) {
         after += handler
@@ -195,7 +195,7 @@ sealed class MenuConfigImpl<M, L : LocalizationFile?>(
         return lazy
     }
 
-    internal fun activate() = lazy.forEach { it.active = true }
+    fun activate() = lazy.forEach { it.active = true }
 
     override fun currentState(): Int = stateAccess!!.currentState()
     override fun skipState(amount: Int) {

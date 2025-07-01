@@ -382,6 +382,6 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
     }
 }
 
-private object ComponentFinderResult : RuntimeException() {
+object ComponentFinderResult : RuntimeException() {
     private fun readResolve(): Any = ComponentFinderResult
 }
