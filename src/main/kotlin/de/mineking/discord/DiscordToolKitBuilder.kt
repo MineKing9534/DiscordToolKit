@@ -79,7 +79,10 @@ class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
     fun withUIManager(config: ManagerConfigurator<UIManager> = {}) = addManager({ UIManager(it) }, config)
 
     fun build(): DiscordToolKit<B> {
-        jda.setEventManager(CoroutineEventManager(coroutineScope))
+        if (jda.eventManager !is CoroutineEventManager) {
+            val old = jda.eventManager
+            jda.setEventManager(CoroutineEventManager(coroutineScope).also { old.registeredListeners.forEach(it::register) })
+        }
 
         val managers = hashSetOf<Manager>()
         val manager = DiscordToolKit(jda, bot, managers, coroutineScope)
