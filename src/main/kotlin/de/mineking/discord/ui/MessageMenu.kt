@@ -153,9 +153,10 @@ class MessageMenu<M, L : LocalizationFile?>(
     suspend fun update(context: HandlerContext<M, *>) {
         try {
             if (defer != DeferMode.NEVER) {
-                if (defer == DeferMode.UNLESS_PREVENTED && !context.event.isAcknowledged) context.disableComponents(context.message).queue()
+                if (defer == DeferMode.UNLESS_PREVENTED && !context.isAcknowledged) context.disableComponents(context.message).queue()
                 context.hook.editOriginal(render(context)).queue()
-            } else context.editMessage(render(context)).queue()
+            } else if (!context.isAcknowledged) context.editMessage(render(context)).queue()
+            else context.hook.editOriginal(render(context)).queue()
         } catch (_: RenderTermination) {
             if (!context.event.isAcknowledged) context.deferEdit().queue()
         }
