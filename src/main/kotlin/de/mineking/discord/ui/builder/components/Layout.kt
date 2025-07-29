@@ -110,12 +110,12 @@ fun thumbnail(file: FileUpload) = thumbnail { file }
 
 fun thumbnail(url: String) = createMessageComponent { _, _ -> Thumbnail.fromUrl(url) }
 
-fun textDisplay(content: suspend () -> String) = createMessageComponent { _, _ -> TextDisplay.create(content()) }
+fun textDisplay(content: suspend () -> String) = createMessageComponent { _, _ -> TextDisplay.of(content()) }
 fun textDisplay(content: String) = textDisplay { content }
 fun buildTextDisplay(content: suspend TextElement.() -> Unit) = textDisplay { build { content() } }
 
 fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageComponent { config, _ ->
-    TextDisplay.create(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
+    TextDisplay.of(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
 }
 
 fun fileDisplay(file: suspend () -> FileUpload) = createMessageComponent { _, _ -> FileDisplay.fromFile(file()) }

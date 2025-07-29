@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.MineKing9534:JDA:f277956a7d4756e146677512d8b5cbe3d23f0534")
+    implementation("net.dv8tion:JDA:6.0.0-rc.2")
 
     implementation(kotlin("reflect"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.3")

@@ -15,7 +15,7 @@ fun ICommandContext<*>.terminateCommand(): Nothing = throw CommandTermination()
 typealias Command<C> = CommandManager.(parent: SlashCommandImpl?) -> C
 
 typealias ContextCommand<C> = Command<ContextCommandImpl<C>>
-typealias EntrypointCommand = Command<EntryPointCommandImpl>
+//TODO typealias EntrypointCommand = Command<EntryPointCommandImpl>
 typealias SlashCommand = Command<SlashCommandImpl>
 
 sealed class CommandImpl<C : ICommandContext<*>, D : CommandData>(
@@ -61,6 +61,7 @@ sealed class CommandImpl<C : ICommandContext<*>, D : CommandData>(
     }
 }
 
+/* TODO
 abstract class EntryPointCommandImpl(
     name: String,
     val description: String,
@@ -83,7 +84,7 @@ abstract class EntryPointCommandImpl(
         finalize(result)
         return result
     }
-}
+}*/
 
 abstract class ContextCommandImpl<C : ContextCommandContext<*, *>>(
     val type: Type,
