@@ -3,7 +3,6 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.message.RuntimeMessageMenuConfigImpl
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import kotlin.contracts.ExperimentalContracts
@@ -110,9 +109,12 @@ fun <T> MenuConfig<*, *>.lazy(default: T, block: suspend () -> T): Lazy<T> =
 
 fun <T> MenuConfig<*, *>.lazy(block: suspend () -> T) = lazy(null, block)
 
-inline fun MenuConfig<*, *>.localize(locale: DiscordLocale, config: LocalizationConfig.() -> Unit = {}) {
-    context.localizationConfig = LocalizationConfig(locale).also(config)
+inline fun MenuConfig<*, *>.localize(locale: DiscordLocale, config: LocalizationContext.() -> Unit = {}) {
+    context.localizationContext = LocalizationContext(locale).also(config)
 }
+
+@Suppress("NOTHING_TO_INLINE")
+inline val MenuConfig<*, *>.currentLocalizationConfig get() = context.localizationContext
 
 //TODO support cache
 

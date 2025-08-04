@@ -54,7 +54,7 @@ class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
         return when {
             localize -> {
                 @Suppress("UNCHECKED_CAST")
-                val config = menu.context.localizationConfig ?: error("You have to configure the localization context for a localized menu (e.g. call localize(DiscordLocale) in the menu builder)")
+                val config = menu.context.localizationContext ?: error("You have to configure the localization context for a localized menu (e.g. call localize(DiscordLocale) in the menu builder)")
                 val locale = config.locale.takeIf { it in menu.menu.manager.manager.localizationManager.locales } ?: menu.menu.manager.manager.localizationManager.defaultLocale
 
                 val key =
@@ -71,7 +71,7 @@ class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
 }
 
 fun <T> MenuConfig<*, *>.read(function: KFunction<T>): T {
-    val localizationConfig = context.localizationConfig
+    val localizationConfig = context.localizationContext
     require(localizationConfig != null) { "Cannot read localization before localize() call" }
 
     return function.call(*function.parameters.map {
@@ -83,7 +83,7 @@ fun <T> MenuConfig<*, *>.read(function: KFunction<T>): T {
     }.toTypedArray())
 }
 
-data class LocalizationConfig(val locale: DiscordLocale, val args: MutableMap<String, Pair<Any?, KType>> = mutableMapOf()) {
+data class LocalizationContext(val locale: DiscordLocale, val args: MutableMap<String, Pair<Any?, KType>> = mutableMapOf()) {
     inline fun <reified T> bindParameter(name: String, value: T) = bindParameter(name, typeOf<T>(), value)
     fun bindParameter(name: String, type: KType, value: Any?) {
         args[name] = value to type
@@ -97,7 +97,7 @@ fun MenuConfig<out GuildChannel, *>.channelLocale() = parameter(
     { event.guildLocale }
 )
 
-inline fun MenuConfig<out GuildChannel, *>.localizeForChannel(config: LocalizationConfig.() -> Unit = {}) = localize(channelLocale, config)
+inline fun MenuConfig<out GuildChannel, *>.localizeForChannel(config: LocalizationContext.() -> Unit = {}) = localize(channelLocale, config)
 
 val MenuConfig<out Interaction, *>.guildLocale get() = guildLocale()
 fun MenuConfig<out Interaction, *>.guildLocale() = parameter(
@@ -106,7 +106,7 @@ fun MenuConfig<out Interaction, *>.guildLocale() = parameter(
     { event.guildLocale }
 )
 
-inline fun MenuConfig<out Interaction, *>.localizeForGuild(config: LocalizationConfig.() -> Unit = {}) = localize(guildLocale, config)
+inline fun MenuConfig<out Interaction, *>.localizeForGuild(config: LocalizationContext.() -> Unit = {}) = localize(guildLocale, config)
 
 val MenuConfig<out Interaction, *>.userLocale get() = userLocale()
 fun MenuConfig<out Interaction, *>.userLocale() = parameter(
@@ -115,4 +115,4 @@ fun MenuConfig<out Interaction, *>.userLocale() = parameter(
     { event.userLocale }
 )
 
-inline fun MenuConfig<out Interaction, *>.localizeForUser(config: LocalizationConfig.() -> Unit = {}) = localize(userLocale, config)
+inline fun MenuConfig<out Interaction, *>.localizeForUser(config: LocalizationContext.() -> Unit = {}) = localize(userLocale, config)

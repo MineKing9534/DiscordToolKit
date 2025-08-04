@@ -18,7 +18,7 @@ sealed class MenuContext<M>(override val stateData: StateData) : StateContainer 
     internal val lazy = mutableListOf<MenuLazyImpl<*>>()
 
     @PublishedApi
-    internal var localizationConfig: LocalizationConfig? = null
+    internal var localizationContext: LocalizationContext? = null
 }
 
 class BuildMenuContext<M>() : MenuContext<M>(StateData(mutableListOf()))
