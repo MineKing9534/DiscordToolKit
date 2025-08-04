@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "de.mineking"
-version = "1.0.0"
+version = "1.1.0"
 
 val jvmVersion = 21
 val release = System.getenv("RELEASE") == "true"
