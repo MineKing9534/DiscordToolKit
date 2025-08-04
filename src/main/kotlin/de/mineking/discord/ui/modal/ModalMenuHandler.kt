@@ -1,0 +1,71 @@
+package de.mineking.discord.ui.modal
+
+import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.IdGenerator
+import de.mineking.discord.ui.MenuContext
+import de.mineking.discord.ui.RenderTermination
+import de.mineking.discord.ui.readLocalizedString
+import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import net.dv8tion.jda.api.components.actionrow.ActionRow
+import net.dv8tion.jda.api.interactions.modals.Modal
+import net.dv8tion.jda.api.interactions.modals.ModalTopLevelComponent
+
+interface ModalMenuHandler {
+    suspend fun <M, L : LocalizationFile?> handle(handler: ModalMenuExecutor<M, L>, menu: ModalMenu<M, L>, state: ModalContext<M>)
+    suspend fun <M, L : LocalizationFile?> build(renderer: ModalMenuRenderer<M, L>, menu: ModalMenu<M, L>, state: MenuContext<M>): Modal
+}
+
+inline fun <reified E: Throwable> ModalMenuHandler.handleException(
+    crossinline handle: suspend ModalContext<*>.(ModalMenuExecutor<*, *>, E) -> Unit,
+    crossinline build: suspend MenuContext<*>.(ModalMenuRenderer<*, *>, E) -> Modal
+) = object : ModalMenuHandler {
+    override suspend fun <M, L : LocalizationFile?> handle(handler: ModalMenuExecutor<M, L>, menu: ModalMenu<M, L>, state: ModalContext<M>) = try {
+        this@handleException.handle(handler, menu, state)
+    } catch (e: Throwable) {
+        if (e !is E) throw e
+        try {
+            handle(state, handler, e)
+        } catch (_: RenderTermination) {}
+    }
+
+    override suspend fun <M, L : LocalizationFile?> build(renderer: ModalMenuRenderer<M, L>, menu: ModalMenu<M, L>, state: MenuContext<M>) = try {
+        this@handleException.build(renderer, menu, state)
+    } catch (e: Throwable) {
+        if (e !is E) throw e
+        build(state, renderer, e)
+    }
+}
+
+object DefaultModalHandler : ModalMenuHandler {
+    override suspend fun <M, L : LocalizationFile?> handle(handler: ModalMenuExecutor<M, L>, menu: ModalMenu<M, L>, state: ModalContext<M>) {
+        menu.config(handler, menu.localization)
+        handler.context.lazy.forEach { it.active = true } //Activate lazy values => Allow them to load in the handler
+
+        try {
+            handler.handlers.forEach { handler -> state.handler() }
+        } catch (_: RenderTermination) { }
+
+        state.after.forEach { it() }
+    }
+
+    fun <M, L : LocalizationFile?> buildComponents(generator: IdGenerator, renderer: ModalMenuRenderer<M, L>): List<ModalTopLevelComponent> {
+        val components = renderModalComponents(generator, renderer)
+
+        val rows = components.map { ActionRow.of(it) }
+
+        val left = generator.charactersLeft()
+        if (left != 0) error("Not enough component id space to store state. $left characters left")
+
+        return rows
+    }
+
+    override suspend fun <M, L : LocalizationFile?> build(renderer: ModalMenuRenderer<M, L>, menu: ModalMenu<M, L>, state: MenuContext<M>): Modal {
+        menu.config(renderer, menu.localization)
+
+        val generator = IdGenerator(state.stateData.encode())
+
+        return Modal.create(generator.nextId("${menu.name}:"), renderer.readLocalizedString(menu.localization, null, renderer.title, "title") ?: ZERO_WIDTH_SPACE)
+            .addComponents(buildComponents(generator, renderer))
+            .build()
+    }
+}

@@ -3,6 +3,8 @@ package examples
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.*
+import de.mineking.discord.ui.getValue
+import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
 import setup.createJDA
 import java.awt.Color

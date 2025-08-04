@@ -1,9 +1,11 @@
 package de.mineking.discord.ui.builder.components
 
-import de.mineking.discord.ui.MessageComponent
-import de.mineking.discord.ui.State
-import de.mineking.discord.ui.createMessageComponent
+import de.mineking.discord.ui.MutableState
 import de.mineking.discord.ui.disabled
+import de.mineking.discord.ui.getValue
+import de.mineking.discord.ui.message.MessageComponent
+import de.mineking.discord.ui.message.createMessageComponent
+import de.mineking.discord.ui.setValue
 import net.dv8tion.jda.api.components.buttons.Button
 
 fun counter(
@@ -11,7 +13,7 @@ fun counter(
     min: Int = 0,
     max: Int = Integer.MAX_VALUE,
     step: Int = 1,
-    ref: State<Int>
+    ref: MutableState<Int>
 ): MessageComponent<Button> {
     var count by ref
 

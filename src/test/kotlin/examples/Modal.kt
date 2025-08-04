@@ -6,7 +6,11 @@ import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
 import de.mineking.discord.ui.builder.components.modalButton
 import de.mineking.discord.ui.builder.components.textInput
-import de.mineking.discord.ui.builder.content
+import de.mineking.discord.ui.getValue
+import de.mineking.discord.ui.message.message
+import de.mineking.discord.ui.message.modal
+import de.mineking.discord.ui.modal.getValue
+import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
 import setup.createJDA
 
@@ -20,10 +24,10 @@ fun main() {
                 val modal = modal("modal") {
                     title("Modal Title")
 
-                    val text = +textInput("text", label = "Text")
+                    val text by +textInput("text", label = "Text")
 
                     execute {
-                        hook.sendMessage(text()).setEphemeral(true).queue()
+                        reply(text).setEphemeral(true).queue()
                     }
                 }
 
@@ -35,6 +39,7 @@ fun main() {
 
                     //Same as above but simpler by inlining the modal definition
                     modalButton("b", label = "b", component = textInput("text", label = "Text"), title = "Modal Title") {
+                        //Using the hook here instead of reply because the modalButton implementation automatically handles acknowledging the interaction and rerenders the message menu
                         hook.sendMessage(it).setEphemeral(true).queue()
                     },
 
@@ -44,9 +49,11 @@ fun main() {
                     }
                 )
 
-                content {
-                    +"**Clicked C:** $count\n"
-                    +"**Text:** $text"
+                message {
+                    content {
+                        +"**Clicked C:** $count\n"
+                        +"**Text:** $text"
+                    }
                 }
             }
 

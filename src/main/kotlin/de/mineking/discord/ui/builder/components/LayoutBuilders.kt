@@ -1,6 +1,6 @@
 package de.mineking.discord.ui.builder.components
 
-import de.mineking.discord.ui.MessageComponent
+import de.mineking.discord.ui.message.MessageComponent
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
 import net.dv8tion.jda.api.components.container.ContainerChildComponent

@@ -6,16 +6,18 @@ import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.TextElement
 import de.mineking.discord.ui.builder.paginate
 import de.mineking.discord.ui.builder.text
+import de.mineking.discord.ui.message.*
+import de.mineking.discord.ui.modal.map
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-suspend fun MessageMenuConfig<*, *>.pageSelector(
+fun MessageMenuConfig<*, *>.pageSelector(
     name: String,
     max: Int,
-    ref: State<Int>,
+    ref: MutableState<Int>,
     modal: Boolean = true,
     title: CharSequence = DEFAULT_LABEL,
     label: CharSequence = DEFAULT_LABEL,
@@ -48,7 +50,7 @@ suspend fun MessageMenuConfig<*, *>.pageSelector(
                     value = page,
                     placeholder = "$page"
                 ).unbox().map { it ?: terminateRender() }
-            ) { page = clamp(it, 1, max) }
+            ) { page = it.coerceIn(1, max) }
         else +label(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max")
 
         +button(
@@ -66,7 +68,7 @@ suspend fun MessageMenuConfig<*, *>.pageSelector(
 fun pageFocusSelector(
     name: String,
     max: Int,
-    ref: State<Int>
+    ref: MutableState<Int>
 ): MessageComponent<ActionRow> {
     var page by ref
 
@@ -81,12 +83,12 @@ fun pageFocusSelector(
 
 data class PaginationResult(val text: TextElement, val component: MessageComponent<ActionRow>)
 
-suspend fun <T> MessageMenuConfig<*, *>.pagination(
+fun <T> MessageMenuConfig<*, *>.pagination(
     name: String,
     entries: List<T>,
     display: T.(index: Int) -> TextElement = { index -> text("$index. ") + text(this) },
     perPage: Int = 20,
-    ref: State<Int>,
+    ref: MutableState<Int>,
     pageFocusSelector: Boolean = false,
     modal: Boolean = true,
     title: CharSequence = DEFAULT_LABEL,

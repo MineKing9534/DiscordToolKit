@@ -7,125 +7,75 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-typealias StateGetter<T> = StateContext<*>.() -> T
-typealias StateSetter<T> = StateContext<*>.(value: T) -> Unit
-typealias StateHandler<T> = (old: T, new: T) -> Unit
+typealias StateUpdateHandler<T> = (old: T, new: T) -> Unit
 
-interface IState {
-    val id: Int
-    fun ref() = this
+interface State<out T> {
+    val value: T
 }
 
-interface ReadState<T> : IState {
-    fun get(context: StateContext<*>?): T
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = get(null)
+interface MutableState<T> : State<T> {
+    override var value: T
 
-    fun <O> transform(toOther: (value: T) -> O): ReadState<O> = object : ReadState<O> {
-        override val id: Int = this@ReadState.id
-        override fun get(context: StateContext<*>?): O = toOther(this@ReadState.get(context))
-    }
+    operator fun component1(): () -> T = { value }
+    operator fun component2(): (T) -> Unit = { value = it }
+    operator fun component3() = this
 }
 
-interface WriteState<T> : IState {
-    fun set(context: StateContext<*>?, value: T)
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(null, value)
+@Suppress("NOTHING_TO_INLINE")
+inline operator fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>) = value
 
-    fun <O> transform(fromOther: (value: O) -> T): WriteState<O> = object : WriteState<O> {
-        override val id: Int = this@WriteState.id
-        override fun set(context: StateContext<*>?, value: O) = this@WriteState.set(context, fromOther(value))
-    }
+@Suppress("NOTHING_TO_INLINE")
+inline operator fun <T> MutableState<T>.setValue(thisObj: Any?, property: KProperty<*>, value: T) {
+    this.value = value
 }
 
-interface State<T> : ReadState<T>, WriteState<T> {
-    override fun ref() = this
-
-    fun <O> transform(toOther: (value: T) -> O, fromOther: (value: O) -> T): State<O> = object : State<O> {
-        override val id: Int = this@State.id
-
-        override fun get(context: StateContext<*>?): O = toOther(this@State.get(context))
-        override fun set(context: StateContext<*>?, value: O) = this@State.set(context, fromOther(value))
-    }
-
-    fun update(context: StateContext<*>? = null, handler: (current: T) -> Unit) {
-        val current = get(context)
-        handler(current)
-        set(context, current)
-    }
-
-    operator fun component1(): StateGetter<T> = { get(this) }
-    operator fun component2(): StateSetter<T> = { set(this, it) }
-    operator fun component3() = ref()
-    operator fun component4() = id
+fun <T, U> MutableState<T>.map(toOther: (T) -> U, fromOther: (U) -> T): MutableState<U> = object : MutableState<U> {
+    override var value: U
+        get() = toOther(this@map.value)
+        set(value) {
+            this@map.value = fromOther(value)
+        }
 }
 
-data class InternalState<T>(val type: KType, val initial: T, val handler: StateHandler<T>?)
+data class InternalState<T>(val type: KType, val initial: T, val handler: StateUpdateHandler<T>?)
 
-fun <T> constantState(value: T) = object : ReadState<T> {
-    override val id: Int = -1
-    override fun get(context: StateContext<*>?): T = value
+fun <T> virtualState(value: () -> T, setter: (value: T) -> Unit) = object : MutableState<T> {
+    override var value: T
+        get() = value()
+        set(value) = setter(value)
 }
 
-fun <T> sinkState(value: T? = null) = object : State<T?> {
-    override val id: Int = -1
-    override fun get(context: StateContext<*>?): T? = value
-    override fun set(context: StateContext<*>?, value: T?) {}
+fun <T> virtualState(initial: T) = object : MutableState<T> {
+    override var value = initial
 }
 
-fun <T> dynamicState(value: () -> T, setter: (value: T) -> Unit) = object : State<T> {
-    override val id: Int = -1
-
-    override fun get(context: StateContext<*>?) = value()
-    override fun set(context: StateContext<*>?, value: T) = setter(value)
-}
-
-interface StateAccessor {
-    fun currentState(): Int
-
-    fun skipState(amount: Int)
-    fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T>
+fun <T> virtualReadonlyState(value: T) = object : State<T> {
+    override val value = value
 }
 
 data class StateData(val data: MutableList<String>) {
-    private val cache = mutableMapOf<Int, Pair<KType, Any?>>()
+    private val cache = arrayOfNulls<Pair<KType, Any?>>(data.size).toMutableList()
 
     fun pushInitial(type: KType, value: Any?) {
         data += encodeSingle(type, value)
+        cache += type to value
     }
 
-    fun get(id: Int, type: KType): Any? = cache.computeIfAbsent(id) { type to decodeSingle(type, data[id]) }.second
-    fun set(id: Int, value: Any?, type: KType) {
+    private fun get(id: Int, type: KType): Any? =
+        cache.getOrNull(id)?.second ?: decodeSingle(type, data[id])
+            .also { cache[id] = type to it }
+    private fun set(id: Int, value: Any?, type: KType) {
         cache[id] = type to value
     }
 
-    fun <T> getState(type: KType, id: Int, handler: StateHandler<T>? = null): State<T> {
-        return object : State<T> {
-            override val id: Int get() = id
-
+    fun <T> getState(type: KType, id: Int, handler: StateUpdateHandler<T>?) = object : MutableState<T> {
+        override var value: T
             @Suppress("UNCHECKED_CAST")
-            override fun get(context: StateContext<*>?): T {
-                val state = context?.stateData ?: this@StateData
-                return state.get(id, type) as T
+            get() = get(id, type) as T
+            set(value) {
+                handler?.invoke(this.value, value)
+                set(id, value, type)
             }
-
-            override fun set(context: StateContext<*>?, value: T) {
-                val state = context?.stateData ?: this@StateData
-
-                handler?.invoke(get(context), value)
-                state.set(id, value, type)
-            }
-        }
-    }
-
-    fun access() = object : StateAccessor {
-        private var currentState = 0
-
-        override fun currentState(): Int = currentState
-
-        override fun skipState(amount: Int) {
-            currentState += amount
-        }
-
-        override fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T> = getState(type, currentState++, handler)
     }
 
     fun effectiveData(id: Int) = cache[id]?.let { (type, value) -> encodeSingle(type, value) } ?: data[id]
@@ -152,28 +102,31 @@ data class StateData(val data: MutableList<String>) {
     }
 }
 
-@MenuMarker
-interface StateContext<M> {
-    val menuInfo: MenuInfo<M>
+interface StateContainer {
     val stateData: StateData
     val cache: MutableList<Any?>
 }
 
-@MenuMarker
-class SendState<M>(override val menuInfo: MenuInfo<M>, override val stateData: StateData, val param: M) : StateContext<M> {
-    override val cache: MutableList<Any?> = mutableListOf()
+fun MenuConfig<*, *>.skipState(amount: Int = 1) {
+    if (isBuild()) repeat(amount) {
+        context.stateData.pushInitial(typeOf<Unit>(), Unit)
+    }
+
+    configState.currentState += amount
 }
 
-@MenuMarker
-interface StateConfig {
-    fun currentState(): Int
+fun <T> MenuConfig<*, *>.state(type: KType, initial: T, handler: StateUpdateHandler<T>? = null): MutableState<T> {
+    if (isBuild()) {
+        configState.menu.states += InternalState(type, initial, handler)
+        context.stateData.pushInitial(type, initial)
+    }
 
-    fun skipState(amount: Int = 1)
-    fun <T> state(type: KType, initial: T, handler: StateHandler<T>? = null): State<T>
+    return context.stateData.getState(type, configState.currentState, handler)
+        .also { configState.currentState++ }
 }
 
-inline fun <reified T> StateConfig.state(initial: T, noinline handler: StateHandler<T>? = null) = state(typeOf<T>(), initial, handler)
-inline fun <reified T> StateConfig.state(noinline handler: StateHandler<T?>? = null) = state(null, handler)
+inline fun <reified T> MenuConfig<*, *>.state(initial: T, noinline handler: StateUpdateHandler<T>? = null) = state(typeOf<T>(), initial, handler)
+inline fun <reified T> MenuConfig<*, *>.state(noinline handler: StateUpdateHandler<T?>? = null) = state(null, handler)
 
 internal fun List<String>.decodeState(parts: Int) = joinToString("") {
     val original = it.split(":", limit = parts)[parts - 1]

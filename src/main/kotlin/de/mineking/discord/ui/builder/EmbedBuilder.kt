@@ -13,9 +13,9 @@ data class EmbedResult(val embed: net.dv8tion.jda.api.EmbedBuilder, val files: L
 fun EmbedImage(url: String) = EmbedImage(url, null)
 fun EmbedImage(file: FileUpload) = EmbedImage("attachment://${file.name}", file)
 
-typealias EmbedBuilder = Embed.() -> Unit
+typealias EmbedConfigurator = EmbedBuilder.() -> Unit
 
-class Embed {
+class EmbedBuilder {
     private var title: String? = null
     private var url: String? = null
 
@@ -40,7 +40,7 @@ class Embed {
         this.title = title
     }
 
-    inline fun title(init: TextElementBuilder) = title(build(init))
+    inline fun title(init: TextElementBuilder) = title(renderTextElement(init))
     fun title(text: TextElement) = title(text.toString())
 
     fun url(url: String) {
@@ -83,7 +83,7 @@ class Embed {
         this.description = description
     }
 
-    inline fun description(init: TextElementBuilder) = description(build(init))
+    inline fun description(init: TextElementBuilder) = description(renderTextElement(init))
     fun description(text: TextElement) = description(text.toString())
 
     fun field(field: EmbedField) {
@@ -94,7 +94,7 @@ class Embed {
 
     fun field(name: String, value: String, inline: Boolean = true) = field(EmbedField(name, value, inline))
     fun field(name: String, value: TextElement, inline: Boolean = true) = field(name, value.toString(), inline)
-    inline fun field(name: String, value: TextElementBuilder, inline: Boolean = true) = field(name, build(value), inline)
+    inline fun field(name: String, value: TextElementBuilder, inline: Boolean = true) = field(name, renderTextElement(value), inline)
 
     fun image(image: EmbedImage?) {
         this.image = image
@@ -147,8 +147,4 @@ class Embed {
     }
 }
 
-fun embed(init: EmbedBuilder): Embed {
-    val embed = Embed()
-    embed.init()
-    return embed
-}
+inline fun embed(init: EmbedConfigurator): EmbedBuilder = EmbedBuilder().apply(init)

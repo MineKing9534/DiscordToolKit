@@ -92,11 +92,11 @@ class UserCommandContext(
     override fun replyFiles(vararg files: FileUpload?) = event.replyFiles(*files)
 
     override fun getType() = event.type
-    override fun isFromAttachedGuild() = event.isFromAttachedGuild()
+    override fun isFromAttachedGuild() = event.isFromAttachedGuild
     override fun isFromGuild() = event.isFromGuild
 
-    override fun getChannelType() = event.getChannelType()
-    override fun getChannelId() = event.getChannelId()
+    override fun getChannelType() = event.channelType
+    override fun getChannelId() = event.channelId
     override fun getGuildChannel() = event.guildChannel
     override fun getMessageChannel() = event.messageChannel
 
@@ -187,11 +187,11 @@ class SlashCommandContext(
     override fun replyFiles(vararg files: FileUpload?) = event.replyFiles(*files)
 
     override fun getType() = event.type
-    override fun isFromAttachedGuild() = event.isFromAttachedGuild()
+    override fun isFromAttachedGuild() = event.isFromAttachedGuild
     override fun isFromGuild() = event.isFromGuild
 
-    override fun getChannelType() = event.getChannelType()
-    override fun getChannelId() = event.getChannelId()
+    override fun getChannelType() = event.channelType
+    override fun getChannelId() = event.channelId
     override fun getMessageChannel() = event.messageChannel
     override fun getGuildLocale() = event.guildLocale
 
@@ -227,11 +227,11 @@ class AutocompleteContext<out T>(
     fun replyChoices(vararg choices: Choice) = replyChoices(choices.toList())
 
     override fun getType() = event.type
-    override fun isFromAttachedGuild() = event.isFromAttachedGuild()
+    override fun isFromAttachedGuild() = event.isFromAttachedGuild
     override fun isFromGuild() = event.isFromGuild
 
-    override fun getChannelType() = event.getChannelType()
-    override fun getChannelId() = event.getChannelId()
+    override fun getChannelType() = event.channelType
+    override fun getChannelId() = event.channelId
     override fun getGuildChannel() = event.guildChannel
     override fun getMessageChannel() = event.messageChannel
     override fun getGuildLocale() = event.guildLocale

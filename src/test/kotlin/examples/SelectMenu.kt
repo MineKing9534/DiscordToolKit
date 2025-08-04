@@ -5,6 +5,8 @@ import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.selectOption
 import de.mineking.discord.ui.builder.components.statefulSingleStringSelect
 import de.mineking.discord.ui.builder.components.stringSelect
+import de.mineking.discord.ui.getValue
+import de.mineking.discord.ui.message.message
 import de.mineking.discord.ui.state
 import setup.createJDA
 
@@ -17,14 +19,19 @@ fun main() {
                 val selectedRef = state("A")
                 val selected by selectedRef
 
-                content("**Selected**: $selected")
+                message{
+                    content("**Selected**: $selected")
+                }
 
+                //This select will keep its selected value across rerenders, because it is safed in a state
+                //(You can get that behavior by using a default stringSelect and manually implement the state logic if you need a more flexible setup
                 +statefulSingleStringSelect("stateful", options = listOf(
                     selectOption("A", label = "A"),
                     selectOption("B", label = "B"),
                     selectOption("C", label = "C")
                 ), ref = selectedRef)
 
+                //The contents of this select will be reset after each rerender, because it is not safed in a state
                 +stringSelect("select", min = 1, max = 2, options = listOf(
                     selectOption("A", label = "A") { println("Option Handler A") }, //Option Handlers are called fist
                     selectOption("B", label = "B") { println("Option Handler B") },

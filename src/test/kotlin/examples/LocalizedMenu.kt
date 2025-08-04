@@ -4,8 +4,12 @@ import de.mineking.discord.commands.localizedMenuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.localization.*
 import de.mineking.discord.ui.builder.components.*
+import de.mineking.discord.ui.builder.embed
+import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.localizeForUser
+import de.mineking.discord.ui.message.message
 import de.mineking.discord.ui.read
+import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.interactions.DiscordLocale
@@ -27,7 +31,9 @@ fun main() {
                     bindParameter("a", state)
                 }
 
-                embed(read(localization::testEmbed))
+                message {
+                    embed(read(localization::testEmbed))
+                }
 
                 +actionRow(
                     label("label"),
@@ -40,7 +46,10 @@ fun main() {
 
                 +actionRow(
                     menuButton("menu1") { back ->
-                        content("$test")
+                        message {
+                            content("$test")
+                        }
+
                         +actionRow(back.asButton("back"))
                     },
                     localizedMenuButton<SubmenuLocalization>("menu2") { _, back ->

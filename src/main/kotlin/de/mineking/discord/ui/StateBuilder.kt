@@ -1,6 +1,6 @@
 package de.mineking.discord.ui
 
-class StateBuilder<M, N>(val base: StateContext<M>, val target: Menu<N, *, *>) {
+class StateBuilder(val base: StateContainer, val target: Menu<*, *, *>) {
     val data = mutableListOf<String>()
     private var baseIndex = 0
     private var targetIndex = 0
@@ -40,6 +40,6 @@ class StateBuilder<M, N>(val base: StateContext<M>, val target: Menu<N, *, *>) {
     fun build() = StateData(data)
 }
 
-typealias StateBuilderConfig = StateBuilder<*, *>.() -> Unit
+typealias StateBuilderConfig = StateBuilder.() -> Unit
 
 val DEFAULT_STATE_BUILDER: StateBuilderConfig = { copyAll(); pushDefaults() }

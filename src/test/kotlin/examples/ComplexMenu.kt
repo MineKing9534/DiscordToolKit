@@ -4,7 +4,13 @@ import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.*
 import de.mineking.discord.ui.builder.components.*
+import de.mineking.discord.ui.getValue
+import de.mineking.discord.ui.initialize
 import de.mineking.discord.ui.jda
+import de.mineking.discord.ui.map
+import de.mineking.discord.ui.message.message
+import de.mineking.discord.ui.message.submenu
+import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.symbols.keycap.listKeycap
@@ -20,7 +26,7 @@ fun main() {
                 val pageRef = state(1) { old, new -> println("Page: $old -> $new") } //You can define a state with an update listener
                 var page by pageRef
 
-                render {
+                message {
                     content(if (page == 1) "First Page" else "Second Page")
                 }
 
@@ -35,7 +41,9 @@ fun main() {
                 val page = state(1)
                 val (content, component) = pagination("page", entries.toList(), display = { index -> text("$index. ") + bold(this) }, perPage = 10, ref = page)
 
-                content(content)
+                message {
+                    content(content)
+                }
 
                 +component
             }
@@ -44,21 +52,28 @@ fun main() {
                 val outerRef = state(3) //Integer state with starting value 3
                 var outer by outerRef
 
-                content("# Root Menu")
+                message {
+                    content("# Root Menu")
+                }
 
                 val submenu = submenu("test") {
                     val state by state(0)
-                    content {
-                        +h1("Custom Submenu")
-                        +"$state"
+
+                    message {
+                        content {
+                            +h1("Custom Submenu")
+                            +"$state"
+                        }
                     }
 
                     +actionRow(switchMenuButton("complex", label = "Back")) //Simple back button. Will also override the outer state to the value of "state"
                 }
 
                 +actionRow(
-                    button("a", label = "A") { switchMenu(submenu) }, //Doesn't pass any value -> default (0) is used
-                    switchMenuButton(submenu, "b", label = "B"), //Implicitly copies the n-th state to the n-th state -> "outer" is used as "state"
+                    button("a", label = "A") { switchMenu(submenu) { pushDefaults() } }, //Push the default state values (0 in this case)
+
+                    //You can also use switchMenuButton to switch to a different menu. Instead of a click handler, you can pass the state builder as a lambda
+                    switchMenuButton(submenu, "b", label = "B"), //Implicitly copies the n-th state to the n-th state -> "outer" is used as "state" (The default state builder copies all states and fills the rest with defaults)
                     switchMenuButton(submenu, "c", label = "C") { push(5) } //Explicitly pushes 5 as first state -> 5 ist used
                 )
 
@@ -71,12 +86,14 @@ fun main() {
                     var inner by innerRef
 
                     //Alternative way to declare states
-                    val (step, _, stepRef) = state(0)
+                    val (step, _, stepRef) = state(1)
 
-                    content {
-                        +h1("Menu Button")
-                        +line("**Parent:** $outer")
-                        +line("**Inner: ** $inner")
+                    message {
+                        content {
+                            +h1("Menu Button")
+                            +line("**Parent:** $outer")
+                            +line("**Inner: ** $inner")
+                        }
                     }
 
                     +actionRow(back.asButton(label = "Back"))
@@ -95,24 +112,30 @@ fun main() {
                         "step",
                         placeholder = "Select Step Size",
                         options = (1..10).map { selectOption(it, label = "$it", emoji = Emoji.listKeycap()[2 + it % 11].jda()) },
-                        ref = stepRef.transform({ "$it" }, { it.toInt() }) //Transform the int state for step to the required string state
+                        ref = stepRef.map({ "$it" }, { it.toInt() }) //Transform the int state for step to the required string state
                     )
                 }
 
                 //Normal submenus inherit properties from the parent like state or localization context
-                //If you detach a submenu, this does NOT happen. This can improve performance and reduce required state size
+                //If you detach a submenu, this does NOT happen. This can improve performance and reduce required state size.
+                //However, keep in mind that this therefore might cause unexpected behavior when using properties defined in the parent menu.
                 val menuB = menuButton("detached", label = "Detached", detach = true) { back ->
                     var count by state(0)
 
-                    content {
-                        +h1("Detached")
-                        +line("Parent: $outer") //Outer value will always be 3 (The default value) because the parent state is not preserved in detached menus
-                        +line("Count: $count")
+                    message {
+                        content {
+                            +h1("Detached")
+                            +line("Parent: $outer") //The outer state is NOT inherited as actual state to this menu because it is registered as detached. This value will therefore ALWAYS reference the state value during the HANDLE phase
+                                                           //Hover, this value is still mutable. It will, however, NOT be persisted over bot restarts (this value is stored in RAM) and is shared between all instances of this menu.
+                                                           //I don't think there is any situation where this should be used. It is NOT recommended to use state values from the parent menu in a detached submenu.
+                            +line("Count: $count")
+                        }
                     }
 
                     +actionRow(
                         button("inc", label = "+") { count++ },
-                        button("ign", label = "Parent +") { outer++ }, //This will do nothing
+                        button("ign", label = "Parent +") { outer++ }, //This will NOT update the UI because this state is not part of this menu's state calculations.
+                                                                               // However, the value is updated in the BUILD phase RAM version of the state. Updates will be visible after a rerender. See the note above for more details about parent state behavior.
                         back.asButton(label = "Back")
                     )
                 }
