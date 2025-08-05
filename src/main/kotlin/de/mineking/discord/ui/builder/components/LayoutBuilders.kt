@@ -37,4 +37,4 @@ inline fun section(
 ) = section(accessory, SectionBuilder().apply(builder).components)
 
 typealias MediaGalleryBuilder = ComponentBuilder<MediaGalleryItem>
-fun mediaGallery(builder: MediaGalleryBuilder.() -> Unit) = mediaGallery(MediaGalleryBuilder().apply(builder).components)
+inline fun mediaGallery(builder: MediaGalleryBuilder.() -> Unit) = mediaGallery(MediaGalleryBuilder().apply(builder).components)

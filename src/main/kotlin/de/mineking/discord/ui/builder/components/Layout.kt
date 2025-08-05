@@ -2,7 +2,7 @@ package de.mineking.discord.ui.builder.components
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.builder.TextElement
+import de.mineking.discord.ui.builder.TextElementBuilder
 import de.mineking.discord.ui.builder.renderTextElement
 import de.mineking.discord.ui.disabled
 import de.mineking.discord.ui.message.MessageComponent
@@ -111,9 +111,11 @@ fun thumbnail(file: FileUpload) = thumbnail { file }
 
 fun thumbnail(url: String) = createMessageComponent { _, _ -> Thumbnail.fromUrl(url) }
 
-fun textDisplay(content: () -> String) = createMessageComponent { _, _ -> TextDisplay.of(content()) }
-fun textDisplay(content: String) = textDisplay { content }
-fun buildTextDisplay(content: TextElement.() -> Unit) = textDisplay { renderTextElement { content() } }
+fun textDisplay(content: String) = createMessageComponent { _, _ -> TextDisplay.of(content) }
+inline fun buildTextDisplay(content: TextElementBuilder) = textDisplay(renderTextElement(content))
+
+fun lazyTextDisplay(content: () -> String) = createMessageComponent { _, _ -> TextDisplay.of(content()) }
+fun buildLazyTextDisplay(content: TextElementBuilder) = lazyTextDisplay { renderTextElement(content) }
 
 fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageComponent { config, _ ->
     TextDisplay.of(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
