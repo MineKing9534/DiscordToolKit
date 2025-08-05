@@ -34,7 +34,7 @@ class ModalMenu<M, L : LocalizationFile?>(
         val context = ModalContext(this, StateData.decode(data), event)
 
         val executor = ModalMenuExecutor(this, context)
-        handler.handle<M, L>(executor, this, context)
+        handler.handle(executor, this, context)
     }
 
     suspend fun createInitial(param: M): Modal {

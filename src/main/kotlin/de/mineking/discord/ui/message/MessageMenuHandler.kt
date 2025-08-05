@@ -10,15 +10,15 @@ import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import net.dv8tion.jda.api.utils.messages.MessageEditData
 
 interface MessageMenuHandler {
-    suspend fun <M, L: LocalizationFile?> handleComponent(finder: MessageMenuComponentFinder<M, L>, menu: MessageMenu<M, L>, state: ComponentContext<M, *>, oldState: String, name: String)
-    suspend fun <M, L: LocalizationFile?> render(renderer: MessageMenuRenderer<M, L>, menu: MessageMenu<M, L>, state: MenuContext<M>): MessageEditData
+    suspend fun handleComponent(finder: MessageMenuComponentFinder<*, *>, menu: MessageMenu<*, *>, state: ComponentContext<*, *>, oldState: String, name: String)
+    suspend fun render(renderer: MessageMenuRenderer<*, *>, menu: MessageMenu<*, *>, state: MenuContext<*>): MessageEditData
 }
 
 inline fun <reified E: Throwable> MessageMenuHandler.handleException(
     crossinline component: suspend ComponentContext<*, *>.(MessageMenuComponentFinder<*, *>, E) -> Unit,
     crossinline render: suspend MenuContext<*>.(MessageMenuConfigImpl<*, *>, E) -> MessageEditData
 ) = object : MessageMenuHandler {
-    override suspend fun <M, L : LocalizationFile?> handleComponent(finder: MessageMenuComponentFinder<M, L>, menu: MessageMenu<M, L>, state: ComponentContext<M, *>, oldState: String, name: String) = try {
+    override suspend fun handleComponent(finder: MessageMenuComponentFinder<*, *>, menu: MessageMenu<*, *>, state: ComponentContext<*, *>, oldState: String, name: String) = try {
         this@handleException.handleComponent(finder, menu, state, oldState, name)
     } catch (e: Throwable) {
         if (e !is E) throw e
@@ -27,7 +27,7 @@ inline fun <reified E: Throwable> MessageMenuHandler.handleException(
         } catch (_: RenderTermination) {}
     }
 
-    override suspend fun <M, L : LocalizationFile?> render(renderer: MessageMenuRenderer<M, L>, menu: MessageMenu<M, L>, state: MenuContext<M>): MessageEditData = try {
+    override suspend fun render(renderer: MessageMenuRenderer<*, *>, menu: MessageMenu<*, *>, state: MenuContext<*>): MessageEditData = try {
         this@handleException.render(renderer, menu, state)
     } catch (e: Throwable) {
         if (e !is E) throw e
@@ -36,9 +36,13 @@ inline fun <reified E: Throwable> MessageMenuHandler.handleException(
 }
 
 object DefaultMessageMenuHandler : MessageMenuHandler {
-    override suspend fun <M, L: LocalizationFile?> handleComponent(finder: MessageMenuComponentFinder<M, L>, menu: MessageMenu<M, L>, state: ComponentContext<M, *>, oldState: String, name: String) {
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun <M, L: LocalizationFile?> runConfig(config: MessageMenuConfig<*, *>, menu: MessageMenu<M, L>) =
+        menu.config(config as MessageMenuConfig<M, L>, menu.localization)
+
+    override suspend fun handleComponent(finder: MessageMenuComponentFinder<*, *>, menu: MessageMenu<*, *>, state: ComponentContext<*, *>, oldState: String, name: String) {
         try {
-            menu.config(finder, menu.localization)
+            runConfig(finder, menu)
             error("Component $name not found")
         } catch (_: ComponentFinderResult) {
         } catch (_: RenderTermination) {
@@ -66,7 +70,7 @@ object DefaultMessageMenuHandler : MessageMenuHandler {
         state.after.forEach { it() }
     }
 
-    fun <M, L: LocalizationFile?> buildComponents(renderer: MessageMenuRenderer<M, L>): List<MessageTopLevelComponent> {
+    fun buildComponents(renderer: MessageMenuRenderer<*, *>): List<MessageTopLevelComponent> {
         val generator = IdGenerator(renderer.context.stateData.encode())
 
         @Suppress("UNCHECKED_CAST")
@@ -78,9 +82,8 @@ object DefaultMessageMenuHandler : MessageMenuHandler {
         return components
     }
 
-    override suspend fun <M, L: LocalizationFile?> render(renderer: MessageMenuRenderer<M, L>, menu: MessageMenu<M, L>, state: MenuContext<M>): MessageEditData {
-        menu.config(renderer, menu.localization)
-
+    override suspend fun render(renderer: MessageMenuRenderer<*, *>, menu: MessageMenu<*, *>, state: MenuContext<*>): MessageEditData {
+        runConfig(renderer, menu)
         val builder = renderer.message ?: MessageEditBuilder()
 
         return builder

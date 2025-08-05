@@ -11,15 +11,15 @@ import net.dv8tion.jda.api.interactions.modals.Modal
 import net.dv8tion.jda.api.interactions.modals.ModalTopLevelComponent
 
 interface ModalMenuHandler {
-    suspend fun <M, L : LocalizationFile?> handle(handler: ModalMenuExecutor<M, L>, menu: ModalMenu<M, L>, state: ModalContext<M>)
-    suspend fun <M, L : LocalizationFile?> build(renderer: ModalMenuRenderer<M, L>, menu: ModalMenu<M, L>, state: MenuContext<M>): Modal
+    suspend fun handle(handler: ModalMenuExecutor<*, *>, menu: ModalMenu<*, *>, state: ModalContext<*>)
+    suspend fun build(renderer: ModalMenuRenderer<*, *>, menu: ModalMenu<*, *>, state: MenuContext<*>): Modal
 }
 
 inline fun <reified E: Throwable> ModalMenuHandler.handleException(
     crossinline handle: suspend ModalContext<*>.(ModalMenuExecutor<*, *>, E) -> Unit,
     crossinline build: suspend MenuContext<*>.(ModalMenuRenderer<*, *>, E) -> Modal
 ) = object : ModalMenuHandler {
-    override suspend fun <M, L : LocalizationFile?> handle(handler: ModalMenuExecutor<M, L>, menu: ModalMenu<M, L>, state: ModalContext<M>) = try {
+    override suspend fun handle(handler: ModalMenuExecutor<*, *>, menu: ModalMenu<*, *>, state: ModalContext<*>) = try {
         this@handleException.handle(handler, menu, state)
     } catch (e: Throwable) {
         if (e !is E) throw e
@@ -28,7 +28,7 @@ inline fun <reified E: Throwable> ModalMenuHandler.handleException(
         } catch (_: RenderTermination) {}
     }
 
-    override suspend fun <M, L : LocalizationFile?> build(renderer: ModalMenuRenderer<M, L>, menu: ModalMenu<M, L>, state: MenuContext<M>) = try {
+    override suspend fun build(renderer: ModalMenuRenderer<*, *>, menu: ModalMenu<*, *>, state: MenuContext<*>) = try {
         this@handleException.build(renderer, menu, state)
     } catch (e: Throwable) {
         if (e !is E) throw e
@@ -37,18 +37,26 @@ inline fun <reified E: Throwable> ModalMenuHandler.handleException(
 }
 
 object DefaultModalHandler : ModalMenuHandler {
-    override suspend fun <M, L : LocalizationFile?> handle(handler: ModalMenuExecutor<M, L>, menu: ModalMenu<M, L>, state: ModalContext<M>) {
-        menu.config(handler, menu.localization)
+    @Suppress("UNCHECKED_CAST")
+    private suspend fun <M, L: LocalizationFile?> runConfig(config: ModalMenuConfig<*, *>, menu: ModalMenu<M, L>) =
+        menu.config(config as ModalMenuConfig<M, L>, menu.localization)
+
+    override suspend fun handle(handler: ModalMenuExecutor<*, *>, menu: ModalMenu<*, *>, state: ModalContext<*>) {
+        runConfig(handler, menu)
         handler.context.lazy.forEach { it.active = true } //Activate lazy values => Allow them to load in the handler
 
         try {
-            handler.handlers.forEach { handler -> state.handler() }
+            @Suppress("UNCHECKED_CAST")
+            suspend fun <M> runHandlers(handlers: List<ModalHandler<M>>) =
+                handlers.forEach { handler -> (state as ModalContext<M>).handler() }
+
+            runHandlers(handler.handlers)
         } catch (_: RenderTermination) { }
 
         state.after.forEach { it() }
     }
 
-    fun <M, L : LocalizationFile?> buildComponents(generator: IdGenerator, renderer: ModalMenuRenderer<M, L>): List<ModalTopLevelComponent> {
+    fun buildComponents(generator: IdGenerator, renderer: ModalMenuRenderer<*, *>): List<ModalTopLevelComponent> {
         val components = renderModalComponents(generator, renderer)
 
         val rows = components.map { ActionRow.of(it) }
@@ -59,9 +67,8 @@ object DefaultModalHandler : ModalMenuHandler {
         return rows
     }
 
-    override suspend fun <M, L : LocalizationFile?> build(renderer: ModalMenuRenderer<M, L>, menu: ModalMenu<M, L>, state: MenuContext<M>): Modal {
-        menu.config(renderer, menu.localization)
-
+    override suspend fun build(renderer: ModalMenuRenderer<*, *>, menu: ModalMenu<*, *>, state: MenuContext<*>): Modal {
+        runConfig(renderer, menu)
         val generator = IdGenerator(state.stateData.encode())
 
         return Modal.create(generator.nextId("${menu.name}:"), renderer.readLocalizedString(menu.localization, null, renderer.title, "title") ?: ZERO_WIDTH_SPACE)
