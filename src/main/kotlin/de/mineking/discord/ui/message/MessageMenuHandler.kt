@@ -46,7 +46,7 @@ object DefaultMessageMenuHandler : MessageMenuHandler {
             error("Component $name not found")
         } catch (_: ComponentFinderResult) {
         } catch (_: RenderTermination) {
-            error("A RenderTermination was thrown during component resolution")
+            return
         }
 
         try {
