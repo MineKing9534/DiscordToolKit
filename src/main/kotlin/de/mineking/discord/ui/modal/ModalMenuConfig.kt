@@ -30,23 +30,23 @@ sealed class ModalMenuConfigImpl<M, L : LocalizationFile?>(
 }
 
 class ModalMenuBuilder<M, L : LocalizationFile?>(menu: ModalMenu<M, L>) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext()) {
-    override fun <T> ModalComponent<T>.unaryPlus() = emptyModalResult<T>()
+    internal val components = mutableListOf<ModalComponent<*>>()
+
+    override fun <T> ModalComponent<T>.unaryPlus(): ModalResult<T> {
+        components += this
+        return emptyModalResult<T>()
+    }
     override fun title(title: CharSequence) {}
     override fun execute(handler: ModalHandler<M>) {}
 }
 
-sealed class RuntimeModalMenuConfigImpl<M, L : LocalizationFile?>(
-    menu: ModalMenu<M, L>,
-    phase: MenuCallbackPhase,
-    context: MenuContext<M>
-) : ModalMenuConfigImpl<M, L>(menu, phase, context)
-
 class ModalMenuRenderer<M, L : LocalizationFile?>(
     menu: ModalMenu<M, L>,
     context: MenuContext<M>
-) : RuntimeModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.RENDER, context) {
-    val components = mutableListOf<ModalComponent<*>>()
-    var title: CharSequence = DEFAULT_LABEL
+) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.RENDER, context) {
+    internal val components = mutableListOf<ModalComponent<*>>()
+    internal var title: CharSequence = DEFAULT_LABEL
+        private set
 
     override fun <T> ModalComponent<T>.unaryPlus(): ModalResult<T> {
         components += this
@@ -63,7 +63,7 @@ class ModalMenuRenderer<M, L : LocalizationFile?>(
 class ModalMenuExecutor<M, L : LocalizationFile?>(
     menu: ModalMenu<M, L>,
     override val context: ModalContext<M>
-) : RuntimeModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
+) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
     val handlers = mutableListOf<ModalHandler<M>>()
 
     override fun <T> ModalComponent<T>.unaryPlus() = object : ModalResult<T> {

@@ -36,17 +36,31 @@ abstract class Menu<M, E : GenericInteractionCreateEvent, L : LocalizationFile?>
 
 internal fun String.menuName() = substring(lastIndexOf('.') + 1)
 
-class IdGenerator(private val state: String) {
-    private var pos = 0
-    var postfix = ""
+interface IdGenerator {
+    fun nextId(base: String): String
+    fun withParameter(parameter: String): IdGenerator
+}
+
+object EmptyIdGenerator : IdGenerator {
+    override fun nextId(base: String) = "-"
+    override fun withParameter(parameter: String) = this
+}
+
+open class IdGeneratorImpl(private val state: String, private val postfix: String = "") : IdGenerator {
+    internal var pos = 0
 
     @Synchronized
-    fun nextId(base: String): String {
+    override fun nextId(base: String): String {
         val length = (Button.ID_MAX_LENGTH - base.length - postfix.length - 2).coerceIn(0, state.length - pos)
         val result = base + String.format("%02d", length) + state.substring(pos, pos + length) + postfix
 
         pos += length
         return result
+    }
+
+    override fun withParameter(parameter: String) = object : IdGeneratorImpl(state, parameter) {
+        override fun nextId(base: String) = super.nextId(base)
+            .also { this@IdGeneratorImpl.pos = this.pos }
     }
 
     fun charactersLeft() = state.length - pos

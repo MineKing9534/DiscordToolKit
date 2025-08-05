@@ -1,7 +1,7 @@
 package de.mineking.discord.ui.modal
 
 import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.IdGenerator
+import de.mineking.discord.ui.IdGeneratorImpl
 import de.mineking.discord.ui.MenuContext
 import de.mineking.discord.ui.RenderTermination
 import de.mineking.discord.ui.readLocalizedString
@@ -56,8 +56,8 @@ object DefaultModalHandler : ModalMenuHandler {
         state.after.forEach { it() }
     }
 
-    fun buildComponents(generator: IdGenerator, renderer: ModalMenuRenderer<*, *>): List<ModalTopLevelComponent> {
-        val components = renderModalComponents(generator, renderer)
+    fun buildComponents(generator: IdGeneratorImpl, renderer: ModalMenuRenderer<*, *>): List<ModalTopLevelComponent> {
+        val components = renderer.components.render(generator, renderer)
 
         val rows = components.map { ActionRow.of(it) }
 
@@ -69,7 +69,7 @@ object DefaultModalHandler : ModalMenuHandler {
 
     override suspend fun build(renderer: ModalMenuRenderer<*, *>, menu: ModalMenu<*, *>, state: MenuContext<*>): Modal {
         runConfig(renderer, menu)
-        val generator = IdGenerator(state.stateData.encode())
+        val generator = IdGeneratorImpl(state.stateData.encode())
 
         return Modal.create(generator.nextId("${menu.name}:"), renderer.readLocalizedString(menu.localization, null, renderer.title, "title") ?: ZERO_WIDTH_SPACE)
             .addComponents(buildComponents(generator, renderer))

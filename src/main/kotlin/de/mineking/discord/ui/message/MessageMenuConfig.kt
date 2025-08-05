@@ -196,22 +196,20 @@ sealed class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 }
 
 class MessageMenuBuilder<M, L : LocalizationFile?>(menu: MessageMenu<M, L>) : MessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext()) {
+    internal val components = mutableListOf<MessageComponent<out MessageTopLevelComponent>>()
+
     override fun <C : MessageComponent<*>> register(component: C) = component
-    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
+    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
+        components += this
+    }
     override fun message(data: MessageEditBuilder) {}
 }
-
-sealed class RuntimeMessageMenuConfigImpl<M, L : LocalizationFile?>(
-    menu: MessageMenu<M, L>,
-    phase: MenuCallbackPhase,
-    context: MenuContext<M>
-) : MessageMenuConfigImpl<M, L>(menu, phase, context)
 
 class MessageMenuRenderer<M, L : LocalizationFile?>(
     menu: MessageMenu<M, L>,
     context: MenuContext<M>
-) : RuntimeMessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.RENDER, context) {
-    var message: MessageEditBuilder? = null
+) : MessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.RENDER, context) {
+    internal var message: MessageEditBuilder? = null
         private set
 
     internal val components = mutableListOf<MessageComponent<out MessageTopLevelComponent>>()
@@ -230,7 +228,7 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
     val component: String,
     menu: MessageMenu<M, L>,
     context: MenuContext<M>
-) : RuntimeMessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
+) : MessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
     private var handler: ComponentHandler<*, *>? = null
 
     private fun findHandler(component: MessageComponent<*>) = component.elements().forEach {

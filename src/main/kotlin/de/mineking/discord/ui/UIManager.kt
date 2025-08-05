@@ -60,9 +60,12 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
         menus[name] = menu
 
         if (init != null) menu.init()
-        else MessageMenuBuilder(menu).config(localization)
+        else {
+            val builder = MessageMenuBuilder(menu)
 
-        //TODO localization :/
+            builder.config(localization)
+            builder.components.render(EmptyIdGenerator, builder, force = true)
+        }
 
         menu
     }
@@ -81,9 +84,12 @@ class UIManager(manager: DiscordToolKit<*>) : Manager(manager) {
         menus[name] = menu
 
         if (init != null) menu.init()
-        else ModalMenuBuilder(menu).config(localization)
+        else {
+            val builder = ModalMenuBuilder(menu)
 
-        //TODO localization :/
+            builder.config(localization)
+            builder.components.render(EmptyIdGenerator, builder, force = true)
+        }
 
         menu
     }

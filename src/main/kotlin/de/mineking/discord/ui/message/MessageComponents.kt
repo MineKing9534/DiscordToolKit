@@ -128,10 +128,8 @@ fun <C : Component> createMessageComponent(
 
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T, C : Component, W : IComponent<C>> W.withParameter(parameter: T) = transform { id, render ->
-    require(id.postfix.isEmpty())
-
-    id.postfix = StateData.encodeSingle(typeOf<T>(), parameter)
-    render(id).also { id.postfix = "" }
+    val parameter = StateData.encodeSingle(typeOf<T>(), parameter)
+    render(id.withParameter(parameter))
 } as W
 
 fun <T> ComponentContext<*, *>.parameter(type: KType): T {

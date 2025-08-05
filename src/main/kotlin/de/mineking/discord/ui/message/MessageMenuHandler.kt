@@ -2,7 +2,7 @@ package de.mineking.discord.ui.message
 
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.DeferMode
-import de.mineking.discord.ui.IdGenerator
+import de.mineking.discord.ui.IdGeneratorImpl
 import de.mineking.discord.ui.MenuContext
 import de.mineking.discord.ui.RenderTermination
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
@@ -71,10 +71,10 @@ object DefaultMessageMenuHandler : MessageMenuHandler {
     }
 
     fun buildComponents(renderer: MessageMenuRenderer<*, *>): List<MessageTopLevelComponent> {
-        val generator = IdGenerator(renderer.context.stateData.encode())
+        val generator = IdGeneratorImpl(renderer.context.stateData.encode())
 
         @Suppress("UNCHECKED_CAST")
-        val components = renderMessageComponents(generator, renderer)
+        val components = renderer.components.render(generator, renderer)
 
         val left = generator.charactersLeft()
         if (left != 0) error("Not enough component id space to store state. $left characters left")
