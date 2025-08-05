@@ -104,10 +104,9 @@ inline fun <M> MenuConfig<M, *>.initialize(block: (param: M) -> Unit) {
     if (context is InitialMenuContext<M>) block(context.parameter)
 }
 
+fun <T> MenuConfig<*, *>.lazy(block: suspend () -> T) = lazy(null, block)
 fun <T> MenuConfig<*, *>.lazy(default: T, block: suspend () -> T): Lazy<T> =
     MenuLazyImpl(menu, active = isRender(), default = default, provider = block).also { context.lazy += it }
-
-fun <T> MenuConfig<*, *>.lazy(block: suspend () -> T) = lazy(null, block)
 
 inline fun MenuConfig<*, *>.localize(locale: DiscordLocale, config: LocalizationContext.() -> Unit = {}) {
     context.localizationContext = LocalizationContext(locale).also(config)
@@ -116,11 +115,12 @@ inline fun MenuConfig<*, *>.localize(locale: DiscordLocale, config: Localization
 @Suppress("NOTHING_TO_INLINE")
 inline val MenuConfig<*, *>.currentLocalizationConfig get() = context.localizationContext
 
-//TODO support cache
-
 class MenuConfigState(val menu: Menu<*, *, *>) {
     @PublishedApi
     internal var currentSetup = 0
+
+    @PublishedApi
+    internal var currentCache = 0
 
     @PublishedApi
     internal var currentState = 0

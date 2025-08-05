@@ -3,6 +3,9 @@ package de.mineking.discord.ui
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.serializer
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -127,6 +130,21 @@ fun <T> MenuConfig<*, *>.state(type: KType, initial: T, handler: StateUpdateHand
 
 inline fun <reified T> MenuConfig<*, *>.state(initial: T, noinline handler: StateUpdateHandler<T>? = null) = state(typeOf<T>(), initial, handler)
 inline fun <reified T> MenuConfig<*, *>.state(noinline handler: StateUpdateHandler<T?>? = null) = state(null, handler)
+
+@Suppress("UNCHECKED_CAST")
+@OptIn(ExperimentalContracts::class)
+fun <T> MenuConfig<*, *>.cache(block: () -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+
+    val value = if (context.cache.size <= configState.currentCache) block().also { context.cache += it }
+    else context.cache[configState.currentCache] as T
+
+    configState.currentCache++
+
+    return value
+}
 
 internal fun List<String>.decodeState(parts: Int) = joinToString("") {
     val original = it.split(":", limit = parts)[parts - 1]
