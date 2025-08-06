@@ -10,6 +10,7 @@ import de.mineking.discord.ui.message.createLayoutComponent
 import de.mineking.discord.ui.message.createMessageComponent
 import de.mineking.discord.ui.readLocalizedString
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import net.dv8tion.jda.api.components.MessageTopLevelComponent
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
 import net.dv8tion.jda.api.components.container.Container
@@ -104,6 +105,20 @@ fun section(
             components.flatMap { it.render(config, id) }
         )
     )
+}
+
+fun <T> optionalSection(
+    accessory: MessageComponent<out SectionAccessoryComponent>,
+    components: List<MessageComponent<out TextDisplay>>
+) where T : ContainerChildComponent, T : MessageTopLevelComponent = createLayoutComponent(components + accessory) { config, id ->
+    val accessory = accessory.render(config, id)
+    val components = components.flatMap { it.render(config, id) }
+
+    val result = if (accessory.isEmpty()) components
+    else listOf(Section.of(accessory.single(), components))
+
+    @Suppress("UNCHECKED_CAST")
+    result as List<T>
 }
 
 fun thumbnail(file: () -> FileUpload) = createMessageComponent { _, _ -> Thumbnail.fromFile(file()) }
