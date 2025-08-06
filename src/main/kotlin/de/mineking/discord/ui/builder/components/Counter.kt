@@ -1,7 +1,7 @@
 package de.mineking.discord.ui.builder.components
 
 import de.mineking.discord.ui.MutableState
-import de.mineking.discord.ui.disabled
+import de.mineking.discord.ui.disabledIf
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.message.MessageComponent
 import de.mineking.discord.ui.message.createMessageComponent
@@ -18,8 +18,8 @@ fun counter(
     var count by ref
 
     return createMessageComponent(
-        button("$name-dec", color = ButtonColor.RED, label = "-") { count -= step }.disabled(count - step < min),
-        button(name, label = "$count").disabled(),
-        button("$name-inc", color = ButtonColor.GREEN, label = "+") { count += step }.disabled(count + step > max),
+        button("$name-dec", color = ButtonColor.RED, label = "-") { count -= step }.disabledIf(count - step < min),
+        button(name, label = "$count").disabledIf(),
+        button("$name-inc", color = ButtonColor.GREEN, label = "+") { count += step }.disabledIf(count + step > max),
     )
 }

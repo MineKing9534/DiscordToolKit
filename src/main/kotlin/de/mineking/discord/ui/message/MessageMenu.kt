@@ -23,7 +23,7 @@ fun IMessageEditCallback.disableComponents(message: Message) = editComponents(me
 
 @Suppress("UNCHECKED_CAST")
 fun Collection<MessageComponent<out MessageTopLevelComponent>>.render(id: IdGenerator, config: MessageMenuConfig<*, *>, force: Boolean = false) = this
-    .map { if (force) it.show() else it }
+    .map { if (force) it.visibleIf() else it }
     .flatMap {
         try {
             it.render(config, id)

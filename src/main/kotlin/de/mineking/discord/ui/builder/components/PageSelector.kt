@@ -28,13 +28,13 @@ fun MessageMenuConfig<*, *>.pageSelector(
     return actionRow {
         +button("$name-first", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏪")) {
             page = 1
-        }.disabled(page == 1)
+        }.disabledIf(page == 1)
 
         +button(
             "$name-back",
             label = ZERO_WIDTH_SPACE,
             emoji = Emoji.fromUnicode("⬅\uFE0F")
-        ) { page-- }.disabled(page <= 1)
+        ) { page-- }.disabledIf(page <= 1)
 
         if (modal)
             +modalButton(
@@ -57,11 +57,11 @@ fun MessageMenuConfig<*, *>.pageSelector(
             "$name-next",
             label = ZERO_WIDTH_SPACE,
             emoji = Emoji.fromUnicode("➡\uFE0F")
-        ) { page++ }.disabled(page >= max)
+        ) { page++ }.disabledIf(page >= max)
 
         +button("$name-last", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏩")) {
             page = parameter()
-        }.disabled(page == max).withParameter(max)
+        }.disabledIf(page == max).withParameter(max)
     }
 }
 
@@ -76,7 +76,7 @@ fun pageFocusSelector(
 
     return actionRow {
         pages.forEach {
-            +button("$name-$it", label = "$it") { page = it }.disabled(it == page)
+            +button("$name-$it", label = "$it") { page = it }.disabledIf(it == page)
         }
     }
 }

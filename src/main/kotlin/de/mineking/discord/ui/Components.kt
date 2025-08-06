@@ -10,12 +10,12 @@ interface IComponent<C : Component> {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <C : Component, W : IComponent<C>> W.show(show: Boolean = true) = transform { id, render -> if (show) render(id) else emptyList() } as W
-fun <C : Component, W : IComponent<C>> W.hide(hide: Boolean = true) = show(!hide)
+fun <C : Component, W : IComponent<C>> W.visibleIf(show: Boolean = true) = transform { id, render -> if (show) render(id) else emptyList() } as W
+fun <C : Component, W : IComponent<C>> W.hiddenIf(hide: Boolean = true) = visibleIf(!hide)
 
 @Suppress("UNCHECKED_CAST")
-fun <C : IDisableable, W : IComponent<C>> W.enabled(enabled: Boolean = true) = transform { id, render -> render(id).map { it.withDisabled(!enabled) as C } } as W
-fun <C : IDisableable, W : IComponent<C>> W.disabled(disabled: Boolean = true) = enabled(!disabled)
+fun <C : IDisableable, W : IComponent<C>> W.enabledIf(enabled: Boolean = true) = transform { id, render -> render(id).map { it.withDisabled(!enabled) as C } } as W
+fun <C : IDisableable, W : IComponent<C>> W.disabledIf(disabled: Boolean = true) = enabledIf(!disabled)
 
 internal fun MenuConfig<*, *>.readLocalizedString(
     localization: LocalizationFile?,

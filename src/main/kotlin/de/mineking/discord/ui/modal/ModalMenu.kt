@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.interactions.callbacks.IModalCallback
 import net.dv8tion.jda.api.interactions.modals.Modal
 
 fun Collection<ModalComponent<*>>.render(id: IdGenerator, config: ModalMenuConfig<*, *>, force: Boolean = false) = this
-    .map { if (force) it.show() else it }
+    .map { if (force) it.visibleIf() else it }
     .flatMap {
         try {
             it.render(config, id)

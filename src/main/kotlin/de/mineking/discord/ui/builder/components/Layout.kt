@@ -4,7 +4,7 @@ import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.TextElementBuilder
 import de.mineking.discord.ui.builder.renderTextElement
-import de.mineking.discord.ui.disabled
+import de.mineking.discord.ui.disabledIf
 import de.mineking.discord.ui.message.MessageComponent
 import de.mineking.discord.ui.message.createLayoutComponent
 import de.mineking.discord.ui.message.createMessageComponent
@@ -32,7 +32,7 @@ fun label(
     label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null
-) = button(name, color, label, emoji, localization).disabled()
+) = button(name, color, label, emoji, localization).disabledIf()
 
 fun actionRow(vararg components: MessageComponent<out ActionRowChildComponent>) = actionRow(components.toList())
 fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent(components) { config, id ->
