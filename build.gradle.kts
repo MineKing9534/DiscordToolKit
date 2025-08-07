@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation("net.dv8tion:JDA:6.0.0-rc.2")
+    implementation("com.github.freya022:JDA:1be8478")
 
     implementation(kotlin("reflect"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.3")

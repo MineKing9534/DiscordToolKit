@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.events.interaction.command.*
 import net.dv8tion.jda.api.interactions.commands.*
 import net.dv8tion.jda.api.interactions.commands.context.MessageContextInteraction
 import net.dv8tion.jda.api.interactions.commands.context.UserContextInteraction
+import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessagePollData
@@ -119,7 +120,6 @@ class UserCommandContext(
     override fun <T : Any?> getOption(name: String, fallback: Supplier<out T?>?, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, fallback, resolver)
 }
 
-/*TODO
 class EntrypointCommandContext(
     override val manager: CommandManager,
     override val event: PrimaryEntryPointInteractionEvent
@@ -132,7 +132,7 @@ class EntrypointCommandContext(
     override fun replyEmbeds(embed: MessageEmbed, vararg embeds: MessageEmbed?) = event.replyEmbeds(embed, *embeds)
     override fun replyComponents(components: Collection<MessageTopLevelComponent?>) = event.replyComponents(components)
     override fun replyComponents(component: MessageTopLevelComponent, vararg other: MessageTopLevelComponent?) = event.replyComponents(component, *other)
-    override fun replyComponents(tree: ComponentTree<MessageTopLevelComponentUnion?>) = event.replyComponents(tree)
+    override fun replyComponents(tree: ComponentTree<out MessageTopLevelComponent?>) = event.replyComponents(tree)
     override fun replyFormat(format: String, vararg args: Any?) = event.replyFormat(format, *args)
     override fun replyFiles(files: Collection<FileUpload?>) = event.replyFiles(files)
     override fun replyFiles(vararg files: FileUpload?) = event.replyFiles(*files)
@@ -162,7 +162,6 @@ class EntrypointCommandContext(
     override fun <T : Any?> getOption(name: String, fallback: T?, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, fallback, resolver)
     override fun <T : Any?> getOption(name: String, fallback: Supplier<out T?>?, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, fallback, resolver)
 }
-*/
 
 interface IOptionContext<E> : IContext<E>, CommandInteractionPayload, OptionContext where E : GenericInteractionCreateEvent, E : CommandInteractionPayload
 

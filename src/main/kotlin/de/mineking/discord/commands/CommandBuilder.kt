@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
+import net.dv8tion.jda.api.interactions.commands.build.PrimaryEntryPointCommandData
 
 typealias CommandHandler<C> = suspend C.() -> Unit
 
@@ -20,11 +21,11 @@ const val DEFAULT_OPTION_DESCRIPTION = "-"
 
 typealias ContextCommandConfig<C> = GenericCommandBuilder<C>.() -> Unit
 typealias SlashCommandConfig = SlashCommandBuilder.() -> Unit
-//TODO typealias EntrypointConfig = GenericCommandBuilder<EntrypointCommandContext>.() -> Unit
+typealias EntrypointConfig = GenericCommandBuilder<EntrypointCommandContext>.() -> Unit
 
 typealias LocalizedContextCommandConfig<C, L> = GenericCommandBuilder<C>.(localization: L) -> Unit
 typealias LocalizedSlashCommandConfig<L> = SlashCommandBuilder.(localization: L) -> Unit
-//TODO typealias LocalizedEntrypointConfig<L> = GenericCommandBuilder<EntrypointCommandContext>.(localization: L) -> Unit
+typealias LocalizedEntrypointConfig<L> = GenericCommandBuilder<EntrypointCommandContext>.(localization: L) -> Unit
 
 interface CommandConfig<C> {
     fun defaultMemberPermission(permission: DefaultMemberPermissions)
@@ -180,7 +181,6 @@ fun userCommand(
     config: ContextCommandConfig<UserCommandContext>
 ) = contextCommand(name, Command.Type.USER, localization, config)
 
-/* TODO
 fun entrypointCommand(
     name: String,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
@@ -192,9 +192,8 @@ fun entrypointCommand(
     object : EntryPointCommandImpl(name, description, localization, emptyList(), emptyList(), permission, contexts ?: defaultInteractionContextTypes.toMutableSet(), types ?: defaultIntegrationTypes.toMutableSet(), PrimaryEntryPointCommandData.Handler.DISCORD_LAUNCH_ACTIVITY) {
         override suspend fun handle(context: EntrypointCommandContext) {}
     }
-}*/
+}
 
-/* TODO
 fun entrypointCommand(
     name: String,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
@@ -218,7 +217,6 @@ fun entrypointCommand(
     }
     command
 }
- */
 
 inline fun <reified L : LocalizationFile> localizedSlashCommand(
     name: String,
@@ -245,7 +243,6 @@ inline fun <reified L : LocalizationFile> localizedUserCommand(
     userCommand(name, file) { config(file) }(it)
 }
 
-/* TODO
 inline fun <reified L : LocalizationFile> localizedEntrypointCommand(
     name: String,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
@@ -265,4 +262,3 @@ inline fun <reified L : LocalizationFile> localizedEntrypointCommand(
     val file = manager.localizationManager.read<L>()
     entrypointCommand(name, description, file) { config(file) }(it)
 }
- */
