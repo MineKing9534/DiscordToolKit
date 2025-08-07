@@ -7,7 +7,6 @@ import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
 import setup.createJDA
-import java.awt.Color
 
 fun main() {
     val jda = createJDA()

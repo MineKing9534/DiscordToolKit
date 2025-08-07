@@ -3,7 +3,6 @@ package de.mineking.discord.ui.message
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.*
-import de.mineking.discord.ui.MenuConfigState
 import de.mineking.discord.ui.builder.MessageConfigurator
 import de.mineking.discord.ui.builder.buildMessage
 import de.mineking.discord.ui.modal.LocalizedModalConfigurator

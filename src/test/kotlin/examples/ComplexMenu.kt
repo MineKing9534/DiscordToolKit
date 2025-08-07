@@ -2,16 +2,14 @@ package examples
 
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.ui.builder.*
+import de.mineking.discord.ui.*
+import de.mineking.discord.ui.builder.bold
 import de.mineking.discord.ui.builder.components.*
-import de.mineking.discord.ui.getValue
-import de.mineking.discord.ui.initialize
-import de.mineking.discord.ui.jda
-import de.mineking.discord.ui.map
+import de.mineking.discord.ui.builder.h1
+import de.mineking.discord.ui.builder.line
+import de.mineking.discord.ui.builder.text
 import de.mineking.discord.ui.message.message
 import de.mineking.discord.ui.message.submenu
-import de.mineking.discord.ui.setValue
-import de.mineking.discord.ui.state
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.symbols.keycap.listKeycap
 import setup.createJDA

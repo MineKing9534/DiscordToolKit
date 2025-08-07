@@ -5,7 +5,6 @@ import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
 import de.mineking.discord.ui.cache
-import de.mineking.discord.ui.lazy
 import setup.createJDA
 import kotlin.random.Random
 

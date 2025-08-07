@@ -1,7 +1,6 @@
 package de.mineking.discord.commands
 
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
-import net.dv8tion.jda.api.components.MessageTopLevelComponentUnion
 import net.dv8tion.jda.api.components.tree.ComponentTree
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
@@ -11,7 +10,6 @@ import net.dv8tion.jda.api.events.interaction.command.*
 import net.dv8tion.jda.api.interactions.commands.*
 import net.dv8tion.jda.api.interactions.commands.context.MessageContextInteraction
 import net.dv8tion.jda.api.interactions.commands.context.UserContextInteraction
-import net.dv8tion.jda.api.requests.restaction.interactions.ReplyCallbackAction
 import net.dv8tion.jda.api.utils.FileUpload
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessagePollData
