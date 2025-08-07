@@ -10,7 +10,7 @@ interface IComponent<C : Component> {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <C : Component, W : IComponent<C>> W.visibleIf(show: Boolean = true) = transform { id, render -> if (show) render(id) else emptyList() } as W
+fun <C : Component, W : IComponent<C>> W.visibleIf(visible: Boolean = true) = transform { id, render -> if (visible) render(id) else emptyList() } as W
 fun <C : Component, W : IComponent<C>> W.hiddenIf(hide: Boolean = true) = visibleIf(!hide)
 
 @Suppress("UNCHECKED_CAST")

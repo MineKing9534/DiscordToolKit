@@ -35,9 +35,6 @@ class SelectOption(
 ) {
     fun withDefault(default: Boolean) = SelectOption(value, label, description, default, emoji, localization, visible, handler)
 
-    fun show(visible: Boolean) = SelectOption(value, label, description, default, emoji, localization, visible, handler)
-    fun hide(hide: Boolean) = show(!hide)
-
     fun build(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
         JDASelectOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
             .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", postfix = "options.$value"))
@@ -45,6 +42,9 @@ class SelectOption(
             .withDefault(default)
             .withValue(value)
 }
+
+fun SelectOption.visibleIf(visible: Boolean) = SelectOption(value, label, description, default, emoji, localization, visible, handler)
+fun SelectOption.hiddenIf(hide: Boolean) = visibleIf(!hide)
 
 fun selectOption(
     value: Any,
