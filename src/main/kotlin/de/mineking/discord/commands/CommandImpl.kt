@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.interactions.commands.build.*
 
 class CommandTermination : RuntimeException()
 
-fun ICommandContext<*>.terminateCommand(): Nothing = throw CommandTermination()
+fun terminateCommand(): Nothing = throw CommandTermination()
 
 typealias Command<C> = CommandManager.(parent: SlashCommandImpl?) -> C
 
@@ -75,10 +75,8 @@ abstract class EntryPointCommandImpl(
     override fun build(manager: CommandManager): PrimaryEntryPointCommandData {
         val localization = manager.localization?.getCommandDescription(effectiveLocalization(), this)
 
-        val result = Commands.primaryEntryPoint(name, localization?.default ?: description)
+        val result = Commands.primaryEntryPoint(name, localization?.default ?: description, handler)
         if (localization != null) result.setDescriptionLocalizations(localization.localization)
-
-        result.setHandler(handler)
 
         finalize(result)
         return result

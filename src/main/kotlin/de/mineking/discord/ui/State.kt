@@ -1,182 +1,155 @@
 package de.mineking.discord.ui
 
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.serializer
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.modules.SerializersModule
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.nio.charset.StandardCharsets
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
-typealias StateGetter<T> = StateContext<*>.() -> T
-typealias StateSetter<T> = StateContext<*>.(value: T) -> Unit
-typealias StateHandler<T> = (old: T, new: T) -> Unit
+typealias StateUpdateHandler<T> = (old: T, new: T) -> Unit
 
-interface IState {
-    val id: Int
-    fun ref() = this
+interface State<out T> {
+    val value: T
 }
 
-interface ReadState<T> : IState {
-    fun get(context: StateContext<*>?): T
-    operator fun getValue(thisRef: Any?, property: KProperty<*>) = get(null)
+interface MutableState<T> : State<T> {
+    override var value: T
 
-    fun <O> transform(toOther: (value: T) -> O): ReadState<O> = object : ReadState<O> {
-        override val id: Int = this@ReadState.id
-        override fun get(context: StateContext<*>?): O = toOther(this@ReadState.get(context))
-    }
+    operator fun component1(): () -> T = { value }
+    operator fun component2(): (T) -> Unit = { value = it }
+    operator fun component3() = this
 }
 
-interface WriteState<T> : IState {
-    fun set(context: StateContext<*>?, value: T)
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) = set(null, value)
+@Suppress("NOTHING_TO_INLINE")
+inline operator fun <T> State<T>.getValue(thisObj: Any?, property: KProperty<*>) = value
 
-    fun <O> transform(fromOther: (value: O) -> T): WriteState<O> = object : WriteState<O> {
-        override val id: Int = this@WriteState.id
-        override fun set(context: StateContext<*>?, value: O) = this@WriteState.set(context, fromOther(value))
-    }
+@Suppress("NOTHING_TO_INLINE")
+inline operator fun <T> MutableState<T>.setValue(thisObj: Any?, property: KProperty<*>, value: T) {
+    this.value = value
 }
 
-interface State<T> : ReadState<T>, WriteState<T> {
-    override fun ref() = this
-
-    fun <O> transform(toOther: (value: T) -> O, fromOther: (value: O) -> T): State<O> = object : State<O> {
-        override val id: Int = this@State.id
-
-        override fun get(context: StateContext<*>?): O = toOther(this@State.get(context))
-        override fun set(context: StateContext<*>?, value: O) = this@State.set(context, fromOther(value))
-    }
-
-    fun update(context: StateContext<*>? = null, handler: (current: T) -> Unit) {
-        val current = get(context)
-        handler(current)
-        set(context, current)
-    }
-
-    operator fun component1(): StateGetter<T> = { get(this) }
-    operator fun component2(): StateSetter<T> = { set(this, it) }
-    operator fun component3() = ref()
-    operator fun component4() = id
+fun <T, U> MutableState<T>.map(toOther: (T) -> U, fromOther: (U) -> T): MutableState<U> = object : MutableState<U> {
+    override var value: U
+        get() = toOther(this@map.value)
+        set(value) {
+            this@map.value = fromOther(value)
+        }
 }
 
-data class InternalState<T>(val type: KType, val initial: T, val handler: StateHandler<T>?)
+data class InternalState<T>(val type: KType, val initial: T, val handler: StateUpdateHandler<T>?)
 
-fun <T> constantState(value: T) = object : ReadState<T> {
-    override val id: Int = -1
-    override fun get(context: StateContext<*>?): T = value
+fun <T> virtualState(value: () -> T, setter: (value: T) -> Unit) = object : MutableState<T> {
+    override var value: T
+        get() = value()
+        set(value) = setter(value)
 }
 
-fun <T> sinkState(value: T? = null) = object : State<T?> {
-    override val id: Int = -1
-    override fun get(context: StateContext<*>?): T? = value
-    override fun set(context: StateContext<*>?, value: T?) {}
+fun <T> virtualState(initial: T) = object : MutableState<T> {
+    override var value = initial
 }
 
-fun <T> dynamicState(value: () -> T, setter: (value: T) -> Unit) = object : State<T> {
-    override val id: Int = -1
-
-    override fun get(context: StateContext<*>?) = value()
-    override fun set(context: StateContext<*>?, value: T) = setter(value)
+fun <T> virtualReadonlyState(value: T) = object : State<T> {
+    override val value = value
 }
 
-interface StateAccessor {
-    fun currentState(): Int
-
-    fun skipState(amount: Int)
-    fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T>
-}
-
-data class StateData(val data: MutableList<String>) {
-    private val cache = mutableMapOf<Int, Pair<KType, Any?>>()
-
-    fun pushInitial(type: KType, value: Any?) {
-        data += encodeSingle(type, value)
-    }
-
-    fun get(id: Int, type: KType): Any? = cache.computeIfAbsent(id) { type to decodeSingle(type, data[id]) }.second
-    fun set(id: Int, value: Any?, type: KType) {
-        cache[id] = type to value
-    }
-
-    fun <T> getState(type: KType, id: Int, handler: StateHandler<T>? = null): State<T> {
-        return object : State<T> {
-            override val id: Int get() = id
-
+class StateData(val data: MutableList<Any?>, val states: List<InternalState<*>>) {
+    fun <T> getState(id: Int, handler: StateUpdateHandler<T>?) = object : MutableState<T> {
+        override var value: T
             @Suppress("UNCHECKED_CAST")
-            override fun get(context: StateContext<*>?): T {
-                val state = context?.stateData ?: this@StateData
-                return state.get(id, type) as T
+            get() = data[id] as T
+            set(value) {
+                handler?.invoke(this.value, value)
+                data[id] = value
             }
-
-            override fun set(context: StateContext<*>?, value: T) {
-                val state = context?.stateData ?: this@StateData
-
-                handler?.invoke(get(context), value)
-                state.set(id, value, type)
-            }
-        }
     }
 
-    fun access() = object : StateAccessor {
-        private var currentState = 0
-
-        override fun currentState(): Int = currentState
-
-        override fun skipState(amount: Int) {
-            currentState += amount
-        }
-
-        override fun <T> nextState(type: KType, handler: StateHandler<T>?): State<T> = getState(type, currentState++, handler)
-    }
-
-    fun effectiveData(id: Int) = cache[id]?.let { (type, value) -> encodeSingle(type, value) } ?: data[id]
-
-    fun encode() = encode(typeOf<List<String>>(), data.indices.map { effectiveData(it) })
+    @OptIn(ExperimentalSerializationApi::class)
+    fun encode() = encode(StateListSerializer(serializers, states.map { it.type }), data)
 
     companion object {
+        var serializers: SerializersModule = SerializersModule {}
+
+        @PublishedApi
         @OptIn(ExperimentalSerializationApi::class)
-        var serializersModule = Cbor.serializersModule
+        internal fun <T> encode(serializer: SerializationStrategy<T>, value: T): String {
+            val result = ByteArrayOutputStream()
+            val encoder = BinaryEncoder(serializers, DataOutputStream(result))
+            encoder.encodeSerializableValue(serializer, value)
+
+            return result.toByteArray().encodeState()
+        }
+
+        @PublishedApi
+        @OptIn(ExperimentalSerializationApi::class)
+        internal fun <T> decode(serializer: DeserializationStrategy<T>, value: String): T {
+            val input = ByteArrayInputStream(value.decodeState())
+            val decoder = BinaryDecoder(serializers, DataInputStream(input))
+
+            return decoder.decodeSerializableValue(serializer)
+        }
 
         @OptIn(ExperimentalSerializationApi::class)
-        private fun encode(type: KType, value: Any?) = Cbor.encodeToByteArray(serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
+        internal fun decode(data: String, states: List<InternalState<*>>) = StateData(
+            if (data.isEmpty()) mutableListOf()
+            else decode(StateListSerializer(serializers, states.map { it.type }), data).toMutableList(),
+            states
+        )
 
-        @OptIn(ExperimentalSerializationApi::class)
-        private fun decode(type: KType, data: String) = Cbor.decodeFromByteArray(serializersModule.serializer(type), data.map { it.code.toByte() }.toByteArray())
-
-        @Suppress("UNCHECKED_CAST")
-        fun decode(data: String) = StateData(if (data.isEmpty()) mutableListOf() else (decode(typeOf<List<String>>(), data) as List<String>).toMutableList())
-
-        fun createInitial(states: List<InternalState<*>>) = StateData(states.map { encodeSingle(it.type, it.initial) }.toMutableList())
-
-        fun encodeSingle(type: KType, value: Any?): String = encode(type, value)
-        fun decodeSingle(type: KType, value: String): Any? = decode(type, value)
+        fun createInitial(states: List<InternalState<*>>) = StateData(states.map { it.initial }.toMutableList(), states)
     }
 }
 
-@MenuMarker
-interface StateContext<M> {
-    val menuInfo: MenuInfo<M>
+interface StateContainer {
     val stateData: StateData
     val cache: MutableList<Any?>
 }
 
-@MenuMarker
-class SendState<M>(override val menuInfo: MenuInfo<M>, override val stateData: StateData, val param: M) : StateContext<M> {
-    override val cache: MutableList<Any?> = mutableListOf()
+fun <T> MenuConfig<*, *>.state(type: KType, initial: T, handler: StateUpdateHandler<T>? = null): MutableState<T> {
+    if (isBuild()) {
+        configState.menu.states += InternalState(type, initial, handler)
+        context.stateData.data += initial
+    } else require(type == configState.menu.states[configState.currentState].type)
+
+    return context.stateData.getState(configState.currentState, handler)
+        .also { configState.currentState++ }
 }
 
-@MenuMarker
-interface StateConfig {
-    fun currentState(): Int
+inline fun <reified T> MenuConfig<*, *>.state(initial: T, noinline handler: StateUpdateHandler<T>? = null) = state(typeOf<T>(), initial, handler)
+inline fun <reified T> MenuConfig<*, *>.state(noinline handler: StateUpdateHandler<T?>? = null) = state(null, handler)
 
-    fun skipState(amount: Int = 1)
-    fun <T> state(type: KType, initial: T, handler: StateHandler<T>? = null): State<T>
+@Suppress("UNCHECKED_CAST")
+@OptIn(ExperimentalContracts::class)
+fun <T> MenuConfig<*, *>.cache(block: () -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+
+    val value = if (context.cache.size <= configState.currentCache) block().also { context.cache += it }
+    else context.cache[configState.currentCache] as T
+
+    configState.currentCache++
+
+    return value
 }
-
-inline fun <reified T> StateConfig.state(initial: T, noinline handler: StateHandler<T>? = null) = state(typeOf<T>(), initial, handler)
-inline fun <reified T> StateConfig.state(noinline handler: StateHandler<T?>? = null) = state(null, handler)
 
 internal fun List<String>.decodeState(parts: Int) = joinToString("") {
     val original = it.split(":", limit = parts)[parts - 1]
     val length = original.take(2).toInt()
     original.drop(2).take(length)
 }
+
+@PublishedApi
+internal fun String.decodeState() = toByteArray(StandardCharsets.ISO_8859_1)
+
+@PublishedApi
+internal fun ByteArray.encodeState() = toString(StandardCharsets.ISO_8859_1)

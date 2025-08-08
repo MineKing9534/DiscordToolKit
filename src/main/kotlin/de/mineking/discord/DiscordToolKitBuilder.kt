@@ -5,17 +5,14 @@ import de.mineking.discord.localization.AdvancedLocalizationManager
 import de.mineking.discord.localization.LocalizationManager
 import de.mineking.discord.localization.SimpleLocalizationManager
 import de.mineking.discord.ui.UIManager
-import de.mineking.discord.utils.CoroutineEventListener
 import de.mineking.discord.utils.CoroutineEventManager
 import de.mineking.discord.utils.createCoroutineScope
 import de.mineking.discord.utils.listen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.GenericEvent
-import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.DiscordLocale
 
 typealias ManagerConfigurator<M> = M.() -> Unit

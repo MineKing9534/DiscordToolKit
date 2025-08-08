@@ -83,8 +83,7 @@ fun <T : LocalizationFile> createLocalizationFile(
             else if (function.equals("register", typeOf<String>(), typeOf<Map<String, KType>>(), typeOf<KType>(), typeOf<KFunction<*>?>(), typeOf<MessageProvider<*>?>())) {
                 val name = arguments[0] as String
 
-                if (messages.keys.any { it.first == name }) Unit
-                else {
+                if (messages.keys.none { it.first == name }) {
                     val params = arguments[1] as Map<String, KType>
                     val result = arguments[2] as KType
                     val functionRef = arguments[3] as KFunction<*>?
@@ -93,7 +92,7 @@ fun <T : LocalizationFile> createLocalizationFile(
                     manager.locales.forEach { locale ->
                         messages += (name to locale) to (registration(file, name, locale, result, params, functionRef, default) to params.keys.toList())
                     }
-                }
+                } else Unit
             } else if (function.equals("readObject", typeOf<String>(), typeOf<DiscordLocale>(), typeOf<Map<String, Any?>>())) {
                 val name = arguments[0] as String
                 val locale = arguments[1] as DiscordLocale

@@ -261,7 +261,7 @@ class AdvancedLocalizationManager(
                         resultField.get(wrappedResult)
                     } catch (e: Exception) {
                         logger.error("Error executing $location#$key for $locale", e)
-                        createDefaultValue("\${EXECUTION ERROR}", type)
+                        createDefaultValue($$"${EXECUTION ERROR}", type)
                     }
                 }
             }
@@ -273,7 +273,7 @@ class AdvancedLocalizationManager(
             if (report.exception != null) logger.error("Error compiling $location#$key for $locale", report.exception)
             else logger.error("Error compiling $location#$key for $locale: ${report.message}")
 
-            element = textElement("\${COMPILATION ERROR}")
+            element = textElement($$"${COMPILATION ERROR}")
         }
 
         element

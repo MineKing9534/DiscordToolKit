@@ -6,16 +6,18 @@ import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.TextElement
 import de.mineking.discord.ui.builder.paginate
 import de.mineking.discord.ui.builder.text
+import de.mineking.discord.ui.message.*
+import de.mineking.discord.ui.modal.map
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import java.lang.Integer.max
 import java.lang.Integer.min
 
-suspend fun MessageMenuConfig<*, *>.pageSelector(
+fun MessageMenuConfig<*, *>.pageSelector(
     name: String,
     max: Int,
-    ref: State<Int>,
+    ref: MutableState<Int>,
     modal: Boolean = true,
     title: CharSequence = DEFAULT_LABEL,
     label: CharSequence = DEFAULT_LABEL,
@@ -26,13 +28,13 @@ suspend fun MessageMenuConfig<*, *>.pageSelector(
     return actionRow {
         +button("$name-first", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏪")) {
             page = 1
-        }.disabled(page == 1)
+        }.disabledIf(page == 1)
 
         +button(
             "$name-back",
             label = ZERO_WIDTH_SPACE,
             emoji = Emoji.fromUnicode("⬅\uFE0F")
-        ) { page-- }.disabled(page <= 1)
+        ) { page-- }.disabledIf(page <= 1)
 
         if (modal)
             +modalButton(
@@ -48,25 +50,25 @@ suspend fun MessageMenuConfig<*, *>.pageSelector(
                     value = page,
                     placeholder = "$page"
                 ).unbox().map { it ?: terminateRender() }
-            ) { page = clamp(it, 1, max) }
+            ) { page = it.coerceIn(1, max) }
         else +label(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max")
 
         +button(
             "$name-next",
             label = ZERO_WIDTH_SPACE,
             emoji = Emoji.fromUnicode("➡\uFE0F")
-        ) { page++ }.disabled(page >= max)
+        ) { page++ }.disabledIf(page >= max)
 
         +button("$name-last", label = ZERO_WIDTH_SPACE, emoji = Emoji.fromUnicode("⏩")) {
             page = parameter()
-        }.disabled(page == max).withParameter(max)
+        }.disabledIf(page == max).withParameter(max)
     }
 }
 
 fun pageFocusSelector(
     name: String,
     max: Int,
-    ref: State<Int>
+    ref: MutableState<Int>
 ): MessageComponent<ActionRow> {
     var page by ref
 
@@ -74,19 +76,19 @@ fun pageFocusSelector(
 
     return actionRow {
         pages.forEach {
-            +button("$name-$it", label = "$it") { page = it }.disabled(it == page)
+            +button("$name-$it", label = "$it") { page = it }.disabledIf(it == page)
         }
     }
 }
 
 data class PaginationResult(val text: TextElement, val component: MessageComponent<ActionRow>)
 
-suspend fun <T> MessageMenuConfig<*, *>.pagination(
+fun <T> MessageMenuConfig<*, *>.pagination(
     name: String,
     entries: List<T>,
     display: T.(index: Int) -> TextElement = { index -> text("$index. ") + text(this) },
     perPage: Int = 20,
-    ref: State<Int>,
+    ref: MutableState<Int>,
     pageFocusSelector: Boolean = false,
     modal: Boolean = true,
     title: CharSequence = DEFAULT_LABEL,

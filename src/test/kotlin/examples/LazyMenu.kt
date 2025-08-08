@@ -4,6 +4,7 @@ import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.actionRow
 import de.mineking.discord.ui.builder.components.button
+import de.mineking.discord.ui.lazy
 import setup.createJDA
 
 fun main() {
@@ -12,6 +13,7 @@ fun main() {
         .withUIManager()
         .withCommandManager {
             +menuCommand("lazy") {
+                //Make sure to import the lazy function from DiscordToolKit, this is NOT the default kotlin lazy function!
                 val value by lazy("DEFAULT") {
                     //This will only print on render and when "b" is clicked
                     println("Lazy load")
@@ -19,13 +21,13 @@ fun main() {
                 }
 
                 //This will print on every config call (rerender and interaction)
-                println("Config")
+                println("Config: $value ($phase)")
 
                 +actionRow(
                     button("a") {
-                        //Clicking "a" will not load the lazy value(even though the lazy value is used in the render function that is called before the handler is executed!)
+                        //Clicking "a" will not load the lazy value (even though the lazy value is used in the render function that is called before the handler is executed!)
 
-                        //Keep in mind, that if this component would trigger a rerender, the lazy value would still be loaded because an actual render
+                        //Keep in mind that if this component triggered a rerender, the lazy value would still be loaded because an actual render
                         //always requires the value to be resolved in this example
                     },
 

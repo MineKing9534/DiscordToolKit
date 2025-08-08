@@ -10,7 +10,8 @@ fun main() {
         .withCommandManager {
             +slashCommand("echo", description = "Sends a message as the bot") {
                 val text = requiredStringOption("text", description = "The text to send") {
-                    replyChoices(
+                    if (currentValue.isNullOrBlank()) replyChoices()
+                    else replyChoices(
                         choice(currentValue!!.lowercase(), label = currentValue!!.lowercase()),
                         choice(currentValue!!.uppercase(), label = currentValue!!.uppercase())
                     )

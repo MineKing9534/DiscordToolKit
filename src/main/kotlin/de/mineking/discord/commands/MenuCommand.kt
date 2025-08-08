@@ -3,9 +3,7 @@ package de.mineking.discord.commands
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.localization.read
 import de.mineking.discord.ui.*
-import kotlinx.coroutines.runBlocking
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent
+import de.mineking.discord.ui.message.*
 import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
@@ -17,22 +15,25 @@ typealias LocalizedMenuCommandConfigurator<L> = suspend MenuCommandConfig<L>.(lo
 
 @CommandMarker
 interface MenuCommandConfig<L : LocalizationFile?> : MessageMenuConfig<SlashCommandContext, L>, OptionConfig, CommandConfig<SlashCommandContext> {
-    suspend fun <T> Option<T>.createUninitializedState(type: KType, handler: StateHandler<T?>? = null) = createState(type, null, handler)
-    suspend fun <T> Option<T>.createState(
-        type: KType = if (this is RichOption) this.type else error("You need to provide a type"),
-        default: T = if (this is RichOption && this.default != null) this.default!! else error("You need to provide a default value or use createUninitializedState"),
-        handler: StateHandler<T>? = null
-    ): State<T> {
-        val (_, setValue, state) = state(type, default, handler)
-        initialize { setValue(this@createState(it)) }
-
-        return state
-    }
-
     fun ignoreParentConditions()
 }
 
-class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: CommandManager, val parent: MessageMenuConfig<SlashCommandContext, L>) : MessageMenuConfig<SlashCommandContext, L> by parent, MenuCommandConfig<L>, MenuConfigData {
+context(config: MenuCommandConfig<*>)
+suspend fun <T> Option<T>.createUninitializedState(type: KType, handler: StateUpdateHandler<T?>? = null) = createState(type, null, handler)
+
+context(config: MenuCommandConfig<*>)
+suspend fun <T> Option<T>.createState(
+    type: KType = if (this is RichOption) this.type else error("You need to provide a type"),
+    default: T = if (this is RichOption && this.default != null) this.default!! else error("You need to provide a default value or use createUninitializedState"),
+    handler: StateUpdateHandler<T>? = null
+): MutableState<T> {
+    val (_, setValue, state) = config.state(type, default, handler)
+    config.initialize { setValue(this@createState.invoke(it)) }
+
+    return state
+}
+
+class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: CommandManager, val parent: MessageMenuConfig<SlashCommandContext, L>) : MessageMenuConfig<SlashCommandContext, L> by parent, MenuCommandConfig<L> {
     internal val options = mutableListOf<OptionInfo>()
 
     internal val before = mutableListOf<BeforeHandler<in SlashCommandContext>>()
@@ -41,9 +42,6 @@ class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: Command
     internal var defaultMemberPermission: DefaultMemberPermissions? = null
     internal val contexts = manager.defaultInteractionContextTypes.toMutableSet()
     internal val types = manager.defaultIntegrationTypes.toMutableSet()
-
-    override val setup get() = (parent as MessageMenuConfigImpl).setup
-    override val states get() = (parent as MessageMenuConfigImpl).states
 
     override fun <T> option(data: OptionInfo): Option<OptionalOption<T>> {
         options += data
@@ -119,11 +117,15 @@ fun <L : LocalizationFile?> localizedMenuCommand(
     val menuName = menu ?: "${parent?.path?.joinToString(".")?.let { "$it." } ?: ""}$name"
 
     val ui = manager.manager.get<UIManager>()
-    val builder = MenuCommandConfigImpl(this, MessageMenuConfigImpl(MenuConfigPhase.BUILD, null, MenuInfo.create(menuName, ui), localization) { MenuCommandConfigImpl(manager, this).config(localization) })
-    runBlocking { builder.config(localization) }
+    lateinit var builder: MenuCommandConfigImpl<L>
 
     @Suppress("UNCHECKED_CAST")
-    val menu = ui.registerLocalizedMenu(menuName, defer, useComponentsV2, localization, builder) { MenuCommandConfigImpl(manager, this).config(localization) }
+    val menu = ui.registerLocalizedMenu(menuName, defer, useComponentsV2, localization, {
+        val parent = MessageMenuBuilder(this)
+
+        MenuCommandConfigImpl(manager, parent).also { builder = it }.config(localization)
+        parent.components.render(EmptyIdGenerator, builder, force = true)
+    }) { MenuCommandConfigImpl(manager, this).config(localization) }
 
     slashCommand(name, description, localization) {
         builder.defaultMemberPermission?.let(this::defaultMemberPermission)
@@ -137,5 +139,5 @@ fun <L : LocalizationFile?> localizedMenuCommand(
     }(parent)
 }
 
-fun MenuConfig<SlashCommandContext, *>.channel(): Parameter<MessageChannel> = parameter({ it.event.messageChannel }, { event.messageChannel })
-fun MenuConfig<SlashCommandContext, *>.event(): Parameter<GenericInteractionCreateEvent> = parameter({ it.event }, { event })
+fun MenuConfig<SlashCommandContext, *>.channel() = parameter({ null }, { it.event.messageChannel }, { event.messageChannel })
+fun MenuConfig<SlashCommandContext, *>.event() = parameter({ null }, { it.event }, { event })

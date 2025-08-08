@@ -1,7 +1,6 @@
 package de.mineking.discord.commands
 
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
-import net.dv8tion.jda.api.components.MessageTopLevelComponentUnion
 import net.dv8tion.jda.api.components.tree.ComponentTree
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
@@ -41,17 +40,17 @@ class MessageCommandContext(
     override fun replyEmbeds(embed: MessageEmbed, vararg embeds: MessageEmbed?) = event.replyEmbeds(embed, *embeds)
     override fun replyComponents(components: Collection<MessageTopLevelComponent?>) = event.replyComponents(components)
     override fun replyComponents(component: MessageTopLevelComponent, vararg other: MessageTopLevelComponent?) = event.replyComponents(component, *other)
-    override fun replyComponents(tree: ComponentTree<MessageTopLevelComponentUnion?>) = event.replyComponents(tree)
+    override fun replyComponents(tree: ComponentTree<out MessageTopLevelComponent?>) = event.replyComponents(tree)
     override fun replyFormat(format: String, vararg args: Any?) = event.replyFormat(format, *args)
     override fun replyFiles(files: Collection<FileUpload?>) = event.replyFiles(files)
     override fun replyFiles(vararg files: FileUpload?) = event.replyFiles(*files)
 
     override fun getType() = event.type
-    override fun isFromAttachedGuild() = event.isFromAttachedGuild()
+    override fun isFromAttachedGuild() = event.isFromAttachedGuild
     override fun isFromGuild() = event.isFromGuild
 
-    override fun getChannelType() = event.getChannelType()
-    override fun getChannelId() = event.getChannelId()
+    override fun getChannelType() = event.channelType
+    override fun getChannelId() = event.channelId
     override fun getMessageChannel() = event.messageChannel
     override fun getGuildLocale() = event.guildLocale
 
@@ -86,17 +85,17 @@ class UserCommandContext(
     override fun replyEmbeds(embed: MessageEmbed, vararg embeds: MessageEmbed?) = event.replyEmbeds(embed, *embeds)
     override fun replyComponents(components: Collection<MessageTopLevelComponent?>) = event.replyComponents(components)
     override fun replyComponents(component: MessageTopLevelComponent, vararg other: MessageTopLevelComponent?) = event.replyComponents(component, *other)
-    override fun replyComponents(tree: ComponentTree<MessageTopLevelComponentUnion?>) = event.replyComponents(tree)
+    override fun replyComponents(tree: ComponentTree<out MessageTopLevelComponent?>) = event.replyComponents(tree)
     override fun replyFormat(format: String, vararg args: Any?) = event.replyFormat(format, *args)
     override fun replyFiles(files: Collection<FileUpload?>) = event.replyFiles(files)
     override fun replyFiles(vararg files: FileUpload?) = event.replyFiles(*files)
 
     override fun getType() = event.type
-    override fun isFromAttachedGuild() = event.isFromAttachedGuild()
+    override fun isFromAttachedGuild() = event.isFromAttachedGuild
     override fun isFromGuild() = event.isFromGuild
 
-    override fun getChannelType() = event.getChannelType()
-    override fun getChannelId() = event.getChannelId()
+    override fun getChannelType() = event.channelType
+    override fun getChannelId() = event.channelId
     override fun getGuildChannel() = event.guildChannel
     override fun getMessageChannel() = event.messageChannel
 
@@ -131,7 +130,7 @@ class EntrypointCommandContext(
     override fun replyEmbeds(embed: MessageEmbed, vararg embeds: MessageEmbed?) = event.replyEmbeds(embed, *embeds)
     override fun replyComponents(components: Collection<MessageTopLevelComponent?>) = event.replyComponents(components)
     override fun replyComponents(component: MessageTopLevelComponent, vararg other: MessageTopLevelComponent?) = event.replyComponents(component, *other)
-    override fun replyComponents(tree: ComponentTree<MessageTopLevelComponentUnion?>) = event.replyComponents(tree)
+    override fun replyComponents(tree: ComponentTree<out MessageTopLevelComponent?>) = event.replyComponents(tree)
     override fun replyFormat(format: String, vararg args: Any?) = event.replyFormat(format, *args)
     override fun replyFiles(files: Collection<FileUpload?>) = event.replyFiles(files)
     override fun replyFiles(vararg files: FileUpload?) = event.replyFiles(*files)
@@ -179,17 +178,17 @@ class SlashCommandContext(
     override fun replyEmbeds(embed: MessageEmbed, vararg embeds: MessageEmbed?) = event.replyEmbeds(embed, *embeds)
     override fun replyComponents(components: Collection<MessageTopLevelComponent?>) = event.replyComponents(components)
     override fun replyComponents(component: MessageTopLevelComponent, vararg other: MessageTopLevelComponent?) = event.replyComponents(component, *other)
-    override fun replyComponents(tree: ComponentTree<MessageTopLevelComponentUnion?>) = event.replyComponents(tree)
+    override fun replyComponents(tree: ComponentTree<out MessageTopLevelComponent?>) = event.replyComponents(tree)
     override fun replyFormat(format: String, vararg args: Any?) = event.replyFormat(format, *args)
     override fun replyFiles(files: Collection<FileUpload?>) = event.replyFiles(files)
     override fun replyFiles(vararg files: FileUpload?) = event.replyFiles(*files)
 
     override fun getType() = event.type
-    override fun isFromAttachedGuild() = event.isFromAttachedGuild()
+    override fun isFromAttachedGuild() = event.isFromAttachedGuild
     override fun isFromGuild() = event.isFromGuild
 
-    override fun getChannelType() = event.getChannelType()
-    override fun getChannelId() = event.getChannelId()
+    override fun getChannelType() = event.channelType
+    override fun getChannelId() = event.channelId
     override fun getMessageChannel() = event.messageChannel
     override fun getGuildLocale() = event.guildLocale
 
@@ -225,11 +224,11 @@ class AutocompleteContext<out T>(
     fun replyChoices(vararg choices: Choice) = replyChoices(choices.toList())
 
     override fun getType() = event.type
-    override fun isFromAttachedGuild() = event.isFromAttachedGuild()
+    override fun isFromAttachedGuild() = event.isFromAttachedGuild
     override fun isFromGuild() = event.isFromGuild
 
-    override fun getChannelType() = event.getChannelType()
-    override fun getChannelId() = event.getChannelId()
+    override fun getChannelType() = event.channelType
+    override fun getChannelId() = event.channelId
     override fun getGuildChannel() = event.guildChannel
     override fun getMessageChannel() = event.messageChannel
     override fun getGuildLocale() = event.guildLocale

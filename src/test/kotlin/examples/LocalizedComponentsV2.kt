@@ -4,11 +4,12 @@ import de.mineking.discord.commands.localizedMenuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.components.*
+import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.localizeForUser
+import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import setup.createJDA
-import java.awt.Color
 
 interface ComponentsV2Localization : LocalizationFile
 
