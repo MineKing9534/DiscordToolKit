@@ -3,6 +3,9 @@ package de.mineking.discord.ui.message
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.components.BackReference
 import de.mineking.discord.ui.modal.ModalMenu
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.serializer
 import net.dv8tion.jda.api.components.Component
 import net.dv8tion.jda.api.events.interaction.component.GenericComponentInteractionCreateEvent
 import kotlin.reflect.KType
@@ -128,8 +131,9 @@ fun <C : Component> createMessageComponent(
 
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T, C : Component, W : IComponent<C>> W.withParameter(parameter: T) = transform { id, render ->
-    val parameter = StateData.encodeSingle(typeOf<T>(), parameter)
-    render(id.withParameter(parameter))
+    @OptIn(ExperimentalSerializationApi::class)
+    val parameter = StateData.encoder.encodeToByteArray(parameter)
+    render(id.withParameter(parameter.encodeState()))
 } as W
 
 fun <T> ComponentContext<*, *>.parameter(type: KType): T {
@@ -138,7 +142,8 @@ fun <T> ComponentContext<*, *>.parameter(type: KType): T {
     val value = base.drop(2 + length)
 
     @Suppress("UNCHECKED_CAST")
-    return StateData.decodeSingle(type, value) as T
+    @OptIn(ExperimentalSerializationApi::class)
+    return StateData.encoder.decodeFromByteArray(StateData.encoder.serializersModule.serializer(type), value.decodeState()) as T
 }
 
 inline fun <reified T> ComponentContext<*, *>.parameter() = parameter<T>(typeOf<T>())

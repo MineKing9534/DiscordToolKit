@@ -68,17 +68,17 @@ fun main() {
                 }
 
                 +actionRow(
-                    button("a", label = "A") { switchMenu(submenu) { pushDefaults() } }, //Push the default state values (0 in this case)
+                    button("a", label = "A") { switchMenu(submenu) { pushDefaults() } }, //Pushed only default values (3 for the parent sate and 0 for the submenu state)
 
                     //You can also use switchMenuButton to switch to a different menu. Instead of a click handler, you can pass the state builder as a lambda
-                    switchMenuButton(submenu, "b", label = "B"), //Implicitly copies the n-th state to the n-th state -> "outer" is used as "state" (The default state builder copies all states and fills the rest with defaults)
-                    switchMenuButton(submenu, "c", label = "C") { push(5) } //Explicitly pushes 5 as first state -> 5 ist used
+                    switchMenuButton(submenu, "b", label = "B"), //Implicitly copies all parent state values and pushes the default values of the submenu (Parent state value will be preserved)
+                    switchMenuButton(submenu, "c", label = "C") { copyAll(); push(5) } //Keeps the parent state value but explicitly pushes 5 as submenu state
                 )
 
                 +actionRow(counter("counter", ref = outerRef))
 
                 //Simpler version for sub-menu if it is only required once
-                //Will preserve all parent state values
+                //Will automatically preserve all parent state values defined before this function call
                 val menuA = menuButton("menu", label = "Menu") { back ->
                     val innerRef = state(0)
                     var inner by innerRef

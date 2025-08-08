@@ -31,7 +31,7 @@ class ModalMenu<M, L : LocalizationFile?>(
         if (defer == DeferMode.ALWAYS) event.deferEdit().queue()
 
         val data = (listOf(event.modalId) + event.values.map { it.customId }).decodeState(2)
-        val context = ModalContext(this, StateData.decode(data), event)
+        val context = ModalContext(this, StateData.decode(data, states), event)
 
         val executor = ModalMenuExecutor(this, context)
         handler.handle(executor, this, context)

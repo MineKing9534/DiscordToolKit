@@ -29,7 +29,7 @@ sealed class ModalMenuConfigImpl<M, L : LocalizationFile?>(
     override val configState = MenuConfigState(menu)
 }
 
-class ModalMenuBuilder<M, L : LocalizationFile?>(menu: ModalMenu<M, L>) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext()) {
+class ModalMenuBuilder<M, L : LocalizationFile?>(menu: ModalMenu<M, L>) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext(menu)) {
     internal val components = mutableListOf<ModalComponent<*>>()
 
     override fun <T> ModalComponent<T>.unaryPlus(): ModalResult<T> {

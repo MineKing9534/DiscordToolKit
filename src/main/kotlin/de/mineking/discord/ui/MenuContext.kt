@@ -21,7 +21,7 @@ sealed class MenuContext<M>(override val stateData: StateData) : StateContainer 
     internal var localizationContext: LocalizationContext? = null
 }
 
-class BuildMenuContext<M>() : MenuContext<M>(StateData(mutableListOf()))
+class BuildMenuContext<M>(menu: Menu<*, *, *>) : MenuContext<M>(StateData(mutableListOf(), menu.states))
 
 class InitialMenuContext<M>(stateData: StateData, val parameter: M) : MenuContext<M>(stateData) {
     override val cache: MutableList<Any?> = mutableListOf()

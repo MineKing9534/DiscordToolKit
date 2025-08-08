@@ -1,8 +1,15 @@
 package de.mineking.discord.ui
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.descriptors.buildSerialDescriptor
+import kotlinx.serialization.encoding.*
 import kotlinx.serialization.serializer
+import java.nio.charset.StandardCharsets
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -56,52 +63,71 @@ fun <T> virtualReadonlyState(value: T) = object : State<T> {
     override val value = value
 }
 
-data class StateData(val data: MutableList<String>) {
-    private val cache = arrayOfNulls<Pair<KType, Any?>>(data.size).toMutableList()
-
-    fun pushInitial(type: KType, value: Any?) {
-        data += encodeSingle(type, value)
-        cache += type to value
-    }
-
-    private fun get(id: Int, type: KType): Any? =
-        cache.getOrNull(id)?.second ?: decodeSingle(type, data[id])
-            .also { cache[id] = type to it }
-    private fun set(id: Int, value: Any?, type: KType) {
-        cache[id] = type to value
-    }
-
-    fun <T> getState(type: KType, id: Int, handler: StateUpdateHandler<T>?) = object : MutableState<T> {
+class StateData(val data: MutableList<Any?>, val states: List<InternalState<*>>) {
+    fun <T> getState(id: Int, handler: StateUpdateHandler<T>?) = object : MutableState<T> {
         override var value: T
             @Suppress("UNCHECKED_CAST")
-            get() = get(id, type) as T
+            get() = data[id] as T
             set(value) {
                 handler?.invoke(this.value, value)
-                set(id, value, type)
+                data[id] = value
             }
     }
 
-    fun effectiveData(id: Int) = cache[id]?.let { (type, value) -> encodeSingle(type, value) } ?: data[id]
-
-    fun encode() = encode(typeOf<List<String>>(), data.indices.map { effectiveData(it) })
+    @OptIn(ExperimentalSerializationApi::class)
+    fun encode() = encoder.encodeToByteArray(StateListSerializer(states.map { it.type }), data).encodeState()
 
     companion object {
         @OptIn(ExperimentalSerializationApi::class)
-        var serializersModule = Cbor.serializersModule
+        var encoder: Cbor = Cbor
 
         @OptIn(ExperimentalSerializationApi::class)
-        private fun encode(type: KType, value: Any?) = Cbor.encodeToByteArray(serializersModule.serializer(type), value).map { it.toInt().toChar() }.joinToString("")
+        fun decode(data: String, states: List<InternalState<*>>) = StateData(
+            if (data.isEmpty()) mutableListOf()
+            else encoder.decodeFromByteArray(StateListSerializer(states.map { it.type }), data.decodeState()).toMutableList(),
+            states
+        )
 
-        @OptIn(ExperimentalSerializationApi::class)
-        private fun decode(type: KType, data: String) = Cbor.decodeFromByteArray(serializersModule.serializer(type), data.map { it.code.toByte() }.toByteArray())
+        fun createInitial(states: List<InternalState<*>>) = StateData(states.map { it.initial }.toMutableList(), states)
+    }
+}
 
-        @Suppress("UNCHECKED_CAST")
-        fun decode(data: String) = StateData(if (data.isEmpty()) mutableListOf() else (decode(typeOf<List<String>>(), data) as List<String>).toMutableList())
+@OptIn(ExperimentalSerializationApi::class)
+private class StateListSerializer(
+    private val types: List<KType>
+) : KSerializer<List<Any?>> {
 
-        fun createInitial(states: List<InternalState<*>>) = StateData(states.map { encodeSingle(it.type, it.initial) }.toMutableList())
+    @OptIn(InternalSerializationApi::class)
+    override val descriptor: SerialDescriptor = buildSerialDescriptor("StateList", StructureKind.LIST) {
+        for (index in types.indices) {
+            val type = types[index]
+            element("element$index", serializer(type).descriptor)
+        }
+    }
 
-        fun encodeSingle(type: KType, value: Any?): String = encode(type, value)
-        fun decodeSingle(type: KType, value: String): Any? = decode(type, value)
+    override fun serialize(encoder: Encoder, value: List<Any?>) {
+        require(value.size == types.size) { "Types and values size mismatch" }
+        encoder.encodeCollection(descriptor, value.size) {
+            for (index in value.indices) {
+                val type = types[index]
+
+                encodeSerializableElement(descriptor, index, serializer(type), value[index])
+            }
+        }
+    }
+
+    override fun deserialize(decoder: Decoder) =decoder.decodeStructure(descriptor) {
+        val result = ArrayList<Any?>(types.size)
+
+        while (true) {
+            val index = decodeElementIndex(descriptor)
+            if (index == CompositeDecoder.DECODE_DONE) break
+
+            val element = decodeSerializableElement(descriptor, index, serializer(types[index]))
+            result += element
+        }
+
+        result
     }
 }
 
@@ -110,21 +136,13 @@ interface StateContainer {
     val cache: MutableList<Any?>
 }
 
-fun MenuConfig<*, *>.skipState(amount: Int = 1) {
-    if (isBuild()) repeat(amount) {
-        context.stateData.pushInitial(typeOf<Unit>(), Unit)
-    }
-
-    configState.currentState += amount
-}
-
 fun <T> MenuConfig<*, *>.state(type: KType, initial: T, handler: StateUpdateHandler<T>? = null): MutableState<T> {
     if (isBuild()) {
         configState.menu.states += InternalState(type, initial, handler)
-        context.stateData.pushInitial(type, initial)
-    }
+        context.stateData.data += initial
+    } else require(type == configState.menu.states[configState.currentState].type)
 
-    return context.stateData.getState(type, configState.currentState, handler)
+    return context.stateData.getState(configState.currentState, handler)
         .also { configState.currentState++ }
 }
 
@@ -151,3 +169,9 @@ internal fun List<String>.decodeState(parts: Int) = joinToString("") {
     val length = original.take(2).toInt()
     original.drop(2).take(length)
 }
+
+@PublishedApi
+internal fun String.decodeState() = toByteArray(StandardCharsets.ISO_8859_1)
+
+@PublishedApi
+internal fun ByteArray.encodeState() = toString(StandardCharsets.ISO_8859_1)
