@@ -1,14 +1,13 @@
 package de.mineking.discord.ui
 
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.StructureKind
-import kotlinx.serialization.descriptors.buildSerialDescriptor
-import kotlinx.serialization.encoding.*
-import kotlinx.serialization.serializer
+import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.modules.SerializersModule
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.nio.charset.StandardCharsets
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -75,59 +74,38 @@ class StateData(val data: MutableList<Any?>, val states: List<InternalState<*>>)
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun encode() = encoder.encodeToByteArray(StateListSerializer(states.map { it.type }), data).encodeState()
+    fun encode() = encode(StateListSerializer(serializers, states.map { it.type }), data)
 
     companion object {
+        var serializers: SerializersModule = SerializersModule {}
+
+        @PublishedApi
         @OptIn(ExperimentalSerializationApi::class)
-        var encoder: Cbor = Cbor
+        internal fun <T> encode(serializer: SerializationStrategy<T>, value: T): String {
+            val result = ByteArrayOutputStream()
+            val encoder = BinaryEncoder(serializers, DataOutputStream(result))
+            encoder.encodeSerializableValue(serializer, value)
+
+            return result.toByteArray().encodeState()
+        }
+
+        @PublishedApi
+        @OptIn(ExperimentalSerializationApi::class)
+        internal fun <T> decode(serializer: DeserializationStrategy<T>, value: String): T {
+            val input = ByteArrayInputStream(value.decodeState())
+            val decoder = BinaryDecoder(serializers, DataInputStream(input))
+
+            return decoder.decodeSerializableValue(serializer)
+        }
 
         @OptIn(ExperimentalSerializationApi::class)
-        fun decode(data: String, states: List<InternalState<*>>) = StateData(
+        internal fun decode(data: String, states: List<InternalState<*>>) = StateData(
             if (data.isEmpty()) mutableListOf()
-            else encoder.decodeFromByteArray(StateListSerializer(states.map { it.type }), data.decodeState()).toMutableList(),
+            else decode(StateListSerializer(serializers, states.map { it.type }), data).toMutableList(),
             states
         )
 
         fun createInitial(states: List<InternalState<*>>) = StateData(states.map { it.initial }.toMutableList(), states)
-    }
-}
-
-@OptIn(ExperimentalSerializationApi::class)
-private class StateListSerializer(
-    private val types: List<KType>
-) : KSerializer<List<Any?>> {
-
-    @OptIn(InternalSerializationApi::class)
-    override val descriptor: SerialDescriptor = buildSerialDescriptor("StateList", StructureKind.LIST) {
-        for (index in types.indices) {
-            val type = types[index]
-            element("element$index", serializer(type).descriptor)
-        }
-    }
-
-    override fun serialize(encoder: Encoder, value: List<Any?>) {
-        require(value.size == types.size) { "Types and values size mismatch" }
-        encoder.encodeCollection(descriptor, value.size) {
-            for (index in value.indices) {
-                val type = types[index]
-
-                encodeSerializableElement(descriptor, index, serializer(type), value[index])
-            }
-        }
-    }
-
-    override fun deserialize(decoder: Decoder) =decoder.decodeStructure(descriptor) {
-        val result = ArrayList<Any?>(types.size)
-
-        while (true) {
-            val index = decodeElementIndex(descriptor)
-            if (index == CompositeDecoder.DECODE_DONE) break
-
-            val element = decodeSerializableElement(descriptor, index, serializer(types[index]))
-            result += element
-        }
-
-        result
     }
 }
 

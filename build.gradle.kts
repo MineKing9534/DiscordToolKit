@@ -24,7 +24,7 @@ dependencies {
     implementation("com.github.freya022:JDA:1be8478")
 
     implementation(kotlin("reflect"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
 
     compileOnly("me.carleslc.Simple-YAML:Simple-Yaml:1.8.4")
     compileOnly("org.kodein.emoji:emoji-kt:2.0.1")

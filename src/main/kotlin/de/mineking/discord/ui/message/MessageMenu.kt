@@ -50,7 +50,7 @@ class MessageMenu<M, L : LocalizationFile?>(
         val name = event.componentId.split(":", limit = 3)[1]
 
         val data = event.message.decodeState()
-        val context = ComponentContext<M, GenericComponentInteractionCreateEvent>(this, StateData.decode(data, states), event)
+        val context = ComponentContext<M, GenericComponentInteractionCreateEvent>(this, decodeState(data), event)
 
         val finder = MessageMenuComponentFinder(name, this, context)
         handler.handleComponent(finder, this, context, data, name)
@@ -94,6 +94,6 @@ fun <M, E> Message.rerenderBlocking(menu: MessageMenu<M, *>, event: E): RestActi
 }
 
 suspend fun <M, E> Message.rerender(menu: MessageMenu<M, *>, event: E): RestAction<*> where E : GenericInteractionCreateEvent, E : IMessageEditCallback, E : IReplyCallback {
-    val context = TransferContext<M, E>(StateData.decode(decodeState(), menu.states), event, this)
+    val context = TransferContext<M, E>(menu.decodeState(decodeState()), event, this)
     return editMessage(menu.render(context))
 }

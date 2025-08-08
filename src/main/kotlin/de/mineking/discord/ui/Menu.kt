@@ -29,6 +29,8 @@ abstract class Menu<M, E : GenericInteractionCreateEvent, L : LocalizationFile?>
         ?.let { name.substring(0, it) }
         ?.let { manager.menus[it] }
 
+    fun decodeState(data: String) = StateData.decode(data, states)
+
     abstract suspend fun handle(event: E)
 
     override fun toString() = "${javaClass.simpleName}[$name]"
