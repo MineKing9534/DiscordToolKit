@@ -54,27 +54,42 @@ fun <T> createModalElement(
     override fun toString() = "ModalElement[$name]"
 }
 
-class ModalComponentBuilder<T>(override val phase: MenuCallbackPhase) : MenuCallbackContext {
-    internal val components = mutableListOf<ModalComponent<*>>()
-    internal var producer: ((ModalContext<*>) -> T)? = null
+sealed interface ModalComponentBuilder<T> : MenuCallbackContext {
+    operator fun <U> ModalComponent<U>.unaryPlus(): ModalResult<U>
+    fun produce(handler: (ModalContext<*>) -> T)
+}
 
-    operator fun <T> ModalComponent<T>.unaryPlus(): ModalResult<T> {
+class ModalComponentRenderer<T>() : ModalComponentBuilder<T> {
+    override val phase = MenuCallbackPhase.RENDER
+
+    internal val components = mutableListOf<ModalComponent<*>>()
+
+    override operator fun <U> ModalComponent<U>.unaryPlus(): ModalResult<U> {
         components += this
         return emptyModalResult()
     }
 
-    fun produce(handler: (ModalContext<*>) -> T) {
+    override fun produce(handler: (ModalContext<*>) -> T) {}
+}
+
+class ModalComponentHandler<T>(val context: ModalContext<*>) : ModalComponentBuilder<T> {
+    override val phase = MenuCallbackPhase.HANDLE
+
+    internal var producer: ((ModalContext<*>) -> T)? = null
+
+    override operator fun <U> ModalComponent<U>.unaryPlus() = object : ModalResult<U> {
+        override fun getValue() = handle(context)
+    }
+
+    override fun produce(handler: (ModalContext<*>) -> T) {
         require(producer == null)
         producer = handler
     }
 }
 
 fun <T> createModalComponent(config: ModalComponentBuilder<T>.() -> Unit) = object : ModalComponent<T> {
-    val render by lazy { ModalComponentBuilder<T>(MenuCallbackPhase.RENDER).apply(config) }
-    val handle by lazy { ModalComponentBuilder<T>(MenuCallbackPhase.HANDLE).apply(config) }
-
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = render.components.flatMap { it.render(config, generator) }
-    override fun handle(context: ModalContext<*>) = handle.producer!!.invoke(context)
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = ModalComponentRenderer<T>().apply { config() }.components.flatMap { it.render(config, generator) }
+    override fun handle(context: ModalContext<*>) = ModalComponentHandler<T>(context).apply(config).producer!!(context)
 
     override fun toString() = "ModalComponent"
 }
