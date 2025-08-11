@@ -159,8 +159,8 @@ fun <T> Option<OptionalOption<T>>.orNull(): Option<T?> = map(if (this is RichOpt
 fun <T> Option<OptionalOption<T>>.or(other: Option<OptionalOption<T>>) = map { if (it.isPresent()) it else other() }
 inline fun <reified T> Option<OptionalOption<T>>.orValue(crossinline other: Option<T>) = map { if (it.isPresent()) it.get() else other() }
 
-inline fun <reified T> Option<OptionalOption<T>>.orElse(noinline value: SlashCommandContext.() -> T): Option<T> = orElse(typeOf<T>(), value)
-fun <T> Option<OptionalOption<T>>.orElse(type: KType?, value: SlashCommandContext.() -> T): Option<T> = map(type) { it.orElse(value()) }
+inline fun <reified T> Option<OptionalOption<T>>.orElse(noinline value: suspend SlashCommandContext.() -> T): Option<T> = orElse(typeOf<T>(), value)
+fun <T> Option<OptionalOption<T>>.orElse(type: KType?, value: suspend SlashCommandContext.() -> T): Option<T> = map(type) { it.orElse(value()) }
 inline fun <reified T> Option<OptionalOption<T>>.orElse(value: T): Option<T> = orElse(typeOf<T>(), value)
 fun <T> Option<OptionalOption<T>>.orElse(type: KType?, value: T): Option<T> = if (this is RichOption<*>) object : RichOption<T> {
     override val data: OptionInfo = this@orElse.data
