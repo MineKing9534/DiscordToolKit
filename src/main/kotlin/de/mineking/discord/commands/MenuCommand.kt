@@ -122,9 +122,7 @@ fun <L : LocalizationFile?> localizedMenuCommand(
     @Suppress("UNCHECKED_CAST")
     val menu = ui.registerLocalizedMenu(menuName, defer, useComponentsV2, localization, {
         val parent = MessageMenuBuilder(this)
-
         MenuCommandConfigImpl(manager, parent).also { builder = it }.config(localization)
-        parent.components.render(EmptyIdGenerator, builder, force = true)
     }) { MenuCommandConfigImpl(manager, this).config(localization) }
 
     slashCommand(name, description, localization) {

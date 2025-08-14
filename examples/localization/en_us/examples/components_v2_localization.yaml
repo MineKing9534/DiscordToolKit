@@ -10,8 +10,8 @@ menu.menu:
         label: Text
         placeholder: Hello World!
 
-  text.content: 'Current Text: ${ text.let { if (it.isNotBlank()) "**$it**" else it } }'
-  count.content: 'Current Count: **${ count }**'
+  text.content: !<text:String> 'Current Text: ${ text.let { if (it.isNotBlank()) "**$it**" else it } }'
+  count.content: !<count:Int> 'Current Count: **${ count }**'
 
   inc.label: Increment
   dec.label: Decrement

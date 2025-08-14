@@ -844,10 +844,11 @@ If you have a non-required option (like above) and already provide a default val
 Otherwise, you have to provide a default value for the state as parameter in the `createState` method.
 
 # Localization
-Documentation not yet available, however there are some examples at `src/test/examples/LocalizedCommand.kt` and `src/test/examples/LocalizedMenu.kt` that should be enough to see the basic concept.
+Documentation not yet available, however there are some examples at `examples/src/main/kotlin/examples/LocalizedCommand.kt` and `examples/src/main/kotlin/examples/LocalizedMenu.kt` that should be enough to see the basic concept.
 
-Inside localization lines, you can define custom scripts as `${ <arbitrary kotlin code> }`. This allows you to pass parameters to localization, but also more complex formatting. These scripts are compiled once they are registered, which is at startup for most cases.
-This can take a short while (depending on hardware, amount, and complexity of your scripts) but doesn't affect the user experience as this delay only happens during registration and not while using the localization entries.
+DiscordToolKit itself only provides interfaces for the actual LocalizationFile. The recommended way to actually create implementations for those is the [DiscordToolKitLocalizationPlugin](https://github.com/MineKing9534/DiscordToolKitLocalizationPlugin).
+It provides a gradle plugin that integrates a kotlin symbol processor into your build that generates LocalizationFile implementations at compile time. 
+The localized values are read from yaml files at the specified location (Look at the example setup or the Readme in the plugin repository for more details).
 
 For automatic localization for commands and menus, localization keys are automatically generated based on their names. You can override those by passing strings to the respective fields, e.g. passing a string as command description in the builder.
 If a value is provided, instead of localization, this value is used as literal. If you want to use it as the localization key, you can use the `localize` extension function for strings to mark it as localization key.

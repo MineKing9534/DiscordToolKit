@@ -2,7 +2,7 @@ command.test:
   description: Opens a localized menu
 
 menu.test:
-  button.label: Press Me! (${ a })
+  button.label: !<a:Int> Press Me! (${ a })
   label.label: Localized Label
 
   menu1:
@@ -13,9 +13,6 @@ menu.test:
 
 abc: Custom localization path
 
-test.embed:
-  title: Title
-  description: '**Current Value:** ${ a }'
-  color: ${ Color.GREEN }
-
-test.content: Content
+test.content: >-
+  # Title
+  **Current Value:** ${ a }

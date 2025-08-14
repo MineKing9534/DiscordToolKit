@@ -1,7 +1,6 @@
 package de.mineking.discord
 
 import de.mineking.discord.commands.CommandManager
-import de.mineking.discord.localization.AdvancedLocalizationManager
 import de.mineking.discord.localization.LocalizationManager
 import de.mineking.discord.localization.SimpleLocalizationManager
 import de.mineking.discord.ui.UIManager
@@ -13,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.GenericEvent
-import net.dv8tion.jda.api.interactions.DiscordLocale
+import kotlin.reflect.full.primaryConstructor
 
 typealias ManagerConfigurator<M> = M.() -> Unit
 
@@ -55,22 +54,7 @@ class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
         return this
     }
 
-    fun withAdvancedLocalization(
-        locales: List<DiscordLocale>,
-        defaultLocale: DiscordLocale = locales.first(),
-        botPackage: String = "",
-        base: (locale: DiscordLocale) -> String = { "text/${it.locale.lowercase().replace("-", "_")}" },
-        config: ManagerConfigurator<AdvancedLocalizationManager> = {}
-    ): DiscordToolKitBuilder<B> {
-        localizationManager = {
-            val temp = AdvancedLocalizationManager(it, locales, defaultLocale, botPackage, base)
-            temp.config()
-
-            temp
-        }
-
-        return this
-    }
+    fun withLocalization(creator: (DiscordToolKit<B>) -> LocalizationManager) = apply { localizationManager = creator }
 
     fun withCommandManager(config: ManagerConfigurator<CommandManager> = {}) = addManager({ CommandManager(it) }, config)
     fun withUIManager(config: ManagerConfigurator<UIManager> = {}) = addManager({ UIManager(it) }, config)
@@ -89,4 +73,11 @@ class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
 
         return manager
     }
+}
+
+inline fun <reified T : LocalizationManager> DiscordToolKitBuilder<*>.withLocalization(noinline config: ManagerConfigurator<T>? = null) = withLocalization {
+    val instance = T::class.primaryConstructor!!.call(it)
+    if (config != null) instance.config()
+
+    instance
 }

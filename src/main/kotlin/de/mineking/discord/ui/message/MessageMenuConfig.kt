@@ -195,12 +195,8 @@ sealed class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 }
 
 class MessageMenuBuilder<M, L : LocalizationFile?>(menu: MessageMenu<M, L>) : MessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext(menu)) {
-    internal val components = mutableListOf<MessageComponent<out MessageTopLevelComponent>>()
-
     override fun <C : MessageComponent<*>> register(component: C) = component
-    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
-        components += this
-    }
+    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
     override fun message(data: MessageEditBuilder) {}
 }
 

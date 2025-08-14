@@ -6,6 +6,7 @@ import de.mineking.discord.localization.*
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.components.*
 import de.mineking.discord.ui.message.message
+import de.mineking.discord.withLocalization
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import setup.createJDA
@@ -14,7 +15,7 @@ import java.awt.Color
 fun main() {
     val jda = createJDA()
     discordToolKit(jda)
-        .withAdvancedLocalization(listOf(DiscordLocale.ENGLISH_US, DiscordLocale.GERMAN)) { import<Color>() }
+        .withLocalization<DefaultLocalizationManager>() //This is generated at compile time by the gradle plugin. See build.gradle.kts to see the setup for that
         .withUIManager { localize() }
         .withCommandManager {
             localize()
@@ -27,7 +28,7 @@ fun main() {
                 }
 
                 message {
-                    embed(read(localization::testEmbed))
+                    content(read(localization::testContent))
                 }
 
                 +actionRow(
@@ -59,7 +60,8 @@ fun main() {
 
 //See resources/text/de/examples/menu_localization.yaml
 interface MenuLocalization : LocalizationFile {
-    @Embed fun testEmbed(@Locale locale: DiscordLocale, @LocalizationParameter a: Int): MessageEmbed
+    @Localize
+    fun testContent(@Locale locale: DiscordLocale, @LocalizationParameter a: Int): String
 }
 
 interface SubmenuLocalization : LocalizationFile

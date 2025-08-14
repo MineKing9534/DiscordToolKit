@@ -2,13 +2,14 @@ package examples
 
 import de.mineking.discord.commands.localizedMenuCommand
 import de.mineking.discord.discordToolKit
+import de.mineking.discord.localization.DefaultLocalizationManager
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.components.*
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.localizeForUser
 import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
-import net.dv8tion.jda.api.interactions.DiscordLocale
+import de.mineking.discord.withLocalization
 import setup.createJDA
 
 interface ComponentsV2Localization : LocalizationFile
@@ -16,7 +17,7 @@ interface ComponentsV2Localization : LocalizationFile
 fun main() {
     val jda = createJDA()
     discordToolKit(jda)
-        .withAdvancedLocalization(listOf(DiscordLocale.ENGLISH_US, DiscordLocale.GERMAN))
+        .withLocalization<DefaultLocalizationManager>() //This is generated at compile time by the gradle plugin. See build.gradle.kts to see the setup for that
         .withUIManager { localize() }
         .withCommandManager {
             localize()

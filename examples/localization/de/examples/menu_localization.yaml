@@ -2,7 +2,7 @@ command.test:
   description: Öffnet ein menu
 
 menu.test:
-  button.label: Klick mich! (${ a })
+  button.label: !<a:Int> Klick mich! (${ a })
   label.label: Label
 
   menu1:
@@ -13,9 +13,6 @@ menu.test:
 
 abc: Eigener Pfad
 
-test.embed:
-  title: Titel
-  description: '**Aktueller Wert:** ${ a }'
-  color: ${ Color.GREEN }
-
-test.content: Nachricht
+test.content: >-
+  # Titel
+  **Aktueller Wert:** ${ a }
