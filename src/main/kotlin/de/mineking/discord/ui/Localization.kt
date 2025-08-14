@@ -61,7 +61,6 @@ class DefaultLocalizationHandler(val prefix: String) : MenuLocalizationHandler {
                     if (base.isDefault()) listOfNotNull(this.prefix, menu.menu.name, prefix, element, postfix, name).joinToString(".")
                     else base.toString()
 
-                file.register(key, config.args.mapValues { it.value.second }, typeOf<String>())
                 file.readString(key, locale, config.args.mapValues { it.value.first })
             }
             base != null && !base.isDefault() -> base.toString()

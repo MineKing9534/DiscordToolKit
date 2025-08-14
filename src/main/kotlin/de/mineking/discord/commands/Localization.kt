@@ -19,9 +19,7 @@ class DefaultCommandLocalizationHandler(val prefix: String, val args: Map<String
     private fun CommandImpl<*, *>.path() = "${prefix.takeIf { it.isNotBlank() }?.let { "$it." } ?: ""}${path.joinToString(".subcommands.")}"
 
     private fun createLocalization(file: LocalizationFile, command: CommandImpl<*, *>, key: String): LocalizationInfo {
-        file.register(key, args.mapValues { it.value.first }, typeOf<String>())
         val localization = file.manager.locales.associateWith { file.readString(key, it, args.mapValues { it.value.second(command) }) }
-
         return LocalizationInfo(localization[file.manager.defaultLocale]!!, localization)
     }
 

@@ -30,12 +30,7 @@ sealed class ModalMenuConfigImpl<M, L : LocalizationFile?>(
 }
 
 class ModalMenuBuilder<M, L : LocalizationFile?>(menu: ModalMenu<M, L>) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext(menu)) {
-    internal val components = mutableListOf<ModalComponent<*>>()
-
-    override fun <T> ModalComponent<T>.unaryPlus(): ModalResult<T> {
-        components += this
-        return emptyModalResult<T>()
-    }
+    override fun <T> ModalComponent<T>.unaryPlus() = emptyModalResult<T>()
     override fun title(title: CharSequence) {}
     override fun execute(handler: ModalHandler<M>) {}
 }
