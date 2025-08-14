@@ -2,12 +2,15 @@ package de.mineking.discord.ui.builder.components
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.*
-import de.mineking.discord.ui.builder.TextElement
 import de.mineking.discord.ui.builder.TextElementBuilder
-import de.mineking.discord.ui.builder.build
-import de.mineking.discord.ui.builder.text
+import de.mineking.discord.ui.builder.renderTextElement
+import de.mineking.discord.ui.disabledIf
+import de.mineking.discord.ui.message.MessageComponent
+import de.mineking.discord.ui.message.createLayoutComponent
+import de.mineking.discord.ui.message.createMessageComponent
+import de.mineking.discord.ui.readLocalizedString
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import net.dv8tion.jda.api.components.MessageTopLevelComponent
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
 import net.dv8tion.jda.api.components.container.Container
@@ -23,7 +26,6 @@ import net.dv8tion.jda.api.components.textdisplay.TextDisplay
 import net.dv8tion.jda.api.components.thumbnail.Thumbnail
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.utils.FileUpload
-import java.awt.Color
 
 fun label(
     name: String,
@@ -31,7 +33,7 @@ fun label(
     label: CharSequence = DEFAULT_LABEL,
     emoji: Emoji? = null,
     localization: LocalizationFile? = null
-) = button(name, color, label, emoji, localization).disabled()
+) = button(name, color, label, emoji, localization).disabledIf()
 
 fun actionRow(vararg components: MessageComponent<out ActionRowChildComponent>) = actionRow(components.toList())
 fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent(components) { config, id ->
@@ -105,20 +107,36 @@ fun section(
     )
 }
 
-fun thumbnail(file: suspend () -> FileUpload) = createMessageComponent { _, _ -> Thumbnail.fromFile(file()) }
+fun <T> optionalSection(
+    accessory: MessageComponent<out SectionAccessoryComponent>,
+    components: List<MessageComponent<out TextDisplay>>
+) where T : ContainerChildComponent, T : MessageTopLevelComponent = createLayoutComponent(components + accessory) { config, id ->
+    val accessory = accessory.render(config, id)
+    val components = components.flatMap { it.render(config, id) }
+
+    val result = if (accessory.isEmpty()) components
+    else listOf(Section.of(accessory.single(), components))
+
+    @Suppress("UNCHECKED_CAST")
+    result as List<T>
+}
+
+fun thumbnail(file: () -> FileUpload) = createMessageComponent { _, _ -> Thumbnail.fromFile(file()) }
 fun thumbnail(file: FileUpload) = thumbnail { file }
 
 fun thumbnail(url: String) = createMessageComponent { _, _ -> Thumbnail.fromUrl(url) }
 
-fun textDisplay(content: suspend () -> String) = createMessageComponent { _, _ -> TextDisplay.create(content()) }
-fun textDisplay(content: String) = textDisplay { content }
-fun buildTextDisplay(content: suspend TextElement.() -> Unit) = textDisplay { build { content() } }
+fun textDisplay(content: String) = createMessageComponent { _, _ -> TextDisplay.of(content) }
+inline fun buildTextDisplay(content: TextElementBuilder) = textDisplay(renderTextElement(content))
+
+fun lazyTextDisplay(content: () -> String) = createMessageComponent { _, _ -> TextDisplay.of(content()) }
+fun buildLazyTextDisplay(content: TextElementBuilder) = lazyTextDisplay { renderTextElement(content) }
 
 fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageComponent { config, _ ->
-    TextDisplay.create(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
+    TextDisplay.of(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
 }
 
-fun fileDisplay(file: suspend () -> FileUpload) = createMessageComponent { _, _ -> FileDisplay.fromFile(file()) }
+fun fileDisplay(file: () -> FileUpload) = createMessageComponent { _, _ -> FileDisplay.fromFile(file()) }
 fun fileDisplay(file: FileUpload) = fileDisplay { file }
 
 fun mediaGallery(vararg media: MediaGalleryItem) = mediaGallery(media.toList())

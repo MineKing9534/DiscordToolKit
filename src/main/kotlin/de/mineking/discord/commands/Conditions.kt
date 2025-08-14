@@ -21,7 +21,7 @@ fun interface ExecutionCondition<C : ICommandContext<*>> : BeforeHandler<C> {
     override suspend operator fun invoke(context: C) {
         if (!check(context)) {
             handleForbidden(context)
-            context.terminateCommand()
+            terminateCommand()
         }
     }
 }

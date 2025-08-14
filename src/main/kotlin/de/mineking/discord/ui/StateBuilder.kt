@@ -1,16 +1,20 @@
 package de.mineking.discord.ui
 
-class StateBuilder<M, N>(val base: StateContext<M>, val target: Menu<N, *, *>) {
-    val data = mutableListOf<String>()
+class StateBuilder(val base: StateContainer, val target: Menu<*, *, *>) {
+    private companion object {
+        val EMPTY_DATA = ByteArray(0)
+    }
+
+    val data = mutableListOf<Any?>()
     private var baseIndex = 0
     private var targetIndex = 0
 
     fun set(id: Int, value: Any?) {
-        data[id] = StateData.encodeSingle(target.states[id].type, value)
+        data[id] = value
     }
 
     fun <T> push(value: T) {
-        data += ""
+        data += EMPTY_DATA
         set(targetIndex++, value)
     }
 
@@ -24,7 +28,7 @@ class StateBuilder<M, N>(val base: StateContext<M>, val target: Menu<N, *, *>) {
 
     fun copy(amount: Int = 1) {
         repeat(amount) {
-            data += base.stateData.effectiveData(baseIndex++)
+            data += base.stateData.data[baseIndex++]
             targetIndex++
         }
     }
@@ -37,9 +41,9 @@ class StateBuilder<M, N>(val base: StateContext<M>, val target: Menu<N, *, *>) {
         while (baseIndex < base.stateData.data.size && targetIndex < target.states.size) copy()
     }
 
-    fun build() = StateData(data)
+    fun build() = StateData(data, target.states)
 }
 
-typealias StateBuilderConfig = StateBuilder<*, *>.() -> Unit
+typealias StateBuilderConfig = StateBuilder.() -> Unit
 
 val DEFAULT_STATE_BUILDER: StateBuilderConfig = { copyAll(); pushDefaults() }
