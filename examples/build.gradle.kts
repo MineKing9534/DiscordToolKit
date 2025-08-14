@@ -1,5 +1,3 @@
-import de.mineking.discord.localization.gradle.declareProperty
-
 plugins {
     id("de.mineking.discord.localization") version "1.0.0"
 }
@@ -9,6 +7,7 @@ version = "1.0.0"
 
 repositories {
     mavenCentral()
+    maven("https://maven.mineking.dev/snapshots")
 }
 
 dependencies {
@@ -27,4 +26,6 @@ kotlin {
 discordLocalization {
     locales = listOf("en-US", "de")
     defaultLocale = "en-US"
+
+    locationFormat = "$projectDir/localization/%locale%/%name%.yaml"
 }
