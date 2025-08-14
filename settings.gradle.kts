@@ -1,7 +1,7 @@
 pluginManagement {
     repositories {
         gradlePluginPortal()
-        mavenLocal()
+        maven("https://maven.mineking.dev/snapshots")
     }
 }
 

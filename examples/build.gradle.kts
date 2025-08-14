@@ -27,6 +27,4 @@ kotlin {
 discordLocalization {
     locales = listOf("en-US", "de")
     defaultLocale = "en-US"
-
-    declareProperty<Int>("bot")
 }
