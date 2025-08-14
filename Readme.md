@@ -3,7 +3,7 @@
 ![[Components V2]](https://img.shields.io/badge/Components_v2-supported-green)
 
 # Introduction
-DTK ("Discord Tool Kit") is a library built around [JDA](https://github.com/discord-jda/JDA) that aims to simplify creating and handling application commands and user interfaces with message components or modals.
+Discord Tool Kit (DTK) is a library built around [JDA](https://github.com/discord-jda/JDA) that aims to simplify creating and handling application commands and user interfaces with message components or modals.
 It also provides a built-in way to localize both commands and menus.
 
 To create a DTK instance, you can use the `discordToolKit` function. As parameters, you have to pass your `JDA` instance and optionally an instance of the main class of your bot.
@@ -14,7 +14,7 @@ If you don't provide an instance of your main class, `Unit` is used implicitly.
 > [!NOTE]
 > This library is not compatible with pure Java. If you want to use Java instead of Kotlin, you can take a look at [DiscordUtils](https://github.com/MineKing9534/DiscordUtils) which has a similar scope as this project but was created in and for Java.
 
-There are some examples available in `src/test/kotlin/examples` if you want to see some features in action. If you want to run them you have to add the `-DTOKEN=<YOUR BOT TOKEN>` flag.
+There are some examples available in `examples/src/main/kotlin/` if you want to see some features in action. If you want to run them you have to add the `-DTOKEN=<YOUR BOT TOKEN>` flag.
 
 > [!NOTE]
 > DiscordToolKit uses kotlin coroutines. Therefore, some public methods are marked as `suspend` and therefore have to be called from a coroutine context. If you don't use coroutines in your project, you can use the `runBlocking` function to call these methods.
@@ -266,6 +266,10 @@ discordToolKit(jda).withUIManager {
 At any point, you can use `terminateRender` to terminate the current render process. It can be used if you don't have any other way to manage complex render flows.
 
 > [!NOTE]
+> A lot of the methods you use to configure your menus are implemented in extension functions. Make sure to import these to avoid running into issues!
+> For example, the `lazy` function also exists as a kotlin default function. However, this functions behaves different from the discord tool kit one (which is only available in menus).
+
+> [!NOTE]
 > The following sections will contain information about a few default provided components, either directly mapping components supported by discord (buttons and selects) or more complex components that consist of multiple primitive components with predefined behavior.
 > These are provided by default to make it easier to implement certain functionality, however, it would theoretically be possible to implement all of these yourself. 
 > Therefore, if you don't like the behavior of a predefined component, you can look up its implementation and modify it to your needs.
@@ -305,17 +309,17 @@ setState(5)
 val state = state(0)
 
 //Read state value
-println(state.get(this))
+println(state.value)
 
 //Change state value
-state.set(this, 5)
+state.value = 5
 ```
 
 To pass a state reference to the counter component you could do
 ```kt
 val (count, _, ref) = state(0)
 
-content("**Current Count:** ${count()}")
+message { content("**Current Count:** ${count()}") }
 +counter("counter", ref = ref)
 ```
 
@@ -337,11 +341,6 @@ val state by state(0) { old, new -> pintln("Old: $old, New: $new") }
 > This update function is always called when a state update is triggered, regardless of whether the value actually changed.
 > This means that setting the state value to the same value it had before will still cause your update handler to run.
 > If you don't want this behavior, you can simply add an if-clause that checks whether the old and new values are equal
-
-In some very rare cases you might want to create a state that always has the same value when read 
-(therefore not an actual state that is stored somewhere but rather a constant value that is converted to a state and can be passed to a function that requires a state parameter).
-You can use the `constantState` function for that. If your state also has to be writable you can use `sinkState`.
-The state returned by this function will always implement WriteState as well as having the provided value when read. Calling `set` on this state (or doing anything that would change the state value) will be ignored.
 
 You can use state transformations to store the state in a different format than when accessing it. For example if you want to store a color as int:
 ```kt
@@ -365,7 +364,9 @@ val menu = registerMenu<Int>("test") {
     //The initialize block is only called when the menu is first sent and gives you access to the menu parameter
     initilaize { count = it }
     
-    content("Count: $count")
+    message {
+      content("Count: $count")   
+    }
     
     +actionRow(button("inc", label = "+") { count++ })
 }
@@ -388,7 +389,9 @@ Inside the menu configuration block you can register states, define the message 
 registerMenu<Unit>("test") {
     var count by state(0)
     
-    content("Count: $count")
+    message {
+      content("Count: $count")
+    }
     
     +actionRow(button("inc", label = "+") { count++ })
 }
@@ -396,7 +399,18 @@ registerMenu<Unit>("test") {
 For more detailed information about states see [States](#states).
 You can define the message content, embed and attachments with the corresponding functions. 
 
-If you have resource heavy rendering, for example generating an image, you should write this code inside a `render` block. 
+To define the message content, you can use the `message` block. Inside that block, you can define the content, attachments and embeds.
+However, it is recommended to use components v2 instead (See [Components V2](#components-v2)).
+
+You can also provide a custom `MessageEditBuilder` instance to configure more advanced data for the finalized message.
+While components will be added to this custom builder, this action will override other message fields like content. If you want to create a custom `MessageEditBuilder` and still use these fields, just set them in the provided `MEssageEditBuilder` accordingly.
+
+For example, you can use this to prevent mentioning users:
+```kt
+message(MessageEditBuilder().setAllowedMentions(emptyList()))
+```
+
+If you have resource heavy rendering, for example, generating an image, you should write this code inside a `render` block. 
 While the entire configuration block is executed several times, everything inside of `render` is only executed when the menu is currently rendering the message content:
 
 ```kt
@@ -408,7 +422,9 @@ registerMenu<Unit>("menu") {
         
         val image = generateImage(state) //Expensive render operation
         
-        attachment(image)
+        message {
+            attachment(image)
+        }
     }
     
     //...
@@ -417,11 +433,11 @@ registerMenu<Unit>("menu") {
 
 ### Components
 Components can be added with the `+` operator. There are some components available by default, but you can also write your own components, either from scratch with default configuration for default components or by composing multiple components to one.
-The first parameter to every default component function is it's internal name. It has to be unique per menu and is used to match a component to its handler.
+The first parameter to every default component function is its internal name. It has to be unique per menu and is used to match a component to its handler.
 
 > [!NOTE]
-> While all cosmetic properties of components like label etc. are allowed to change during different renders (e.g. by making it dependent on state values), the names and added components should stay the same during every call of the function.
-> If you don't want to show certain components under certain conditions, you can use the `hide` function. This way the component is still added on each render but only actually shown on the message when you want to.
+> While all cosmetic properties of components like label etc. are allowed to change during different renders (e.g., by making it dependent on state values), the names and added components should stay the same during every call of the function.
+> If you don't want to show certain components under certain conditions, you can use the `hiddenIf` function. This way the component is still added on each render but only actually shown on the message when you want to.
 
 ```kt
 registerMenu<Unit>("test") {
@@ -434,7 +450,7 @@ registerMenu<Unit>("test") {
     button("dec", label = "-", color = ButtonColor.BLUE) { count-- },
 
     //Only show reset button if the state value is not already 0
-    button("rst", label = "Reset", color = ButtonColor.RED) { count = 0 }.hide(count == 0)   
+    button("rst", label = "Reset", color = ButtonColor.RED) { count = 0 }.hiddenIf(count == 0)   
   )
 }
 ```
@@ -733,7 +749,7 @@ registerModal<Unit>("modal") {
 A simple modal with a single text input could be implemented like this:
 ```kt
 registerModal<Unit>("modal") {
-    val value = +textInput("text", label = "Text")
+    val value by +textInput("text", label = "Text")
     
     execute {
         println(value())
@@ -758,7 +774,7 @@ registerMenu<Unit>("menu", deferMode = DeferMode.UNLESS_PREVENTED) {
     }
 }
 ```
-As always with modals, a menu that might open a modal has to use a defer mode other than `DeferMode.ALWAYS` (which is the default).
+As always with modals, a menu that might open a modal has to use a defer mode other than `DeferMode.ALWAYS`.
 
 If you want to use a modal button with multiple inputs, you can combine multiple text inputs to a single modal component:
 ```kt
@@ -767,24 +783,24 @@ registerMenu<Unit>("menu", deferMode = DeferMode.UNLESS_PREVENTED) {
     
     content("**Name:** $name")
 
-    +modalButton("modal", title = "Enter Name", component = composeInputs {
+    +modalButton("modal", title = "Enter Name", component = createModalComponent {
         val current = name.split(" ", limit = 2) 
         
-        val first = +textInput("first", label = "First Name", value = current[0])
-        val last = +textInput("last", label = "Last Name", value = if (current.size == 1) "" else current[1])
+        val first by +textInput("first", label = "First Name", value = current[0])
+        val last by +textInput("last", label = "Last Name", value = if (current.size == 1) "" else current[1])
 
-        produce { "${first()} ${last()}" }
+        produce { "$first $second" }
     }) { value ->
         name = value
     }
 }
 ```
-You could also store the first name and last name in separate states by returning `listOf(first(), second())` in the producer and changing the rest of the code respectively.
+You could also store the first name and last name in separate states by returning `listOf(first, second)` in the producer and changing the rest of the code respectively.
 
 As with message submenus, opening a modal with a `modalButton` will preserve all parent state values.
 
 ## MenuCommand
-In most scenarios you want to send a menu as response to a command. To avoid having to register the menu separately in the ui manager configuration block or in a setup block of your command, and then replying with it manually, you can directly use a `menuCommand` that combines these steps:
+In most scenarios, you want to send a menu as a response to a command. To avoid having to register the menu separately in the ui manager configuration block or in a setup block of your command, and then replying with it manually, you can directly use a `menuCommand` that combines these steps:
 ```kt
 menuCommand("menu") {
     var state by state(0)
