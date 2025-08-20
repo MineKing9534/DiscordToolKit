@@ -276,10 +276,10 @@ At any point, you can use `terminateRender` to terminate the current render proc
 
 ## States
 States allow you to store information in a menu that is persistent over different renders and even bot restarts. 
-This is achieved by using the custom id space of your components to store state values (encoded as Cbor).
+This is achieved by using the custom id space of your components to store state values (encoded in a very basic binary format using kotlinx.serialization).
 
 > [!TIP]
-> You should therefore try to keep your component names rather short to leave more free space for states
+> Discord allows bots to store up to 100 characters per component. DiscordToolKit will use this space to identify the component and the menu it belomgs to. The remaining free characters are used to store the encoded state. You should therefore try to keep your component and menu names rather short to leave more free space for states, if your menu needs as much space as possible. if you just need to store a few integers, that usually isn't a problem. 
 
 In Message menus, the menu is automatically rerendered when state values change (after all handlers are executed). If you didn't change any state values but still want to rerender, you can call `forceUpdate`.
 
