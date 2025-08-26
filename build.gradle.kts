@@ -22,7 +22,7 @@ allprojects {
 }
 
 dependencies {
-    implementation("net.dv8tion:JDA:6.0.0-rc.3_DEV")
+    implementation("com.github.MineKing9534:JDA:1c0dbd9")
     compileOnly("org.kodein.emoji:emoji-kt:2.0.1")
 
     implementation(kotlin("reflect"))
