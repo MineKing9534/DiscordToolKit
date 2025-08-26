@@ -4,13 +4,14 @@ import de.mineking.discord.commands.localizedMenuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.localization.*
 import de.mineking.discord.ui.*
-import de.mineking.discord.ui.builder.components.*
+import de.mineking.discord.ui.builder.components.message.actionRow
+import de.mineking.discord.ui.builder.components.message.button
+import de.mineking.discord.ui.builder.components.message.localizedMenuButton
+import de.mineking.discord.ui.builder.components.message.menuButton
 import de.mineking.discord.ui.message.message
 import de.mineking.discord.withLocalization
-import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import setup.createJDA
-import java.awt.Color
 
 fun main() {
     val jda = createJDA()
@@ -32,10 +33,10 @@ fun main() {
                 }
 
                 +actionRow(
-                    label("label"),
+                    button("label").disabled(),
                     button("button") { state++ },
-                    label("constant", label = "Not Localized"),
-                    label("custom", label = "abc".localize())
+                    button("constant", label = "Not Localized").disabled(),
+                    button("custom", label = "abc".localize()).disabled()
                 )
 
                 val test = state

@@ -503,16 +503,8 @@ stringSelect("select", min = 1, max = 2, options = listOf(
 }
 ```
 
-For string selects there are also stateful variants available. There is also `enumSelect` which also has stateful variants:
-```kt
-enum class Enum { A, B, C }
-
-val ref = state(EnumSet.noneOf(Enum::class.java))
-+statefulMultiEnumSelect<Enum>("select", ref = ref)
-```
-
 > [!NOTE]
-> While theoretically select menus have to be wrapped in action rows like buttons before they can be used, DTK will automatically do that for select menus because a select menu always takes up a full action row.
+> Select menus in message menus always have to be wrapped inside an `actionRow`. Since a select menu already takes up the entire action row, you cannot add any other components to that action row.
 
 ### Components V2
 DiscordToolKit supports discords new `Components V2 Feature`. To enable it you can either set the global variable `DEFAULT_COMPONENTS_V2` to `true` or manually pass `useComponentsV2 = true` to your registerMenu call.
@@ -531,7 +523,7 @@ registerMenu("menu", useComponentsV2 = true) {
       +section(
           modalButton(
               "text", label = "Modal", title = "Enter Text", component =
-                  textInput("text", label = "Enter Text", placeholder = "Hello World!", value = text)
+                  label(textInput("text", placeholder = "Hello World!", value = text), label = "Enter Text")
           ) {
               text = it
           }
@@ -749,13 +741,19 @@ registerModal<Unit>("modal") {
 A simple modal with a single text input could be implemented like this:
 ```kt
 registerModal<Unit>("modal") {
-    val value by +textInput("text", label = "Text")
+    val value by +label(textInput("text"), label = "Text")
     
     execute {
         println(value())
     }
 }
 ```
+
+> [!NOTE]
+> You always have to wrap components in a `label` to be able to add them to a modal menu
+
+> [!NOTE]
+> Discord currently only allows `textInput`s and `stringSelect`s inside modals. For select menus, their main handler (and option handlers) are NOT executed. Instead, the `modalHandler` is used.
 
 You can create text inputs with the `textInput` function. They can be added to your modal with the `+` operator. Adding a text input will return a function that can be used inside the executor block to read the inputs value.
 The `execute` block is what is executed when a user submits a modal.
@@ -768,7 +766,7 @@ registerMenu<Unit>("menu", deferMode = DeferMode.UNLESS_PREVENTED) {
     content("**Name:** $name")
   
     +modalButton("modal", label = "Change Name", title = "Enter Name", component = 
-        textInput("name", label = "Your Name", value = name)
+        label(textInput("name", value = name), label = "Your Name")
     ) { value ->
         name = value
     }
@@ -786,16 +784,16 @@ registerMenu<Unit>("menu", deferMode = DeferMode.UNLESS_PREVENTED) {
     +modalButton("modal", title = "Enter Name", component = createModalComponent {
         val current = name.split(" ", limit = 2) 
         
-        val first by +textInput("first", label = "First Name", value = current[0])
-        val last by +textInput("last", label = "Last Name", value = if (current.size == 1) "" else current[1])
+        val first by +label(textInput("first", value = current[0]), label = "First Name")
+        val last by +label(textInput("last", value = if (current.size == 1) "" else current[1]), label = "Last Name")
 
-        produce { "$first $second" }
+        produce { "$first $last" }
     }) { value ->
         name = value
     }
 }
 ```
-You could also store the first name and last name in separate states by returning `listOf(first, second)` in the producer and changing the rest of the code respectively.
+You could also store the first name and last name in separate states by returning `listOf(first, last)` in the producer and changing the rest of the code respectively.
 
 As with message submenus, opening a modal with a `modalButton` will preserve all parent state values.
 

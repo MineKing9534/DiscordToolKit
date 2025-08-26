@@ -5,7 +5,6 @@ import de.mineking.discord.localization.isDefault
 import de.mineking.discord.localization.shouldLocalize
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import kotlin.reflect.KType
-import kotlin.reflect.typeOf
 
 data class LocalizationInfo(val default: String, val localization: Map<DiscordLocale, String> = emptyMap())
 

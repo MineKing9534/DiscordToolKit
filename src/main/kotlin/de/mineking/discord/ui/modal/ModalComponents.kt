@@ -3,12 +3,16 @@ package de.mineking.discord.ui.modal
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.message.MessageMenu
 import de.mineking.discord.ui.message.disableComponents
-import net.dv8tion.jda.api.components.textinput.TextInput
+import net.dv8tion.jda.api.components.Component
+import net.dv8tion.jda.api.components.ModalTopLevelComponent
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import kotlin.reflect.full.primaryConstructor
 
 typealias ModalHandler<M> = suspend ModalContext<M>.() -> Unit
+typealias ModalResultHandler<T> = ModalContext<*>.(value: T) -> Unit
+
+fun <T, U> ModalResultHandler<T>.map(mapper: (U) -> T): ModalResultHandler<U> = { this@map(mapper(it)) }
 
 class ModalContext<M>(val menu: ModalMenu<M, *>, stateData: StateData, event: ModalInteractionEvent) :
     HandlerContext<M, ModalInteractionEvent>(stateData, event) {
@@ -25,10 +29,10 @@ class ModalContext<M>(val menu: ModalMenu<M, *>, stateData: StateData, event: Mo
     }
 }
 
-interface ModalComponent<T> : IComponent<TextInput> {
+interface ModalComponent<C : Component, T> : IComponent<C> {
     fun handle(context: ModalContext<*>): T
 
-    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<TextInput>) -> List<TextInput>) = object : ModalComponent<T> {
+    override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>) = object : ModalComponent<C, T> {
         override fun handle(context: ModalContext<*>) = this@ModalComponent.handle(context)
         override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = mapper(generator) { this@ModalComponent.render(config, it) }
 
@@ -36,35 +40,53 @@ interface ModalComponent<T> : IComponent<TextInput> {
     }
 }
 
-fun <T, O> ModalComponent<T>.map(handler: ModalContext<*>.(value: T) -> O) = object : ModalComponent<O> {
+fun <C : Component, T, O> ModalComponent<C, T>.map(handler: ModalContext<*>.(value: T) -> O) = object : ModalComponent<C, O> {
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = this@map.render(config, generator)
     override fun handle(context: ModalContext<*>): O = handler.invoke(context, this@map.handle(context))
 
     override fun toString() = this@map.toString()
 }
 
-fun <T> createModalElement(
+interface ModalElement<C : Component, T> : ModalComponent<C, T>, IElement<C>
+
+fun <C : Component, T> createModalElement(
     name: String,
     handler: ModalContext<*>.() -> T,
-    renderer: (MenuConfig<*, *>, String) -> TextInput
-) = object : ModalComponent<T> {
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId("$name:")))
+    renderer: (MenuConfig<*, *>, String) -> C
+) = object : ModalElement<C, T> {
+    override val name = name
+
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator.nextId(config, name)))
     override fun handle(context: ModalContext<*>) = handler.invoke(context)
 
     override fun toString() = "ModalElement[$name]"
 }
 
-sealed interface ModalComponentBuilder<T> : MenuCallbackContext {
-    operator fun <U> ModalComponent<U>.unaryPlus(): ModalResult<U>
+fun <C : Component, T, O> ModalElement<C, T>.map(handler: ModalContext<*>.(value: T) -> O): ModalElement<C, O> = object : ModalElement<C, O>, ModalComponent<C, O> by (this as ModalComponent<C, T>).map(handler) {
+    override val name = this@map.name
+}
+
+fun <C : Component, T> createModalLayoutComponent(
+    handler: ModalContext<*>.() -> T,
+    renderer: (MenuConfig<*, *>, IdGenerator) -> List<C>
+) = object : ModalComponent<C, T> {
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator)
+    override fun toString() = "ModalComponent"
+
+    override fun handle(context: ModalContext<*>) = context.handler()
+}
+
+sealed interface ModalComponentBuilder<C: Component, T> : MenuCallbackContext {
+    operator fun <U> ModalComponent<out C, U>.unaryPlus(): ModalResult<U>
     fun produce(handler: (ModalContext<*>) -> T)
 }
 
-class ModalComponentRenderer<T>() : ModalComponentBuilder<T> {
+private class ModalComponentRenderer<C: Component, T>() : ModalComponentBuilder<C, T> {
     override val phase = MenuCallbackPhase.RENDER
 
-    internal val components = mutableListOf<ModalComponent<*>>()
+    val components = mutableListOf<ModalComponent<out C, *>>()
 
-    override operator fun <U> ModalComponent<U>.unaryPlus(): ModalResult<U> {
+    override operator fun <U> ModalComponent<out C, U>.unaryPlus(): ModalResult<U> {
         components += this
         return emptyModalResult()
     }
@@ -72,12 +94,12 @@ class ModalComponentRenderer<T>() : ModalComponentBuilder<T> {
     override fun produce(handler: (ModalContext<*>) -> T) {}
 }
 
-class ModalComponentHandler<T>(val context: ModalContext<*>) : ModalComponentBuilder<T> {
+private class ModalComponentHandler<C: Component, T>(val context: ModalContext<*>) : ModalComponentBuilder<C, T> {
     override val phase = MenuCallbackPhase.HANDLE
 
-    internal var producer: ((ModalContext<*>) -> T)? = null
+    var producer: ((ModalContext<*>) -> T)? = null
 
-    override operator fun <U> ModalComponent<U>.unaryPlus() = object : ModalResult<U> {
+    override operator fun <U> ModalComponent<out C, U>.unaryPlus() = object : ModalResult<U> {
         override fun getValue() = handle(context)
     }
 
@@ -87,26 +109,26 @@ class ModalComponentHandler<T>(val context: ModalContext<*>) : ModalComponentBui
     }
 }
 
-fun <T> createModalComponent(config: ModalComponentBuilder<T>.() -> Unit) = object : ModalComponent<T> {
-    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = ModalComponentRenderer<T>().apply { config() }.components.flatMap { it.render(config, generator) }
-    override fun handle(context: ModalContext<*>) = ModalComponentHandler<T>(context).apply(config).producer!!(context)
+fun <C : Component, T> createModalComponent(config: ModalComponentBuilder<C, T>.() -> Unit) = object : ModalComponent<C, T> {
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = ModalComponentRenderer<C, T>().apply { config() }.components.flatMap { it.render(config, generator) }
+    override fun handle(context: ModalContext<*>) = ModalComponentHandler<C, T>(context).apply(config).producer!!(context)
 
     override fun toString() = "ModalComponent"
 }
 
-fun <T> createModalArrayComponent(vararg inputs: ModalComponent<T>) = createModalComponent {
+fun <C : Component, T> createModalArrayComponent(vararg inputs: ModalComponent<C, T>) = createModalComponent {
     val values = inputs.map { +it }
     produce { values.map { it.getValue() } }
 }
 
-inline fun <reified T : Any> createModalComponentFor(vararg inputs: ModalComponent<*>) = createModalComponent {
+inline fun <reified T : Any> createModalComponentFor(vararg inputs: ModalComponent<out ModalTopLevelComponent, *>) = createModalComponent {
     val values = inputs.map { +it }
     produce { T::class.primaryConstructor!!.call(*values.map { it.getValue() }.toTypedArray()) }
 }
 
 private data class LazyModalComponentContext(override val phase: MenuCallbackPhase) : MenuCallbackContext
 
-fun <T> createLazyModalComponent(component: MenuCallbackContext.() -> ModalComponent<T>) = object : ModalComponent<T> {    
+fun <C : Component, T> createLazyModalComponent(component: MenuCallbackContext.() -> ModalComponent<C, T>) = object : ModalComponent<C, T> {
     val renderComponent by lazy { LazyModalComponentContext(MenuCallbackPhase.RENDER).component() }
     val handleComponent by lazy { LazyModalComponentContext(MenuCallbackPhase.HANDLE).component() }
 

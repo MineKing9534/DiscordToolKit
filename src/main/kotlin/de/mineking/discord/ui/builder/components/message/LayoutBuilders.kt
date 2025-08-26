@@ -1,4 +1,4 @@
-package de.mineking.discord.ui.builder.components
+package de.mineking.discord.ui.builder.components.message
 
 import de.mineking.discord.ui.message.MessageComponent
 import net.dv8tion.jda.api.components.MessageTopLevelComponent

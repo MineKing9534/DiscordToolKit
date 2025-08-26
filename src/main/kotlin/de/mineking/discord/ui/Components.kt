@@ -9,6 +9,10 @@ interface IComponent<C : Component> {
     fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>): IComponent<C>
 }
 
+interface IElement<C : Component> : IComponent<C> {
+    val name: String
+}
+
 @Suppress("UNCHECKED_CAST")
 fun <C : Component, W : IComponent<C>> W.visibleIf(visible: Boolean) = transform { id, render -> if (visible) render(id) else emptyList() } as W
 fun <C : Component, W : IComponent<C>> W.hiddenIf(hide: Boolean) = visibleIf(!hide)

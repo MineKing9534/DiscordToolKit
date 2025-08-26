@@ -2,11 +2,12 @@ package de.mineking.discord.ui.modal
 
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
+import net.dv8tion.jda.api.components.ModalTopLevelComponent
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IModalCallback
-import net.dv8tion.jda.api.interactions.modals.Modal
+import net.dv8tion.jda.api.modals.Modal
 
-fun Collection<ModalComponent<*>>.render(id: IdGenerator, config: ModalMenuConfig<*, *>, force: Boolean = false) = this
+fun Collection<ModalComponent<out ModalTopLevelComponent, *>>.render(id: IdGenerator, config: ModalMenuConfig<*, *>, force: Boolean = false) = this
     .map { if (force) it.visible() else it }
     .flatMap {
         try {

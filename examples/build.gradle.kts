@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     implementation(rootProject)
-    implementation("com.github.freya022:JDA:1be8478")
+    implementation("net.dv8tion:JDA:6.0.0-rc.3_DEV")
 
     implementation("ch.qos.logback:logback-classic:1.5.15")
     implementation("org.kodein.emoji:emoji-kt:2.0.1")

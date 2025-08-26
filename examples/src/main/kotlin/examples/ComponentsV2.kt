@@ -2,7 +2,9 @@ package examples
 
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.ui.builder.components.*
+import de.mineking.discord.ui.builder.components.message.*
+import de.mineking.discord.ui.builder.components.modal.label
+import de.mineking.discord.ui.builder.components.modal.textInput
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state
@@ -21,7 +23,7 @@ fun main() {
                     +section(
                         modalButton(
                             "text", label = "Modal", title = "Enter Text", component =
-                                textInput("text", label = "Enter Text", placeholder = "Hello World!", value = text)
+                                label(textInput("text", placeholder = "Hello World!", value = text), label = "Enter Text")
                         ) {
                             text = it
                         }

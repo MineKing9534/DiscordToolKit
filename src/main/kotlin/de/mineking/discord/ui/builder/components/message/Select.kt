@@ -1,22 +1,20 @@
-package de.mineking.discord.ui.builder.components
+package de.mineking.discord.ui.builder.components.message
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.MenuConfig
-import de.mineking.discord.ui.MutableState
-import de.mineking.discord.ui.map
+import de.mineking.discord.ui.*
 import de.mineking.discord.ui.message.ComponentHandler
 import de.mineking.discord.ui.message.createMessageElement
-import de.mineking.discord.ui.readLocalizedString
+import de.mineking.discord.ui.modal.ModalResultHandler
+import de.mineking.discord.ui.modal.map
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
-import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu
 import net.dv8tion.jda.api.components.selections.StringSelectMenu
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
-import java.util.*
+import kotlin.math.absoluteValue
 
 typealias StringSelectHandler = ComponentHandler<*, StringSelectInteractionEvent>
 typealias EntitySelectHandler = ComponentHandler<*, EntitySelectInteractionEvent>
@@ -60,44 +58,59 @@ fun stringSelect(
     name: String,
     options: List<SelectOption>,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<List<String>>? = null,
     handler: StringSelectHandler? = null
-) = createMessageElement<ActionRow, StringSelectInteractionEvent>(name, {
+) = createSharedElement<StringSelectMenu, StringSelectInteractionEvent, List<String>>(name, {
     options.filter { it.value in event.values }.forEach { it.handler?.invoke(this) }
     handler?.invoke(this)
+}, {
+    val temp = event.getValueByUniqueId(name.hashCode().absoluteValue)!!.asStringList
+    temp.also { modalHandler?.invoke(this, it) }
 }) { config, id ->
     val select = StringSelectMenu.create(id)
+        .setUniqueId(name.hashCode().absoluteValue)
+        .addOptions(options.filter { it.visible }.map { it.build(name, localization, config) })
         .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder"))
         .setMinValues(min)
         .setMaxValues(max)
-        .addOptions(options.filter { it.visible }.map { it.build(name, localization, config) })
+        .setRequired(required)
 
     if (options.isEmpty()) select.addOption("---", "---").isDisabled = true
 
-    ActionRow.of(select.build())
+    select.build()
 }
 
 fun stringSelect(
     name: String,
     vararg options: SelectOption,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<List<String>>? = null,
     handler: StringSelectHandler? = null
-) = stringSelect(name, options.toList(), placeholder, min, max, localization, handler)
+) = stringSelect(name, options.toList(), placeholder, required, min, max, localization, modalHandler, handler)
 
 fun statefulMultiStringSelect(
     name: String,
     options: List<SelectOption>,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
+    localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<List<String>>? = null,
     ref: MutableState<List<String>>,
     handler: StringSelectHandler? = null
-) = stringSelect(name, options.map { it.withDefault(it.value in ref.value) }, placeholder, min, max) {
+) = stringSelect(name, options.map { it.withDefault(it.value in ref.value) }, placeholder, required, min, max, localization, {
+    ref.value = it
+    modalHandler?.invoke(this, it)
+}) {
     ref.value = event.values
     handler?.invoke(this)
 }
@@ -106,89 +119,67 @@ fun statefulMultiStringSelect(
     name: String,
     vararg options: SelectOption,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
+    localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<List<String>>? = null,
     ref: MutableState<List<String>>,
     handler: StringSelectHandler? = null
-) = statefulMultiStringSelect(name, options.toList(), placeholder, min, max, ref, handler)
+) = statefulMultiStringSelect(name, options.toList(), placeholder, required, min, max, localization, modalHandler, ref, handler)
 
 internal fun String?.toList() = if (this == null) emptyList() else listOf(this)
 fun statefulOptionalSingleStringSelect(
     name: String,
     options: List<SelectOption>,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
+    localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<String?>? = null,
     ref: MutableState<String?>,
     handler: StringSelectHandler? = null
-) = statefulMultiStringSelect(name, options, placeholder, min = 0, max = 1, ref = ref.map({ it.toList() }, { it.firstOrNull() }), handler = handler)
+) = statefulMultiStringSelect(
+    name, options, placeholder, required, min = 0, max = 1, localization,
+    modalHandler?.map { it.firstOrNull() },
+    ref = ref.map({ it.toList() }, { it.firstOrNull() }), handler = handler
+)
 
 fun statefulOptionalSingleStringSelect(
     name: String,
     vararg options: SelectOption,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
+    localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<String?>? = null,
     ref: MutableState<String?>,
     handler: StringSelectHandler? = null
-) = statefulOptionalSingleStringSelect(name, options.toList(), placeholder, ref, handler)
+) = statefulOptionalSingleStringSelect(name, options.toList(), placeholder, required, localization, modalHandler, ref, handler)
 
 fun statefulSingleStringSelect(
     name: String,
     options: List<SelectOption>,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
+    localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<String>? = null,
     ref: MutableState<String>,
     handler: StringSelectHandler? = null
-) = statefulMultiStringSelect(name, options, placeholder, min = 1, max = 1, ref = ref.map({ it.toList() }, { it.first() }), handler = handler)
+) = statefulMultiStringSelect(
+    name, options, placeholder, required, min = 1, max = 1, localization,
+    modalHandler?.map { it.first() },
+    ref = ref.map({ it.toList() }, { it.first() }), handler = handler
+)
 
 fun statefulSingleStringSelect(
     name: String,
     vararg options: SelectOption,
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
+    localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<String?>? = null,
     ref: MutableState<String>,
     handler: StringSelectHandler? = null
-) = statefulSingleStringSelect(name, options.toList(), placeholder, ref, handler)
-
-inline fun <reified E : Enum<E>> enumSelect(
-    name: String,
-    placeholder: CharSequence? = DEFAULT_LABEL,
-    min: Int = 1,
-    max: Int = 1,
-    localization: LocalizationFile? = null,
-    label: (id: String, enum: E) -> SelectOption = { id, e -> selectOption(e.toString(), id, localization = localization) },
-    noinline handler: StringSelectHandler? = null
-) = stringSelect(name, E::class.java.enumConstants.map { label(it.name, it) }, placeholder, min, max, localization, handler)
-
-inline fun <reified E : Enum<E>> statefulMultiEnumSelect(
-    name: String,
-    placeholder: CharSequence? = DEFAULT_LABEL,
-    min: Int = 1,
-    max: Int = 1,
-    localization: LocalizationFile? = null,
-    label: (id: String, enum: E) -> SelectOption = { id, e -> selectOption(e.toString(), id, localization = localization) },
-    ref: MutableState<EnumSet<E>>,
-    noinline handler: StringSelectHandler? = null
-) = enumSelect<E>(name, placeholder, min, max, localization, { id, e -> label(id, e).withDefault(id in ref.value.map { it.name }) }) {
-    val temp = E::class.java.enumConstants.filter { it.name in event.values }
-    ref.value = if (temp.isNotEmpty()) EnumSet.copyOf(temp) else EnumSet.noneOf(E::class.java)
-
-    handler?.invoke(this)
-}
-
-inline fun <reified E : Enum<E>> E?.toEnumSet(): EnumSet<E> = if (this == null) EnumSet.noneOf(E::class.java) else EnumSet.of(this)
-inline fun <reified E : Enum<E>> statefulOptionalSingleEnumSelect(
-    name: String,
-    placeholder: CharSequence? = DEFAULT_LABEL,
-    localization: LocalizationFile? = null,
-    label: (id: String, enum: E) -> SelectOption = { id, e -> selectOption(e.toString(), id, localization = localization) },
-    ref: MutableState<E?>,
-    noinline handler: StringSelectHandler? = null
-) = statefulMultiEnumSelect(name, placeholder, min = 0, max = 1, localization, label, ref = ref.map({ it.toEnumSet() }, { it.firstOrNull() }), handler = handler)
-
-inline fun <reified E : Enum<E>> statefulSingleEnumSelect(
-    name: String,
-    placeholder: CharSequence? = DEFAULT_LABEL,
-    localization: LocalizationFile? = null,
-    label: (id: String, enum: E) -> SelectOption = { id, e -> selectOption(e.toString(), id, localization = localization) },
-    ref: MutableState<E>,
-    noinline handler: StringSelectHandler? = null
-) = statefulMultiEnumSelect(name, placeholder = placeholder, min = 1, max = 1, label = label, ref = ref.map({ it.toEnumSet() }, { it.first() }), handler = handler)
+) = statefulSingleStringSelect(name, options.toList(), placeholder, required, localization, modalHandler, ref, handler)
 
 fun entitySelect(
     name: String,
@@ -201,13 +192,11 @@ fun entitySelect(
     localization: LocalizationFile? = null,
     handler: EntitySelectHandler? = null
 ) = createMessageElement(name, handler) { config, id ->
-    val select = EntitySelectMenu.create(id, targets.toList())
+    EntitySelectMenu.create(id, targets.toList())
         .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder"))
         .setMinValues(min)
         .setMaxValues(max)
         .setChannelTypes(channelTypes)
         .setDefaultValues(default)
         .build()
-
-    ActionRow.of(select)
 }

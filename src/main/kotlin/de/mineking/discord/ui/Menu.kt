@@ -1,6 +1,7 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.message.MessageMenuConfig
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import net.dv8tion.jda.api.components.buttons.Button
@@ -42,6 +43,10 @@ interface IdGenerator {
     fun nextId(base: String): String
     fun withParameter(parameter: String): IdGenerator
 }
+
+fun IdGenerator.nextId(config: MenuConfig<*, *>, name: String) =
+    if (config is MessageMenuConfig<*, *>) nextId("${config.menu.name}:$name:")
+    else nextId("$name:")
 
 object EmptyIdGenerator : IdGenerator {
     override fun nextId(base: String) = "-"

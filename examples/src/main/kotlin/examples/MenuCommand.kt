@@ -4,9 +4,9 @@ import de.mineking.discord.commands.createState
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.commands.requiredOption
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.ui.builder.components.ButtonColor
-import de.mineking.discord.ui.builder.components.actionRow
-import de.mineking.discord.ui.builder.components.button
+import de.mineking.discord.ui.builder.components.message.ButtonColor
+import de.mineking.discord.ui.builder.components.message.actionRow
+import de.mineking.discord.ui.builder.components.message.button
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.initialize

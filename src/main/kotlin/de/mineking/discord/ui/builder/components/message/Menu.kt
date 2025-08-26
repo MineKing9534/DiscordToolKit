@@ -1,4 +1,4 @@
-package de.mineking.discord.ui.builder.components
+package de.mineking.discord.ui.builder.components.message
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
@@ -11,6 +11,7 @@ import de.mineking.discord.ui.modal.ModalComponent
 import de.mineking.discord.ui.modal.ModalContext
 import de.mineking.discord.ui.modal.getValue
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
+import net.dv8tion.jda.api.components.ModalTopLevelComponent
 import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.components.tree.ComponentTree
 import net.dv8tion.jda.api.entities.MessageEmbed
@@ -185,7 +186,7 @@ inline fun <reified T> MessageMenuConfig<*, *>.modalButton(
     modalLocalization: LocalizationFile? = localization,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: ModalComponent<T>,
+    component: ModalComponent<out ModalTopLevelComponent, T>,
     noinline handler: suspend ModalButtonContext<*, *>.(value: T) -> Unit = { }
 ) = localizedModalButton(name, color, label, emoji, title, localization, modalLocalization, defer, detach, component) { _, value -> handler(value) }
 
@@ -198,7 +199,7 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: ModalComponent<T>,
+    component: ModalComponent<out ModalTopLevelComponent, T>,
     noinline handler: suspend ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): MessageElement<Button, ButtonInteractionEvent> {
     val file = menu.manager.manager.localizationManager.read<L>()
@@ -216,7 +217,7 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     modalLocalization: L = localization as L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: ModalComponent<T>,
+    component: ModalComponent<out ModalTopLevelComponent, T>,
     noinline handler: suspend ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): MessageElement<Button, ButtonInteractionEvent> {
     val currentState = if (detach) 0 else configState.currentState
@@ -321,7 +322,7 @@ inline fun <reified T> MessageMenuConfig<*, *>.modalSelectOption(
     modalLocalization: LocalizationFile? = localization,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: ModalComponent<T>,
+    component: ModalComponent<out ModalTopLevelComponent, T>,
     noinline handler: suspend ModalButtonContext<*, *>.(value: T) -> Unit = { }
 ) = localizedModalSelectOption(name, label, description, default, emoji, title, localization, modalLocalization, defer, detach, component) { _, value -> handler(value) }
 
@@ -335,7 +336,7 @@ inline fun <reified T, reified L : LocalizationFile> MessageMenuConfig<*, *>.loc
     localization: LocalizationFile? = null,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: ModalComponent<T>,
+    component: ModalComponent<out ModalTopLevelComponent, T>,
     noinline handler: suspend ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): SelectOption {
     val file = menu.manager.manager.localizationManager.read<L>()
@@ -354,7 +355,7 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     modalLocalization: L = localization as L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean = false,
-    component: ModalComponent<T>,
+    component: ModalComponent<out ModalTopLevelComponent, T>,
     noinline handler: suspend ModalButtonContext<*, *>.(localization: L, value: T) -> Unit = { _, _ -> }
 ): SelectOption {
     val currentState = if (detach) 0 else configState.currentState
@@ -372,7 +373,7 @@ fun <T, M, L : LocalizationFile?> MessageMenuConfig<M, *>.createModal(
     localization: L,
     defer: DeferMode = DEFAULT_DEFER_MODE,
     detach: Boolean,
-    component: ModalComponent<T>,
+    component: ModalComponent<out ModalTopLevelComponent, T>,
     handler: suspend ModalButtonContext<*, *>.(localization: L, value: T) -> Unit
 ) = localizedModal(name, localization = localization, defer = defer, detach = detach) {
     title(title)

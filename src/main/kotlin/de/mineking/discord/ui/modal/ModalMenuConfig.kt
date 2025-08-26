@@ -3,6 +3,7 @@ package de.mineking.discord.ui.modal
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
+import net.dv8tion.jda.api.components.ModalTopLevelComponent
 import kotlin.reflect.KProperty
 
 typealias ModalConfigurator<M> = suspend ModalMenuConfig<M, *>.() -> Unit
@@ -15,7 +16,7 @@ fun interface ModalResult<T> {
 operator fun <T> ModalResult<T>.getValue(thisRef: Any?, property: KProperty<*>): T = getValue()
 
 interface ModalMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L> {
-    operator fun <T> ModalComponent<T>.unaryPlus(): ModalResult<T>
+    operator fun <T> ModalComponent<out ModalTopLevelComponent, T>.unaryPlus(): ModalResult<T>
 
     fun title(title: CharSequence)
     fun execute(handler: ModalHandler<M>)
@@ -30,7 +31,7 @@ sealed class ModalMenuConfigImpl<M, L : LocalizationFile?>(
 }
 
 class ModalMenuBuilder<M, L : LocalizationFile?>(menu: ModalMenu<M, L>) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext(menu)) {
-    override fun <T> ModalComponent<T>.unaryPlus() = emptyModalResult<T>()
+    override fun <T> ModalComponent<out ModalTopLevelComponent, T>.unaryPlus() = emptyModalResult<T>()
     override fun title(title: CharSequence) {}
     override fun execute(handler: ModalHandler<M>) {}
 }
@@ -39,11 +40,11 @@ class ModalMenuRenderer<M, L : LocalizationFile?>(
     menu: ModalMenu<M, L>,
     context: MenuContext<M>
 ) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.RENDER, context) {
-    internal val components = mutableListOf<ModalComponent<*>>()
+    internal val components = mutableListOf<ModalComponent<out ModalTopLevelComponent, *>>()
     internal var title: CharSequence = DEFAULT_LABEL
         private set
 
-    override fun <T> ModalComponent<T>.unaryPlus(): ModalResult<T> {
+    override fun <T> ModalComponent<out ModalTopLevelComponent, T>.unaryPlus(): ModalResult<T> {
         components += this
         return emptyModalResult()
     }
@@ -61,7 +62,7 @@ class ModalMenuExecutor<M, L : LocalizationFile?>(
 ) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
     val handlers = mutableListOf<ModalHandler<M>>()
 
-    override fun <T> ModalComponent<T>.unaryPlus() = object : ModalResult<T> {
+    override fun <T> ModalComponent<out ModalTopLevelComponent, T>.unaryPlus() = object : ModalResult<T> {
         override fun getValue() = handle(context)
     }
 
