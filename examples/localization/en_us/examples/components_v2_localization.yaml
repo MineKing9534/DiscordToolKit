@@ -8,6 +8,7 @@ menu.menu:
     inputs:
       text:
         label: Text
+        description: Enter some text
         placeholder: Hello World!
 
   text.content: !<text:String> 'Current Text: ${ text.let { if (it.isNotBlank()) "**$it**" else it } }'

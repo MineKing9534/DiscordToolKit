@@ -74,7 +74,7 @@ fun stringSelect(
     val select = StringSelectMenu.create(id)
         .setUniqueId(name.hashCode().absoluteValue)
         .addOptions(options.filter { it.visible }.map { it.build(name, localization, config) })
-        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder"))
+        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = config.localizationPrefix()))
         .setMinValues(min)
         .setMaxValues(max)
         .setRequired(required)
@@ -193,7 +193,7 @@ fun entitySelect(
     handler: EntitySelectHandler? = null
 ) = createMessageElement(name, handler) { config, id ->
     EntitySelectMenu.create(id, targets.toList())
-        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder"))
+        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = config.localizationPrefix()))
         .setMinValues(min)
         .setMaxValues(max)
         .setChannelTypes(channelTypes)

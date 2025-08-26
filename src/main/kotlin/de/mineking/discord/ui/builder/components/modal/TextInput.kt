@@ -2,6 +2,7 @@ package de.mineking.discord.ui.builder.components.modal
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.localizationPrefix
 import de.mineking.discord.ui.modal.*
 import de.mineking.discord.ui.readLocalizedString
 import net.dv8tion.jda.api.components.Component
@@ -27,7 +28,7 @@ fun textInput(
 }) { config, id ->
     TextInput.create(id, style)
         .setUniqueId(name.hashCode().absoluteValue)
-        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = "components")?.takeIf { it.isNotBlank() })
+        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = config.localizationPrefix())?.takeIf { it.isNotBlank() })
         .setValue(value?.takeIf { it.isNotBlank() })
         .setMinLength(minLength)
         .setMaxLength(maxLength)

@@ -2,6 +2,7 @@ package de.mineking.discord.ui.builder.components.modal
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.localizationPrefix
 import de.mineking.discord.ui.modal.ModalComponent
 import de.mineking.discord.ui.modal.ModalElement
 import de.mineking.discord.ui.modal.createModalLayoutComponent
@@ -28,8 +29,8 @@ fun <T> localizedLabel(
 ) = createModalLayoutComponent({ child.handle(this) }) { config, id ->
     listOf(
         Label.of(
-            config.readLocalizedString(localization, name, label, "label", prefix = "components")?.takeIf { it.isNotBlank() } ?: name,
-            config.readLocalizedString(localization, name, description, "description", prefix = "components")?.takeIf { it.isNotEmpty() },
+            config.readLocalizedString(localization, name, label, "label", prefix = config.localizationPrefix())?.takeIf { it.isNotBlank() } ?: name,
+            config.readLocalizedString(localization, name, description, "description", prefix = config.localizationPrefix())?.takeIf { it.isNotEmpty() },
             child.render(config, id).single()
         )
     )

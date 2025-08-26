@@ -7,6 +7,7 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.components.message.*
 import de.mineking.discord.ui.builder.components.modal.localizedLabel
 import de.mineking.discord.ui.builder.components.modal.textInput
+import de.mineking.discord.ui.builder.components.modal.withLocalizedLabel
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.localizeForUser
 import de.mineking.discord.ui.setValue
@@ -36,8 +37,7 @@ fun main() {
                 +container(color = 0x00ff00) {
                     +section(
                         modalButton(
-                            "modal", component =
-                                localizedLabel(textInput("text", value = text, required = false))
+                            "modal", component = textInput("text", value = text, required = false).withLocalizedLabel()
                         ) {
                             text = it
                         }

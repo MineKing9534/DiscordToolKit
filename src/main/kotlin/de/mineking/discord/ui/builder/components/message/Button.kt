@@ -3,6 +3,7 @@ package de.mineking.discord.ui.builder.components.message
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.MutableState
+import de.mineking.discord.ui.localizationPrefix
 import de.mineking.discord.ui.message.ComponentHandler
 import de.mineking.discord.ui.message.createMessageElement
 import de.mineking.discord.ui.message.createMessageLayoutComponent
@@ -35,7 +36,7 @@ fun button(
     Button.of(
         color.style,
         id,
-        config.readLocalizedString(localization, name, label, "label") ?: if (emoji == null) ZERO_WIDTH_SPACE else null,
+        config.readLocalizedString(localization, name, label, "label", prefix = config.localizationPrefix()) ?: if (emoji == null) ZERO_WIDTH_SPACE else null,
         emoji
     )
 }
@@ -50,7 +51,7 @@ fun link(
     Button.of(
         ButtonStyle.LINK,
         url,
-        config.readLocalizedString(localization, name, label, "label") ?: if (emoji == null) ZERO_WIDTH_SPACE else null,
+        config.readLocalizedString(localization, name, label, "label", prefix = config.localizationPrefix()) ?: if (emoji == null) ZERO_WIDTH_SPACE else null,
         emoji
     )
 }

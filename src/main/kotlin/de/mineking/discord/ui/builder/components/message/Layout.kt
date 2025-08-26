@@ -4,6 +4,7 @@ import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.TextElementBuilder
 import de.mineking.discord.ui.builder.renderTextElement
+import de.mineking.discord.ui.localizationPrefix
 import de.mineking.discord.ui.message.MessageComponent
 import de.mineking.discord.ui.message.createMessageLayoutComponent
 import de.mineking.discord.ui.readLocalizedString
@@ -122,7 +123,7 @@ fun lazyTextDisplay(content: () -> String) = createMessageLayoutComponent { _, _
 fun buildLazyTextDisplay(content: TextElementBuilder) = lazyTextDisplay { renderTextElement(content) }
 
 fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageLayoutComponent { config, _ ->
-    TextDisplay.of(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
+    TextDisplay.of(config.readLocalizedString(localization, name, path, "content", prefix = config.localizationPrefix())?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
 }
 
 fun fileDisplay(file: () -> FileUpload) = createMessageLayoutComponent { _, _ -> FileDisplay.fromFile(file()) }
