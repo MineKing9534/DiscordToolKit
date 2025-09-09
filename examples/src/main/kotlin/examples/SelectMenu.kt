@@ -3,9 +3,9 @@ package examples
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.message.actionRow
-import de.mineking.discord.ui.builder.components.message.selectOption
-import de.mineking.discord.ui.builder.components.message.statefulSingleStringSelect
-import de.mineking.discord.ui.builder.components.message.stringSelect
+import de.mineking.discord.ui.builder.components.selectOption
+import de.mineking.discord.ui.builder.components.statefulSingleStringSelect
+import de.mineking.discord.ui.builder.components.stringSelect
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.message.message
 import de.mineking.discord.ui.state

@@ -1,14 +1,7 @@
 package de.mineking.discord.ui.builder.components.message
 
-import de.mineking.discord.localization.DEFAULT_LABEL
-import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.builder.TextElementBuilder
-import de.mineking.discord.ui.builder.renderTextElement
-import de.mineking.discord.ui.localizationPrefix
 import de.mineking.discord.ui.message.MessageComponent
 import de.mineking.discord.ui.message.createMessageLayoutComponent
-import de.mineking.discord.ui.readLocalizedString
-import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
@@ -115,16 +108,6 @@ fun thumbnail(file: () -> FileUpload) = createMessageLayoutComponent { _, _ -> T
 fun thumbnail(file: FileUpload) = thumbnail { file }
 
 fun thumbnail(url: String) = createMessageLayoutComponent { _, _ -> Thumbnail.fromUrl(url) }
-
-fun textDisplay(content: String) = createMessageLayoutComponent { _, _ -> TextDisplay.of(content) }
-inline fun buildTextDisplay(content: TextElementBuilder) = textDisplay(renderTextElement(content))
-
-fun lazyTextDisplay(content: () -> String) = createMessageLayoutComponent { _, _ -> TextDisplay.of(content()) }
-fun buildLazyTextDisplay(content: TextElementBuilder) = lazyTextDisplay { renderTextElement(content) }
-
-fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageLayoutComponent { config, _ ->
-    TextDisplay.of(config.readLocalizedString(localization, name, path, "content", prefix = config.localizationPrefix())?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
-}
 
 fun fileDisplay(file: () -> FileUpload) = createMessageLayoutComponent { _, _ -> FileDisplay.fromFile(file()) }
 fun fileDisplay(file: FileUpload) = fileDisplay { file }

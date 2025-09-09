@@ -4,7 +4,7 @@ serialization = "1.8.0"
 coroutines = "1.8.1"
 
 localization = "1.0.0"
-jda = "1c0dbd9"
+jda = "272f047"
 emoji = "2.0.1"
 
 logging = "2.0.11"

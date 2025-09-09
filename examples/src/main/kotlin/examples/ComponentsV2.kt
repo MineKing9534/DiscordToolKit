@@ -5,6 +5,7 @@ import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.message.*
 import de.mineking.discord.ui.builder.components.modal.label
 import de.mineking.discord.ui.builder.components.modal.textInput
+import de.mineking.discord.ui.builder.components.textDisplay
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.setValue
 import de.mineking.discord.ui.state

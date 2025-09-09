@@ -47,12 +47,14 @@ fun MessageMenuConfig<*, *>.pageSelector(
                 label = "$page/$max",
                 title = title,
                 localization = localization,
-                component = localizedLabel(intInput(
+                component = localizedLabel(
+                    intInput(
                     "page",
                     localization = localization,
                     value = page,
                     placeholder = "$page"
-                ).unbox().map { it ?: terminateRender() }, label = label, description = description, localization = localization)
+                ).unbox().map { it ?: terminateRender() }, label = label, description = description, localization = localization
+                )
             ) { page = it.coerceIn(1, max) }
         else +button(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max").disabled()
 

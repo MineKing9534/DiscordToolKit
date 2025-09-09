@@ -1,15 +1,15 @@
-package de.mineking.discord.ui.builder.components.message
+package de.mineking.discord.ui.builder.components
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.message.ComponentHandler
-import de.mineking.discord.ui.message.createMessageElement
 import de.mineking.discord.ui.modal.ModalResultHandler
 import de.mineking.discord.ui.modal.map
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu
 import net.dv8tion.jda.api.components.selections.StringSelectMenu
+import net.dv8tion.jda.api.entities.Mentions
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent
@@ -190,8 +190,12 @@ fun entitySelect(
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
+    modalHandler: ModalResultHandler<Mentions>? = null,
     handler: EntitySelectHandler? = null
-) = createMessageElement(name, handler) { config, id ->
+) = createSharedElement(name, handler, {
+    val temp = event.getValueByUniqueId(name.hashCode().absoluteValue)!!.asMentions
+    temp.also { modalHandler?.invoke(this, it) }
+}) { config, id ->
     EntitySelectMenu.create(id, targets.toList())
         .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = config.localizationPrefix()))
         .setMinValues(min)

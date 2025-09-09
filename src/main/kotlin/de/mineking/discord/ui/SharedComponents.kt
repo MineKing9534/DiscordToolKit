@@ -34,3 +34,13 @@ fun <C : Component, E : GenericComponentInteractionCreateEvent, T> createSharedE
     modalHandler: ModalContext<*>.() -> T,
     renderer: (MenuConfig<*, *>, String) -> C?
 ) = SharedElement(name, handler, modalHandler) { config, id -> renderer(config, id.nextId(config, name)) }
+
+fun <C : Component> createSharedLayoutComponent(
+    renderer: (MenuConfig<*, *>, IdGenerator) -> C
+) = object : SharedComponent<C, Nothing> {
+    override fun elements() = emptyList<MessageElement<*, *>>()
+    override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = listOf(renderer(config, generator))
+    override fun handle(context: ModalContext<*>): Nothing = error("Cannot read value for layout component")
+
+    override fun toString() = "SharedComponent"
+}

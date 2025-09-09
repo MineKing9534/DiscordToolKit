@@ -4,8 +4,8 @@ import de.mineking.discord.commands.localizedMenuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.localization.DefaultLocalizationManager
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.builder.components.localizedTextDisplay
 import de.mineking.discord.ui.builder.components.message.*
-import de.mineking.discord.ui.builder.components.modal.localizedLabel
 import de.mineking.discord.ui.builder.components.modal.textInput
 import de.mineking.discord.ui.builder.components.modal.withLocalizedLabel
 import de.mineking.discord.ui.getValue

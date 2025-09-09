@@ -5,6 +5,8 @@ import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.bold
 import de.mineking.discord.ui.builder.components.message.*
+import de.mineking.discord.ui.builder.components.selectOption
+import de.mineking.discord.ui.builder.components.statefulSingleStringSelect
 import de.mineking.discord.ui.builder.h1
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.builder.text
@@ -106,12 +108,14 @@ fun main() {
                         counter("inner_counter", ref = innerRef, step = step())
                     )
 
-                    +actionRow(statefulSingleStringSelect(
-                        "step",
-                        placeholder = "Select Step Size",
-                        options = (1..10).map { selectOption(it, label = "$it", emoji = Emoji.listKeycap()[2 + it % 11].jda()) },
-                        ref = stepRef.map({ "$it" }, { it.toInt() }) //Transform the int state for step to the required string state
-                    ))
+                    +actionRow(
+                        statefulSingleStringSelect(
+                            "step",
+                            placeholder = "Select Step Size",
+                            options = (1..10).map { selectOption(it, label = "$it", emoji = Emoji.listKeycap()[2 + it % 11].jda()) },
+                            ref = stepRef.map({ "$it" }, { it.toInt() }) //Transform the int state for step to the required string state
+                        )
+                    )
                 }
 
                 //Normal submenus inherit properties from the parent like state or localization context
