@@ -147,7 +147,18 @@ fun <T, U> Option<T>.map(type: KType?, mapper: suspend SlashCommandContext.(valu
     @Suppress("UNCHECKED_CAST")
     override val default: U? = if (type == this@map.type) this@map.default as U? else null
 
-    override suspend fun invoke(context: SlashCommandContext): U = context.mapper(this@map(context))
+    private var value: U? = null
+    private var present = false
+
+    @Suppress("UNCHECKED_CAST")
+    override suspend fun invoke(context: SlashCommandContext): U {
+        if (present) return value as U
+
+        value = context.mapper(this@map(context))
+        present = true
+
+        return value as U
+    }
 } else { { mapper(this@map()) } }
 
 fun <T, U> Option<OptionalOption<T>>.mapValue(mapper: suspend SlashCommandContext.(value: T) -> U): Option<OptionalOption<U>> = map { it.map { mapper(it) } }
