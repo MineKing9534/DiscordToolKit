@@ -506,6 +506,8 @@ stringSelect("select", min = 1, max = 2, options = listOf(
 > [!NOTE]
 > Select menus in message menus always have to be wrapped inside an `actionRow`. Since a select menu already takes up the entire action row, you cannot add any other components to that action row.
 
+For entitySelects you can use the generic `entitySelect` or the more specific `userSelect`, `roleSelect`, `mentionableSelect` and `channelSelect`.
+
 ### Components V2
 DiscordToolKit supports discords new `Components V2 Feature`. To enable it you can either set the global variable `DEFAULT_COMPONENTS_V2` to `true` or manually pass `useComponentsV2 = true` to your registerMenu call.
 The variable `DEFAULT_COMPONENTS_V2` also defaults to `MessageReference.isDefaultUseComponentsV2()` so you could also change that if you want to enable it globally for all messages sent by your JDA instance.

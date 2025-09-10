@@ -17,8 +17,6 @@ import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionE
 import kotlin.math.absoluteValue
 
 typealias StringSelectHandler = ComponentHandler<*, StringSelectInteractionEvent>
-typealias EntitySelectHandler = ComponentHandler<*, EntitySelectInteractionEvent>
-
 typealias JDASelectOption = net.dv8tion.jda.api.components.selections.SelectOption
 
 class SelectOption(
@@ -180,27 +178,3 @@ fun statefulSingleStringSelect(
     ref: MutableState<String>,
     handler: StringSelectHandler? = null
 ) = statefulSingleStringSelect(name, options.toList(), placeholder, required, localization, modalHandler, ref, handler)
-
-fun entitySelect(
-    name: String,
-    vararg targets: EntitySelectMenu.SelectTarget,
-    channelTypes: Collection<ChannelType> = emptyList(),
-    default: Collection<EntitySelectMenu.DefaultValue> = emptyList(),
-    placeholder: CharSequence? = DEFAULT_LABEL,
-    min: Int = 1,
-    max: Int = 1,
-    localization: LocalizationFile? = null,
-    modalHandler: ModalResultHandler<Mentions>? = null,
-    handler: EntitySelectHandler? = null
-) = createSharedElement(name, handler, {
-    val temp = event.getValueByUniqueId(name.hashCode().absoluteValue)!!.asMentions
-    temp.also { modalHandler?.invoke(this, it) }
-}) { config, id ->
-    EntitySelectMenu.create(id, targets.toList())
-        .setPlaceholder(config.readLocalizedString(localization, name, placeholder, "placeholder", prefix = config.localizationPrefix()))
-        .setMinValues(min)
-        .setMaxValues(max)
-        .setChannelTypes(channelTypes)
-        .setDefaultValues(default)
-        .build()
-}
