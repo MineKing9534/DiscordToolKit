@@ -87,6 +87,7 @@ fun MenuConfig<out GenericInteractionCreateEvent, *>.event() = lazy {
     parameter({ error("Cannot access the menu event during the BUILD phase") }, { it }, { event })
 }
 
+@Suppress("ObjectInheritsException")
 object RenderTermination : RuntimeException() {
     private fun readResolve(): Any = RenderTermination
 }

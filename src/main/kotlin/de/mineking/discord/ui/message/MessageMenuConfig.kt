@@ -136,7 +136,7 @@ sealed class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
                 try {
                     this@MessageMenuConfigImpl.menu.config(context, this@MessageMenuConfigImpl.menu.localization)
-                    error("Unable to match parent render to child entrypoint. Are you conditionally registering submenus?")
+                    error("Unable to match parent render to child entrypoint. This usually happens when you register submenus based on conditions that change at runtime (which should be avoided)")
                 } catch(e: InternalTermination) {
                     (e.config as LocalizedMessageMenuConfigurator<M, CL>).invoke(this@submenu, localization)
                 }
@@ -184,7 +184,7 @@ sealed class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 
                 try {
                     this@MessageMenuConfigImpl.menu.config(context, this@MessageMenuConfigImpl.menu.localization)
-                    error("Unable to match parent render to child entrypoint. Are you conditionally registering submenus?")
+                    error("Unable to match parent render to child entrypoint. This usually happens when you register submenus based on conditions that change at runtime (which should be avoided)")
                 } catch(e: InternalTermination) {
                     (e.config as LocalizedModalConfigurator<M, CL>).invoke(this@submenu, localization)
                 }
@@ -224,13 +224,10 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
     menu: MessageMenu<M, L>,
     context: MenuContext<M>
 ) : MessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
-    private var handler: ComponentHandler<*, *>? = null
-
     private fun findHandler(component: MessageComponent<*>) = component.elements().forEach {
         if (it.name == this.component) {
             @Suppress("UNCHECKED_CAST")
-            this@MessageMenuComponentFinder.handler = it.handler as ComponentHandler<*, *>
-            throw ComponentFinderResult
+            throw ComponentFinderResult(it.handler as ComponentHandler<*, *>)
         }
     }
 
@@ -238,14 +235,10 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
     override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() = findHandler(this)
 
     override fun message(data: MessageEditBuilder) {}
-
-    suspend fun execute(context: ComponentContext<*, *>) {
-        handler!!(context)
-    }
 }
 
-object ComponentFinderResult : RuntimeException() {
-    private fun readResolve(): Any = ComponentFinderResult
+class ComponentFinderResult(val handler: ComponentHandler<*, *>) : RuntimeException() {
+    override fun fillInStackTrace() = this //This should decrease performance loss when creating the exception
 }
 
 private fun <T: Menu<*, *, *>> MenuConfig<*, *>.getNextSubmenu(name: String): T = setup<T> {

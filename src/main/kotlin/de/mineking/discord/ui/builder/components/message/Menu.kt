@@ -164,6 +164,7 @@ class ModalButtonContext<M, N>(val target: MessageMenu<N, *>, val context: Modal
     override fun getMessageChannel() = context.event.messageChannel
     override fun getGuildLocale() = context.event.guildLocale
     override fun getId() = context.event.id
+    override fun getCustomId() = context.event.customId
     override fun getTimeCreated() = context.event.timeCreated
 
     override fun editMessage(message: MessageEditData) = context.event.editMessage(message)
@@ -225,7 +226,7 @@ inline fun <reified T, L : LocalizationFile?> MessageMenuConfig<*, *>.localizedM
     val currentState = if (detach) 0 else configState.currentState
     val modal = createModal(name, title, modalLocalization, defer, detach, component, handler)
 
-    return switchMenuButton(modal.name, color = color, label = label, emoji = emoji, localization = localization) {
+    return switchMenuButton(modal, color = color, label = label, emoji = emoji, localization = localization) {
         copy(currentState)
         pushDefaults()
     }
