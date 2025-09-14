@@ -41,17 +41,18 @@ object DefaultMessageMenuHandler : MessageMenuHandler {
         menu.config(config as MessageMenuConfig<M, L>, menu.localization)
 
     override suspend fun handleComponent(finder: MessageMenuComponentFinder<*, *>, menu: MessageMenu<*, *>, state: ComponentContext<*, *>, oldState: String, name: String) {
-        try {
+        val handler = try {
             runConfig(finder, menu)
             error("Component $name not found")
-        } catch (_: ComponentFinderResult) {
+        } catch (e: ComponentFinderResult) {
+            e.handler
         } catch (_: RenderTermination) {
             return
         }
 
         try {
             finder.context.lazy.forEach { it.active = true } //Activate lazy values => Allow them to load in the handler
-            finder.execute(state)
+            handler(state)
         } catch (_: RenderTermination) {
             return
         }

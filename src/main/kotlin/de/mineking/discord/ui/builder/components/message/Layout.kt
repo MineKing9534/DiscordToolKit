@@ -1,15 +1,7 @@
-package de.mineking.discord.ui.builder.components
+package de.mineking.discord.ui.builder.components.message
 
-import de.mineking.discord.localization.DEFAULT_LABEL
-import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.builder.TextElementBuilder
-import de.mineking.discord.ui.builder.renderTextElement
-import de.mineking.discord.ui.disabledIf
 import de.mineking.discord.ui.message.MessageComponent
-import de.mineking.discord.ui.message.createLayoutComponent
-import de.mineking.discord.ui.message.createMessageComponent
-import de.mineking.discord.ui.readLocalizedString
-import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
+import de.mineking.discord.ui.message.createMessageLayoutComponent
 import net.dv8tion.jda.api.components.MessageTopLevelComponent
 import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.components.actionrow.ActionRowChildComponent
@@ -24,19 +16,10 @@ import net.dv8tion.jda.api.components.section.SectionContentComponent
 import net.dv8tion.jda.api.components.separator.Separator
 import net.dv8tion.jda.api.components.textdisplay.TextDisplay
 import net.dv8tion.jda.api.components.thumbnail.Thumbnail
-import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.utils.FileUpload
 
-fun label(
-    name: String,
-    color: ButtonColor = DEFAULT_BUTTON_COLOR,
-    label: CharSequence = DEFAULT_LABEL,
-    emoji: Emoji? = null,
-    localization: LocalizationFile? = null
-) = button(name, color, label, emoji, localization).disabledIf()
-
 fun actionRow(vararg components: MessageComponent<out ActionRowChildComponent>) = actionRow(components.toList())
-fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent(components) { config, id ->
+fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) = createMessageLayoutComponent(components) { config, id ->
     listOf(
         ActionRow.of(components.flatMap { it.render(config, id) })
     )
@@ -45,7 +28,7 @@ fun actionRow(components: List<MessageComponent<out ActionRowChildComponent>>) =
 private const val MAX_PER_ROW = 5
 
 fun actionRows(vararg component: MessageComponent<out ActionRowChildComponent>) = actionRows(component.toList())
-fun actionRows(components: List<MessageComponent<out ActionRowChildComponent>>) = createLayoutComponent(components) { config, id ->
+fun actionRows(components: List<MessageComponent<out ActionRowChildComponent>>) = createMessageLayoutComponent(components) { config, id ->
     val temp = mutableListOf<ActionRowChildComponent>()
     var currentSize = 0
 
@@ -70,7 +53,7 @@ fun actionRows(components: List<MessageComponent<out ActionRowChildComponent>>) 
     rows
 }
 
-fun separator(invisible: Boolean = false, spacing: Separator.Spacing = Separator.Spacing.SMALL) = createMessageComponent { _, _ -> Separator.create(!invisible, spacing) }
+fun separator(invisible: Boolean = false, spacing: Separator.Spacing = Separator.Spacing.SMALL) = createMessageLayoutComponent { _, _ -> Separator.create(!invisible, spacing) }
 
 fun container(
     vararg components: MessageComponent<out ContainerChildComponent>,
@@ -82,7 +65,7 @@ fun container(
     components: List<MessageComponent<out ContainerChildComponent>>,
     spoiler: Boolean = false,
     color: Int? = null
-) = createLayoutComponent(components) { config, id ->
+) = createMessageLayoutComponent(components) { config, id ->
     listOf(
         Container.of(components.flatMap { it.render(config, id) })
             .withSpoiler(spoiler)
@@ -98,7 +81,7 @@ fun section(
 fun section(
     accessory: MessageComponent<out SectionAccessoryComponent>,
     components: List<MessageComponent<out SectionContentComponent>>
-) = createLayoutComponent(components + accessory) { config, id ->
+) = createMessageLayoutComponent(components + accessory) { config, id ->
     listOf(
         Section.of(
             accessory.render(config, id).single(),
@@ -110,7 +93,7 @@ fun section(
 fun <T> optionalSection(
     accessory: MessageComponent<out SectionAccessoryComponent>,
     components: List<MessageComponent<out TextDisplay>>
-) where T : ContainerChildComponent, T : MessageTopLevelComponent = createLayoutComponent(components + accessory) { config, id ->
+) where T : ContainerChildComponent, T : MessageTopLevelComponent = createMessageLayoutComponent(components + accessory) { config, id ->
     val accessory = accessory.render(config, id)
     val components = components.flatMap { it.render(config, id) }
 
@@ -121,23 +104,13 @@ fun <T> optionalSection(
     result as List<T>
 }
 
-fun thumbnail(file: () -> FileUpload) = createMessageComponent { _, _ -> Thumbnail.fromFile(file()) }
+fun thumbnail(file: () -> FileUpload) = createMessageLayoutComponent { _, _ -> Thumbnail.fromFile(file()) }
 fun thumbnail(file: FileUpload) = thumbnail { file }
 
-fun thumbnail(url: String) = createMessageComponent { _, _ -> Thumbnail.fromUrl(url) }
+fun thumbnail(url: String) = createMessageLayoutComponent { _, _ -> Thumbnail.fromUrl(url) }
 
-fun textDisplay(content: String) = createMessageComponent { _, _ -> TextDisplay.of(content) }
-inline fun buildTextDisplay(content: TextElementBuilder) = textDisplay(renderTextElement(content))
-
-fun lazyTextDisplay(content: () -> String) = createMessageComponent { _, _ -> TextDisplay.of(content()) }
-fun buildLazyTextDisplay(content: TextElementBuilder) = lazyTextDisplay { renderTextElement(content) }
-
-fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createMessageComponent { config, _ ->
-    TextDisplay.of(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
-}
-
-fun fileDisplay(file: () -> FileUpload) = createMessageComponent { _, _ -> FileDisplay.fromFile(file()) }
+fun fileDisplay(file: () -> FileUpload) = createMessageLayoutComponent { _, _ -> FileDisplay.fromFile(file()) }
 fun fileDisplay(file: FileUpload) = fileDisplay { file }
 
 fun mediaGallery(vararg media: MediaGalleryItem) = mediaGallery(media.toList())
-fun mediaGallery(media: List<MediaGalleryItem>) = createMessageComponent { _, _ -> MediaGallery.of(media) }
+fun mediaGallery(media: List<MediaGalleryItem>) = createMessageLayoutComponent { _, _ -> MediaGallery.of(media) }

@@ -1,0 +1,27 @@
+[versions]
+kotlin = "2.2.0"
+serialization = "1.8.0"
+coroutines = "1.8.1"
+
+localization = "1.1.0"
+jda = "272f047"
+emoji = "2.0.1"
+
+logging = "2.0.11"
+logback = "1.5.15"
+
+[libraries]
+coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "serialization" }
+
+jda = { module = "com.github.MineKing9534:JDA", version.ref = "jda" }
+emoji = { module = "org.kodein.emoji:emoji-kt", version.ref = "emoji" }
+
+logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "logging" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+
+localization = { id = "de.mineking.discord.localization", version.ref = "localization" }

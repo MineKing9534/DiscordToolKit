@@ -3,6 +3,7 @@ package de.mineking.discord.ui
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -63,21 +64,24 @@ fun <T> virtualReadonlyState(value: T) = object : State<T> {
 }
 
 class StateData(val data: MutableList<Any?>, val states: List<InternalState<*>>) {
-    fun <T> getState(id: Int, handler: StateUpdateHandler<T>?) = object : MutableState<T> {
-        override var value: T
-            @Suppress("UNCHECKED_CAST")
-            get() = data[id] as T
-            set(value) {
-                handler?.invoke(this.value, value)
-                data[id] = value
-            }
+    fun <T> getState(id: Int, handler: StateUpdateHandler<T>?): MutableState<T> {
+        require(id in data.indices) { "Trying to read state $id, but only ${data.size} states exist" }
+        return object : MutableState<T> {
+            override var value: T
+                @Suppress("UNCHECKED_CAST")
+                get() = data[id] as T
+                set(value) {
+                    handler?.invoke(this.value, value)
+                    data[id] = value
+                }
+        }
     }
 
     @OptIn(ExperimentalSerializationApi::class)
     fun encode() = encode(StateListSerializer(serializers, states.map { it.type }), data)
 
     companion object {
-        var serializers: SerializersModule = SerializersModule {}
+        var serializers: SerializersModule = EmptySerializersModule()
 
         @PublishedApi
         @OptIn(ExperimentalSerializationApi::class)
@@ -118,10 +122,13 @@ fun <T> MenuConfig<*, *>.state(type: KType, initial: T, handler: StateUpdateHand
     if (isBuild()) {
         configState.menu.states += InternalState(type, initial, handler)
         context.stateData.data += initial
-    } else require(type == configState.menu.states[configState.currentState].type)
+    }
 
     return context.stateData.getState(configState.currentState, handler)
-        .also { configState.currentState++ }
+        .also {
+            require(type == configState.menu.states[configState.currentState].type)
+            configState.currentState++
+        }
 }
 
 inline fun <reified T> MenuConfig<*, *>.state(initial: T, noinline handler: StateUpdateHandler<T>? = null) = state(typeOf<T>(), initial, handler)

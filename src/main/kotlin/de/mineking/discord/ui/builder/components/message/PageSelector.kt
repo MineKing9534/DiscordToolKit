@@ -1,9 +1,12 @@
-package de.mineking.discord.ui.builder.components
+package de.mineking.discord.ui.builder.components.message
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.TextElement
+import de.mineking.discord.ui.builder.components.modal.intInput
+import de.mineking.discord.ui.builder.components.modal.localizedLabel
+import de.mineking.discord.ui.builder.components.modal.unbox
 import de.mineking.discord.ui.builder.paginate
 import de.mineking.discord.ui.builder.text
 import de.mineking.discord.ui.message.*
@@ -21,6 +24,7 @@ fun MessageMenuConfig<*, *>.pageSelector(
     modal: Boolean = true,
     title: CharSequence = DEFAULT_LABEL,
     label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     localization: LocalizationFile? = null
 ): MessageComponent<ActionRow> {
     var page by ref
@@ -43,15 +47,16 @@ fun MessageMenuConfig<*, *>.pageSelector(
                 label = "$page/$max",
                 title = title,
                 localization = localization,
-                component = intInput(
+                component = localizedLabel(
+                    intInput(
                     "page",
-                    label = label,
                     localization = localization,
                     value = page,
                     placeholder = "$page"
-                ).unbox().map { it ?: terminateRender() }
+                ).unbox().map { it ?: terminateRender() }, label = label, description = description, localization = localization
+                )
             ) { page = it.coerceIn(1, max) }
-        else +label(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max")
+        else +button(name, emoji = Emoji.fromUnicode("\uD83D\uDCD4"), label = "$page/$max").disabled()
 
         +button(
             "$name-next",
@@ -93,12 +98,13 @@ fun <T> MessageMenuConfig<*, *>.pagination(
     modal: Boolean = true,
     title: CharSequence = DEFAULT_LABEL,
     label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
     localization: LocalizationFile? = null
 ): PaginationResult {
     val page by ref
 
     val max = (entries.size - 1) / perPage + 1
-    val component = pageSelector(name, max, ref, modal, title, label, localization)
+    val component = pageSelector(name, max, ref, modal, title, label, description, localization)
 
     return PaginationResult(
         paginate(entries, page, perPage, display),

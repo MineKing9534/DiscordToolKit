@@ -6,9 +6,8 @@ import de.mineking.discord.ui.MenuContext
 import de.mineking.discord.ui.RenderTermination
 import de.mineking.discord.ui.readLocalizedString
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
-import net.dv8tion.jda.api.components.actionrow.ActionRow
-import net.dv8tion.jda.api.interactions.modals.Modal
-import net.dv8tion.jda.api.interactions.modals.ModalTopLevelComponent
+import net.dv8tion.jda.api.components.ModalTopLevelComponent
+import net.dv8tion.jda.api.modals.Modal
 
 interface ModalMenuHandler {
     suspend fun handle(handler: ModalMenuExecutor<*, *>, menu: ModalMenu<*, *>, state: ModalContext<*>)
@@ -59,12 +58,10 @@ object DefaultModalHandler : ModalMenuHandler {
     fun buildComponents(generator: IdGeneratorImpl, renderer: ModalMenuRenderer<*, *>): List<ModalTopLevelComponent> {
         val components = renderer.components.render(generator, renderer)
 
-        val rows = components.map { ActionRow.of(it) }
-
         val left = generator.charactersLeft()
         if (left != 0) error("Not enough component id space to store state. $left characters left")
 
-        return rows
+        return components
     }
 
     override suspend fun build(renderer: ModalMenuRenderer<*, *>, menu: ModalMenu<*, *>, state: MenuContext<*>): Modal {

@@ -1,6 +1,7 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.*
+import de.mineking.discord.ui.modal.ModalMenuConfig
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.Interaction
@@ -9,6 +10,11 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.hasAnnotation
 import kotlin.reflect.typeOf
+
+fun MenuConfig<*, *>.localizationPrefix() = when (this) {
+    is ModalMenuConfig<*, *> -> "inputs"
+    else -> null
+}
 
 interface MenuLocalizationHandler {
     fun readLocalizedString(

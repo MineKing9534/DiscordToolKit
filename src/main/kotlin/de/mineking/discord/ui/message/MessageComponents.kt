@@ -1,7 +1,7 @@
 package de.mineking.discord.ui.message
 
 import de.mineking.discord.ui.*
-import de.mineking.discord.ui.builder.components.BackReference
+import de.mineking.discord.ui.builder.components.message.BackReference
 import de.mineking.discord.ui.modal.ModalMenu
 import kotlinx.serialization.serializer
 import net.dv8tion.jda.api.components.Component
@@ -91,11 +91,11 @@ interface MessageComponent<C : Component> : IComponent<C> {
     }
 }
 
-class MessageElement<C : Component, E : GenericComponentInteractionCreateEvent>(
-    val name: String,
+open class MessageElement<C : Component, E : GenericComponentInteractionCreateEvent>(
+    override val name: String,
     val handler: ComponentHandler<*, E>?,
     val renderer: (MenuConfig<*, *>, IdGenerator) -> C?
-) : MessageComponent<C> {
+) : MessageComponent<C>, IElement<C> {
     override fun elements() = listOf(this)
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator)?.let { listOf(it) } ?: emptyList()
     override fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>) = MessageElement(name, handler) { config, id -> mapper(id) { render(config, it) }.firstOrNull() }
@@ -107,14 +107,14 @@ fun <C : Component, E : GenericComponentInteractionCreateEvent> createMessageEle
     name: String,
     handler: ComponentHandler<*, E>? = null,
     renderer: (MenuConfig<*, *>, String) -> C?
-) = MessageElement(name, handler) { config, id -> renderer(config, id.nextId("${config.menu.name}:$name:")) }
+) = MessageElement(name, handler) { config, id -> renderer(config, id.nextId(config, name)) }
 
-fun <C : Component> createLayoutComponent(
+fun <C : Component> createMessageLayoutComponent(
     vararg children: MessageComponent<*>,
     renderer: (MenuConfig<*, *>, IdGenerator) -> C
-) = createLayoutComponent(children.toList()) { config, id -> listOf(renderer(config, id)) }
+) = createMessageLayoutComponent(children.toList()) { config, id -> listOf(renderer(config, id)) }
 
-fun <C : Component> createLayoutComponent(
+fun <C : Component> createMessageLayoutComponent(
     children: List<MessageComponent<*>>,
     renderer: (MenuConfig<*, *>, IdGenerator) -> List<C>
 ) = object : MessageComponent<C> {
@@ -122,10 +122,6 @@ fun <C : Component> createLayoutComponent(
     override fun render(config: MenuConfig<*, *>, generator: IdGenerator) = renderer(config, generator)
     override fun toString() = "MessageComponent"
 }
-
-fun <C : Component> createMessageComponent(
-    renderer: (MenuConfig<*, *>, String) -> C
-) = createLayoutComponent { config, id -> renderer(config, "::") }
 
 @Suppress("UNCHECKED_CAST")
 inline fun <reified T, C : Component, W : IComponent<C>> W.withParameter(parameter: T) = transform { id, render ->

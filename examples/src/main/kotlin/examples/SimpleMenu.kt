@@ -5,10 +5,9 @@ import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.commands.slashCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.*
-import de.mineking.discord.ui.builder.components.actionRow
-import de.mineking.discord.ui.builder.components.button
-import de.mineking.discord.ui.builder.components.counter
-import de.mineking.discord.ui.builder.components.label
+import de.mineking.discord.ui.builder.components.message.actionRow
+import de.mineking.discord.ui.builder.components.message.button
+import de.mineking.discord.ui.builder.components.message.counter
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.message.message
 import de.mineking.discord.ui.message.replyMenu
@@ -28,7 +27,7 @@ fun main() {
 
                 +actionRow(
                     button("inc", label = "Increase Counter") { count++ },
-                    label("current", label = "$count")
+                    button("current", label = "$count").disabled()
                 )
             }
 
@@ -71,7 +70,7 @@ fun main() {
 
                 +actionRow(
                     button("inc", label = "Increase Counter") { count++ },
-                    label("current", label = "$count")
+                    button("current", label = "$count").disabled()
                 )
             }
 

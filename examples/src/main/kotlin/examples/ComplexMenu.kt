@@ -4,7 +4,9 @@ import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.*
 import de.mineking.discord.ui.builder.bold
-import de.mineking.discord.ui.builder.components.*
+import de.mineking.discord.ui.builder.components.message.*
+import de.mineking.discord.ui.builder.components.selectOption
+import de.mineking.discord.ui.builder.components.statefulSingleStringSelect
 import de.mineking.discord.ui.builder.h1
 import de.mineking.discord.ui.builder.line
 import de.mineking.discord.ui.builder.text
@@ -97,20 +99,22 @@ fun main() {
                     +actionRow(back.asButton(label = "Back"))
 
                     +actionRow(
-                        label("parent", label = "Parent"),
+                        button("parent", label = "Parent").disabled(),
                         counter("parent_counter", ref = outerRef)
                     )
 
                     +actionRow(
-                        label("inner", label = "Inner"),
+                        button("inner", label = "Inner").disabled(),
                         counter("inner_counter", ref = innerRef, step = step())
                     )
 
-                    +statefulSingleStringSelect(
-                        "step",
-                        placeholder = "Select Step Size",
-                        options = (1..10).map { selectOption(it, label = "$it", emoji = Emoji.listKeycap()[2 + it % 11].jda()) },
-                        ref = stepRef.map({ "$it" }, { it.toInt() }) //Transform the int state for step to the required string state
+                    +actionRow(
+                        statefulSingleStringSelect(
+                            "step",
+                            placeholder = "Select Step Size",
+                            options = (1..10).map { selectOption(it, label = "$it", emoji = Emoji.listKeycap()[2 + it % 11].jda()) },
+                            ref = stepRef.map({ "$it" }, { it.toInt() }) //Transform the int state for step to the required string state
+                        )
                     )
                 }
 
@@ -133,7 +137,7 @@ fun main() {
                     +actionRow(
                         button("inc", label = "+") { count++ },
                         button("ign", label = "Parent +") { outer++ }, //This will NOT update the UI because this state is not part of this menu's state calculations.
-                                                                               // However, the value is updated in the BUILD phase RAM version of the state. Updates will be visible after a rerender. See the note above for more details about parent state behavior.
+                        // However, the value is updated in the BUILD phase RAM version of the state. Updates will be visible after a rerender. See the note above for more details about parent state behavior.
                         back.asButton(label = "Back")
                     )
                 }

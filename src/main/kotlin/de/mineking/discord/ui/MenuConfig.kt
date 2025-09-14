@@ -122,6 +122,6 @@ class MenuConfigState(val menu: Menu<*, *, *>) {
     @PublishedApi
     internal var currentCache = 0
 
-    @PublishedApi
-    internal var currentState = 0
+    var currentState = 0
+        internal set
 }

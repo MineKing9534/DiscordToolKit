@@ -1,6 +1,7 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.ui.message.MessageMenuConfig
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import net.dv8tion.jda.api.components.buttons.Button
@@ -43,6 +44,10 @@ interface IdGenerator {
     fun withParameter(parameter: String): IdGenerator
 }
 
+fun IdGenerator.nextId(config: MenuConfig<*, *>, name: String) =
+    if (config is MessageMenuConfig<*, *>) nextId("${config.menu.name}:$name:")
+    else nextId("$name:")
+
 object EmptyIdGenerator : IdGenerator {
     override fun nextId(base: String) = "-"
     override fun withParameter(parameter: String) = this
@@ -82,6 +87,7 @@ fun MenuConfig<out GenericInteractionCreateEvent, *>.event() = lazy {
     parameter({ error("Cannot access the menu event during the BUILD phase") }, { it }, { event })
 }
 
+@Suppress("ObjectInheritsException")
 object RenderTermination : RuntimeException() {
     private fun readResolve(): Any = RenderTermination
 }

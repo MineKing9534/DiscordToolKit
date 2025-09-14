@@ -1,5 +1,5 @@
 plugins {
-    id("de.mineking.discord.localization") version "1.0.0"
+    alias(libs.plugins.localization)
 }
 
 group = "de.mineking"
@@ -13,10 +13,11 @@ repositories {
 
 dependencies {
     implementation(rootProject)
-    implementation("com.github.freya022:JDA:1be8478")
+    implementation(libs.jda)
 
-    implementation("ch.qos.logback:logback-classic:1.5.15")
-    implementation("org.kodein.emoji:emoji-kt:2.0.1")
+    implementation(kotlin("reflect"))
+    implementation(libs.logback)
+    implementation(libs.emoji)
 }
 
 kotlin {
@@ -27,6 +28,4 @@ kotlin {
 discordLocalization {
     locales = listOf("en-US", "de")
     defaultLocale = "en-US"
-
-    locationFormat = "$projectDir/localization/%locale%/%name%.yaml"
 }
