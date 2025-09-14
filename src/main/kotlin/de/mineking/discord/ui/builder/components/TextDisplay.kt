@@ -17,5 +17,5 @@ fun lazyTextDisplay(content: () -> String) = createSharedLayoutComponent { _, _ 
 fun buildLazyTextDisplay(content: TextElementBuilder) = lazyTextDisplay { renderTextElement(content) }
 
 fun localizedTextDisplay(name: String, path: CharSequence = DEFAULT_LABEL, localization: LocalizationFile? = null) = createSharedLayoutComponent { config, _ ->
-    TextDisplay.of(config.readLocalizedString(localization, name, path, "content", prefix = config.localizationPrefix())?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
+    TextDisplay.of(config.readLocalizedString(localization, name, path, "content")?.takeIf { it.isNotEmpty() } ?: ZERO_WIDTH_SPACE)
 }
