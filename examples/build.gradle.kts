@@ -28,6 +28,4 @@ kotlin {
 discordLocalization {
     locales = listOf("en-US", "de")
     defaultLocale = "en-US"
-
-    locationFormat = "$projectDir/localization/%locale%/%name%.yaml"
 }
