@@ -23,6 +23,7 @@ fun entitySelect(
     channelTypes: Collection<ChannelType> = emptyList(),
     default: Collection<EntitySelectMenu.DefaultValue> = emptyList(),
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -38,6 +39,7 @@ fun entitySelect(
         .setMaxValues(max)
         .setChannelTypes(channelTypes)
         .setDefaultValues(default)
+        .setRequired(required)
         .build()
 }
 
@@ -46,6 +48,7 @@ fun channelSelect(
     channelTypes: Collection<ChannelType> = emptyList(),
     default: Collection<GuildChannel> = emptyList(),
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -53,7 +56,7 @@ fun channelSelect(
     handler: EntitySelectHandler? = null
 ) = entitySelect(
     name, targets = arrayOf(EntitySelectMenu.SelectTarget.CHANNEL), channelTypes, default.map { EntitySelectMenu.DefaultValue.from(it) },
-    placeholder, min, max, localization,
+    placeholder, required, min, max, localization,
     modalHandler?.map { it.channels }, handler
 )
 
@@ -61,6 +64,7 @@ fun userSelect(
     name: String,
     default: Collection<UserSnowflake> = emptyList(),
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -68,7 +72,7 @@ fun userSelect(
     handler: EntitySelectHandler? = null
 ) = entitySelect(
     name, targets = arrayOf(EntitySelectMenu.SelectTarget.USER), emptyList(), default.map { EntitySelectMenu.DefaultValue.from(it) },
-    placeholder, min, max, localization,
+    placeholder, required, min, max, localization,
     modalHandler?.map { it.members }, handler
 )
 
@@ -76,6 +80,7 @@ fun roleSelect(
     name: String,
     default: Collection<Role> = emptyList(),
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -83,7 +88,7 @@ fun roleSelect(
     handler: EntitySelectHandler? = null
 ) = entitySelect(
     name, targets = arrayOf(EntitySelectMenu.SelectTarget.ROLE), emptyList(), default.map { EntitySelectMenu.DefaultValue.from(it) },
-    placeholder, min, max, localization,
+    placeholder, required, min, max, localization,
     modalHandler?.map { it.roles }, handler
 )
 
@@ -91,6 +96,7 @@ fun mentionableSelect(
     name: String,
     default: Collection<IMentionable> = emptyList(),
     placeholder: CharSequence? = DEFAULT_LABEL,
+    required: Boolean = true,
     min: Int = 1,
     max: Int = 1,
     localization: LocalizationFile? = null,
@@ -105,6 +111,6 @@ fun mentionableSelect(
             else -> error("Unsupported mentionable type: $it")
         }
     },
-    placeholder, min, max, localization,
+    placeholder, required, min, max, localization,
     modalHandler?.map { it.getMentions() }, handler
 )
