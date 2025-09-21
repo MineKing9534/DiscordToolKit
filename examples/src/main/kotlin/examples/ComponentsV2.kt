@@ -3,8 +3,8 @@ package examples
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.message.*
-import de.mineking.discord.ui.builder.components.modal.label
 import de.mineking.discord.ui.builder.components.modal.textInput
+import de.mineking.discord.ui.builder.components.modal.withLabel
 import de.mineking.discord.ui.builder.components.textDisplay
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.setValue
@@ -24,7 +24,7 @@ fun main() {
                     +section(
                         modalButton(
                             "text", label = "Modal", title = "Enter Text", component =
-                                label(textInput("text", placeholder = "Hello World!", value = text), label = "Enter Text")
+                                textInput("text", placeholder = "Hello World!", value = text).withLabel("Enter Text")
                         ) {
                             text = it
                         }

@@ -5,8 +5,8 @@ import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.message.actionRow
 import de.mineking.discord.ui.builder.components.message.button
 import de.mineking.discord.ui.builder.components.message.modalButton
-import de.mineking.discord.ui.builder.components.modal.label
 import de.mineking.discord.ui.builder.components.modal.textInput
+import de.mineking.discord.ui.builder.components.modal.withLabel
 import de.mineking.discord.ui.getValue
 import de.mineking.discord.ui.message.message
 import de.mineking.discord.ui.message.modal
@@ -25,7 +25,7 @@ fun main() {
                 val modal = modal("modal") {
                     title("Modal Title")
 
-                    val text by +label(textInput("text"), label = "Text", description = "Some description")
+                    val text by +textInput("text").withLabel(label = "Text", description = "Some description")
 
                     execute {
                         reply(text).setEphemeral(true).queue()
@@ -39,12 +39,12 @@ fun main() {
                     button("a", label = "a") { switchMenu(modal) },
 
                     //Same as above but simpler by inlining the modal definition
-                    modalButton("b", label = "b", component = label(textInput("text"), label = "Text"), title = "Modal Title") {
+                    modalButton("b", label = "b", component = textInput("text").withLabel("Text"), title = "Modal Title") {
                         //Using the hook here instead of reply because the modalButton implementation automatically handles acknowledging the interaction and rerenders the message menu
                         hook.sendMessage(it).setEphemeral(true).queue()
                     },
 
-                    modalButton("c", label = "c", title = "Modal Title", component = label(textInput("text", value = text), label = "Text")) {
+                    modalButton("c", label = "c", title = "Modal Title", component = textInput("text", value = text).withLabel("Text")) {
                         count++
                         text = it
                     }
