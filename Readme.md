@@ -525,7 +525,7 @@ registerMenu("menu", useComponentsV2 = true) {
       +section(
           modalButton(
               "text", label = "Modal", title = "Enter Text", component =
-                  label(textInput("text", placeholder = "Hello World!", value = text), label = "Enter Text")
+                  textInput("text", placeholder = "Hello World!", value = text).withLabel("Enter Text")
           ) {
               text = it
           }
@@ -743,7 +743,7 @@ registerModal<Unit>("modal") {
 A simple modal with a single text input could be implemented like this:
 ```kt
 registerModal<Unit>("modal") {
-    val value by +label(textInput("text"), label = "Text")
+    val value by +textInput("text").withLabel("Text")
     
     execute {
         println(value())
@@ -752,10 +752,10 @@ registerModal<Unit>("modal") {
 ```
 
 > [!NOTE]
-> You always have to wrap components in a `label` to be able to add them to a modal menu
+> You always have to wrap components in a `label` to be able to add them to a modal menu. There is also the `withLabel` extension function that makes the component creation more readable.
 
 > [!NOTE]
-> Discord currently only allows `textInput`s and `stringSelect`s inside modals. For select menus, their main handler (and option handlers) are NOT executed. Instead, the `modalHandler` is used.
+> Discord currently only allows `textInput`s, `stringSelect`s and `entitySelect`s inside modals. For select menus, their main handler (and option handlers) are NOT executed. Instead, the `modalHandler` is used.
 
 You can create text inputs with the `textInput` function. They can be added to your modal with the `+` operator. Adding a text input will return a function that can be used inside the executor block to read the inputs value.
 The `execute` block is what is executed when a user submits a modal.
@@ -768,7 +768,7 @@ registerMenu<Unit>("menu", deferMode = DeferMode.UNLESS_PREVENTED) {
     content("**Name:** $name")
   
     +modalButton("modal", label = "Change Name", title = "Enter Name", component = 
-        label(textInput("name", value = name), label = "Your Name")
+        textInput("name", value = name).withLabel("Your Name")
     ) { value ->
         name = value
     }
@@ -786,8 +786,8 @@ registerMenu<Unit>("menu", deferMode = DeferMode.UNLESS_PREVENTED) {
     +modalButton("modal", title = "Enter Name", component = createModalComponent {
         val current = name.split(" ", limit = 2) 
         
-        val first by +label(textInput("first", value = current[0]), label = "First Name")
-        val last by +label(textInput("last", value = if (current.size == 1) "" else current[1]), label = "Last Name")
+        val first by +textInput("first", value = current[0]).withLabel("First Name")
+        val last by +textInput("last", value = if (current.size == 1) "" else current[1]).withLabel("Last Name")
 
         produce { "$first $last" }
     }) { value ->

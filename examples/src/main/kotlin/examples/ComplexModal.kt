@@ -5,8 +5,8 @@ import de.mineking.discord.discordToolKit
 import de.mineking.discord.ui.builder.components.buildTextDisplay
 import de.mineking.discord.ui.builder.components.message.modalButton
 import de.mineking.discord.ui.builder.components.message.section
-import de.mineking.discord.ui.builder.components.modal.label
 import de.mineking.discord.ui.builder.components.modal.textInput
+import de.mineking.discord.ui.builder.components.modal.withLabel
 import de.mineking.discord.ui.builder.components.selectOption
 import de.mineking.discord.ui.builder.components.stringSelect
 import de.mineking.discord.ui.builder.line
@@ -46,7 +46,7 @@ enum class Option { A, B, C }
 data class FormData(val text: String, val option: Option)
 
 private fun customModalComponent(value: FormData) = createModalComponentFor<FormData>(
-    label(textInput("text", value = value.text), label = "Text", description = "Enter some text"),
-    label(stringSelect("option", Option.entries.map { selectOption(it, it.name, default = it == value.option) }), label = "Option", description = "Select an option")
+    textInput("text", value = value.text).withLabel(label = "Text", description = "Enter some text"),
+    stringSelect("option", Option.entries.map { selectOption(it, it.name, default = it == value.option) }).withLabel(label = "Option", description = "Select an option")
         .map { Option.valueOf(it.first()) }
 )

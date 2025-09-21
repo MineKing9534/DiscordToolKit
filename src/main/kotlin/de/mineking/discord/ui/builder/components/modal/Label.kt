@@ -20,6 +20,8 @@ fun <T> label(
     )
 }
 
+fun <T> ModalComponent<out LabelChildComponent, out T>.withLabel(label: String, description: String? = null) = label(this, label, description)
+
 fun <T> localizedLabel(
     name: String,
     child: ModalComponent<out LabelChildComponent, T>,
