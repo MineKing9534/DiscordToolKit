@@ -45,4 +45,8 @@ fun <T> localizedLabel(
     localization: LocalizationFile? = null
 ) = localizedLabel(child.name, child, label, description, localization)
 
-fun <T> ModalElement<out LabelChildComponent, T>.withLocalizedLabel() = localizedLabel(this)
+fun <T> ModalElement<out LabelChildComponent, T>.withLocalizedLabel(
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
+    localization: LocalizationFile? = null
+) = localizedLabel(this, label, description, localization)
