@@ -20,12 +20,6 @@ fun main() {
                 }
             }
 
-            slashCommand("test") {
-                val option = option<String>("option", choices = listOf(
-                    choice("value", label = "label")
-                ))
-            }
-
             lateinit var command: SlashCommandImpl
             command = +slashCommand("test", description = "Command with subcommands") {
                 require({ user.idLong == adminId }, orElse = { event.reply(":x: You are not allowed to use this command").setEphemeral(true).queue() }) //Set precondition for this command and all children (inherited over all layers)
