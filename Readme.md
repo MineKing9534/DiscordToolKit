@@ -12,7 +12,7 @@ This is common in custom components or command implementations because they alwa
 If you don't provide an instance of your main class, `Unit` is used implicitly.
 
 > [!NOTE]
-> This library is not compatible with pure Java. If you want to use Java instead of Kotlin, you can take a look at [DiscordUtils](https://github.com/MineKing9534/DiscordUtils) which has a similar scope as this project but was created in and for Java.
+> This library is NOT compatible with pure Java. If you want to use Java instead of Kotlin, you can take a look at [DiscordUtils](https://github.com/MineKing9534/DiscordUtils) which has a similar scope as this project but was created in and for Java.
 
 There are some examples available in `examples/src/main/kotlin/` if you want to see some features in action. If you want to run them you have to add the `-DTOKEN=<YOUR BOT TOKEN>` flag.
 
@@ -23,6 +23,7 @@ There are some examples available in `examples/src/main/kotlin/` if you want to 
 <!-- TOC -->
 * [Introduction](#introduction)
 * [Table of Contents](#table-of-contents)
+* [Installation](#installation)
 * [Commands](#commands)
   * [Execution conditions](#execution-conditions)
   * [Options](#options)
@@ -50,6 +51,22 @@ There are some examples available in `examples/src/main/kotlin/` if you want to 
   * [Command Localization](#command-localization)
   * [Menu Localization](#menu-localization)
 <!-- TOC -->
+
+# Installation
+DiscordToolKit can be downloaded from a custom maven repository. To use it, add this to your `build.gradle.kts` file:
+```
+repositories {
+//...
+    maven("https://maven.mineking.dev/releases")
+//  maven("https://maven.mineking.dev/snapshots") 
+}
+
+dependencies {
+//...
+    implementation("de.mineking:DiscordToolKit:VERSION")
+}
+```
+If you are using Maven you can just use the maven equivalent of the above.
 
 # Commands
 To start using the CommandManager, you first have to register it to your DTK instance. You can then start configuring it inside the configuration block:
