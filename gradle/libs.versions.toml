@@ -1,10 +1,10 @@
 [versions]
-kotlin = "2.2.0"
+kotlin = "2.2.20"
 serialization = "1.8.0"
 coroutines = "1.8.1"
 
 localization = "1.1.0"
-jda = "17e5796"
+jda = "6.1.0"
 emoji = "2.0.1"
 
 logging = "2.0.11"
@@ -14,7 +14,7 @@ logback = "1.5.15"
 coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "serialization" }
 
-jda = { module = "com.github.MineKing9534:JDA", version.ref = "jda" }
+jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
 emoji = { module = "org.kodein.emoji:emoji-kt", version.ref = "emoji" }
 
 logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "logging" }

@@ -14,8 +14,8 @@ import kotlin.reflect.typeOf
 annotation class CommandMarker
 class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(manager) {
     val commands: MutableMap<String, CommandImpl<*, out CommandData>> = hashMapOf()
-    var entryPoint: EntryPointCommandImpl? = null
-        private set
+    /*var entryPoint: EntryPointCommandImpl? = null
+        private set*/
 
     val optionMappers = DefaultOptionMappers.javaClass.declaredFields.filter { it.kotlinProperty != null }.onEach { it.trySetAccessible() }.map { it.get(DefaultOptionMappers) as OptionMapper<*> }.toMutableList()
 
@@ -66,7 +66,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
 
             is MessageContextInteractionEvent -> MessageCommandContext(this, event)
             is UserContextInteractionEvent -> UserCommandContext(this, event)
-            is PrimaryEntryPointInteractionEvent -> EntrypointCommandContext(this, event)
+            //is PrimaryEntryPointInteractionEvent -> EntrypointCommandContext(this, event)
             else -> error("Unknown command event")
         }
 
@@ -104,7 +104,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         } catch (_: CommandTermination) {}
     }
 
-    fun getCommand(name: String): CommandImpl<*, *>? = if (name == entryPoint?.name) entryPoint else commands[name]
+    fun getCommand(name: String): CommandImpl<*, *>? = /*if (name == entryPoint?.name) entryPoint else */commands[name]
 
     fun <C : CommandImpl<*, out CommandData>> registerCommand(command: Command<C>) = command(null).apply(this::registerCommand)
     fun registerCommand(command: CommandImpl<*, out CommandData>) {
@@ -112,11 +112,11 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         if (command is SlashCommandImpl) command.subcommands.values.forEach { registerCommand(it) }
     }
 
-    fun primaryEntrypoint(command: EntrypointCommand) = command(null).apply(this::primaryEntrypoint)
+    /*fun primaryEntrypoint(command: EntrypointCommand) = command(null).apply(this::primaryEntrypoint)
     fun primaryEntrypoint(command: EntryPointCommandImpl) {
         require(entryPoint == null) { "Cannot have more than one entrypoint command" }
         entryPoint = command
-    }
+    }*/
 
     operator fun <C: CommandImpl<*, out CommandData>> plusAssign(command: Command<C>) { registerCommand(command) }
     operator fun plusAssign(command: CommandImpl<*, out CommandData>) = registerCommand(command)
@@ -128,7 +128,7 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
         .addCommands(commands.values
              .filter { it.parent == null }
              .map { it.build(this) }
-        ).apply { entryPoint?.build(this@CommandManager)?.let { setPrimaryEntryPointCommand(it) } }
+        )//.apply { entryPoint?.build(this@CommandManager)?.let { setPrimaryEntryPointCommand(it) } }
         .onSuccess { result -> result.forEach {
             getCommand(it.fullCommandName)!!.idLong = it.idLong
         } }

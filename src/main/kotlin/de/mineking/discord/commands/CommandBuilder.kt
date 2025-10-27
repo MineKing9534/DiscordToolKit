@@ -8,9 +8,10 @@ import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
-import net.dv8tion.jda.api.interactions.commands.build.PrimaryEntryPointCommandData
 
-typealias CommandHandler<C> = suspend C.() -> Unit
+fun interface CommandHandler<C> {
+    suspend fun C.run()
+}
 
 interface BeforeHandler<C> : CommandHandler<C> {
     val inherit: Boolean get() = true
@@ -21,11 +22,11 @@ const val DEFAULT_OPTION_DESCRIPTION = "-"
 
 typealias ContextCommandConfig<C> = GenericCommandBuilder<C>.() -> Unit
 typealias SlashCommandConfig = SlashCommandBuilder.() -> Unit
-typealias EntrypointConfig = GenericCommandBuilder<EntrypointCommandContext>.() -> Unit
+//typealias EntrypointConfig = GenericCommandBuilder<EntrypointCommandContext>.() -> Unit
 
 typealias LocalizedContextCommandConfig<C, L> = GenericCommandBuilder<C>.(localization: L) -> Unit
 typealias LocalizedSlashCommandConfig<L> = SlashCommandBuilder.(localization: L) -> Unit
-typealias LocalizedEntrypointConfig<L> = GenericCommandBuilder<EntrypointCommandContext>.(localization: L) -> Unit
+//typealias LocalizedEntrypointConfig<L> = GenericCommandBuilder<EntrypointCommandContext>.(localization: L) -> Unit
 
 interface CommandConfig<C> {
     fun defaultMemberPermission(permission: DefaultMemberPermissions)
@@ -40,9 +41,8 @@ interface CommandConfig<C> {
     fun integrationTypes(vararg types: IntegrationType) = integrationTypes(types.asList())
 
     fun before(handler: BeforeHandler<in C>)
-    fun before(inherit: Boolean = false, handler: CommandHandler<C>) = before(object : BeforeHandler<C> {
+    fun before(inherit: Boolean = false, handler: CommandHandler<C>) = before(object : BeforeHandler<C>, CommandHandler<C> by handler {
         override val inherit: Boolean get() = inherit
-        override suspend fun invoke(context: C) = context.handler()
     })
 }
 
@@ -134,8 +134,8 @@ fun slashCommand(
             val executor = SlashCommandBuilder(manager, this)
             executor.config()
 
-            command.effectiveConditions().forEach { handler -> handler(context) }
-            executor.handlers.forEach { handler -> context.handler() }
+            command.effectiveConditions().forEach { handler -> with(handler) { context.run() } }
+            executor.handlers.forEach { handler -> with(handler) { context.run() } }
         }
     }
 
@@ -162,8 +162,8 @@ fun <C : ContextCommandContext<*, *>> contextCommand(
             val executor = GenericCommandBuilder(manager, this)
             executor.config()
 
-            command.effectiveConditions().forEach { handler -> handler(context) }
-            executor.handlers.forEach { handler -> context.handler() }
+            command.effectiveConditions().forEach { handler -> with(handler) { context.run() } }
+            executor.handlers.forEach { handler -> with(handler) { context.run() } }
         }
     }
     command
@@ -181,7 +181,7 @@ fun userCommand(
     config: ContextCommandConfig<UserCommandContext>
 ) = contextCommand(name, Command.Type.USER, localization, config)
 
-fun entrypointCommand(
+/*fun entrypointCommand(
     name: String,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     permission: DefaultMemberPermissions? = null,
@@ -216,7 +216,7 @@ fun entrypointCommand(
         }
     }
     command
-}
+}*/
 
 inline fun <reified L : LocalizationFile> localizedSlashCommand(
     name: String,
@@ -243,7 +243,7 @@ inline fun <reified L : LocalizationFile> localizedUserCommand(
     userCommand(name, file) { config(file) }(it)
 }
 
-inline fun <reified L : LocalizationFile> localizedEntrypointCommand(
+/*inline fun <reified L : LocalizationFile> localizedEntrypointCommand(
     name: String,
     description: String = DEFAULT_COMMAND_DESCRIPTION,
     permission: DefaultMemberPermissions? = null,
@@ -261,4 +261,4 @@ inline fun <reified L : LocalizationFile> localizedEntrypointCommand(
 ): EntrypointCommand = {
     val file = manager.localizationManager.read<L>()
     entrypointCommand(name, description, file) { config(file) }(it)
-}
+}*/
