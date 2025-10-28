@@ -102,9 +102,11 @@ class SlashCommandBuilder(manager: CommandManager, command: SlashCommandImpl?) :
 
     override fun <T> option(data: OptionInfo): Option<OptionalOption<T>> {
         if (command == null) options += data
-        return object : RichOption<OptionalOption<T>> {
+        return object : Option<OptionalOption<T>> {
             override val data: OptionInfo = data
-            override suspend fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
+
+            context(context: SlashCommandContext)
+            override suspend fun invoke() = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
         }
     }
 

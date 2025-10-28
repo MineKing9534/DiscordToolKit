@@ -4,8 +4,8 @@ fun <C : ICommandContext<*>> GenericCommandBuilder<C>.condition(condition: Execu
 fun <C : ICommandContext<*>> GenericCommandBuilder<C>.condition(inherit: Boolean = true, condition: ExecutionCondition<C>) = before(inherit, condition)
 
 fun <C : ICommandContext<*>> GenericCommandBuilder<C>.require(condition: suspend C.() -> Boolean, orElse: CommandHandler<C>, inherit: Boolean = true) = condition(inherit) {
-    if (!condition(it)) {
-        orElse(it)
+    if (!condition(this)) {
+        with(orElse) { this@condition.run() }
         false
     } else true
 }
@@ -13,14 +13,14 @@ fun <C : ICommandContext<*>> GenericCommandBuilder<C>.require(condition: suspend
 fun interface ExecutionCondition<C : ICommandContext<*>> : BeforeHandler<C> {
     override val inherit: Boolean get() = true
 
-    suspend fun check(context: C): Boolean
+    suspend fun C.check(): Boolean
     fun handleForbidden(context: C) {
         if (!context.event.isAcknowledged) context.event.deferReply(true).flatMap { it.deleteOriginal() }.queue()
     }
 
-    override suspend operator fun invoke(context: C) {
-        if (!check(context)) {
-            handleForbidden(context)
+    override suspend fun C.run() {
+        if (!check()) {
+            handleForbidden(this)
             terminateCommand()
         }
     }
