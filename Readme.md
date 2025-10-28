@@ -7,7 +7,7 @@ Discord Tool Kit (DTK) is a library built around [JDA](https://github.com/discor
 It also provides a built-in way to localize both commands and menus.
 
 To create a DTK instance, you can use the `discordToolKit` function. As parameters, you have to pass your `JDA` instance and optionally an instance of the main class of your bot.
-This is useful if you need already have a reference to the DTK instance available but also need access to your main class instance.
+This is useful if you already have a reference to the DTK instance available but also need access to your main class instance.
 This is common in custom components or command implementations because they always provide a reference to their respective managers (Both CommandManager and UIManager have a reference to their DTK instance in the `manager` property).
 If you don't provide an instance of your main class, `Unit` is used implicitly.
 
@@ -267,7 +267,7 @@ discordToolKit(jda).withUIManager {
 }
 ```
 
-Menus have to be registered once and can then be used afterwards:
+Menus have to be registered once and can then be used afterward:
 ```kt
 discordToolKit(jda).withUIManager {
     val menu = registerMenu<Unit>("test") {
@@ -372,7 +372,7 @@ println(color.rgb)
 
 ## Menu Parameters
 You might have noticed the `Unit` type parameter that is passed to registerMenu in the examples before. 
-This type is the menu parameter type. In many cases you can just use Unit because you don't need a parameter, but you might want to pass certain information when first ending a menu, like an initial state value.
+This type is the menu parameter type. In many cases you can just use Unit because you don't need a parameter, but you might want to pass certain information when first sending a menu, like an initial state value.
 
 ```kt
 val menu = registerMenu<Int>("test") {
