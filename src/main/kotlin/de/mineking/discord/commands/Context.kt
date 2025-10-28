@@ -118,7 +118,7 @@ class UserCommandContext(
     override fun <T : Any?> getOption(name: String, fallback: Supplier<out T?>?, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, fallback, resolver)
 }
 
-class EntrypointCommandContext(
+/*class EntrypointCommandContext(
     override val manager: CommandManager,
     override val event: PrimaryEntryPointInteractionEvent
 ) : ICommandContext<PrimaryEntryPointInteractionEvent>, PrimaryEntryPointInteraction by event {
@@ -159,7 +159,7 @@ class EntrypointCommandContext(
     override fun <T : Any?> getOption(name: String, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, resolver)
     override fun <T : Any?> getOption(name: String, fallback: T?, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, fallback, resolver)
     override fun <T : Any?> getOption(name: String, fallback: Supplier<out T?>?, resolver: Function<in OptionMapping, out T?>): T? = event.getOption(name, fallback, resolver)
-}
+}*/
 
 interface IOptionContext<E> : IContext<E>, CommandInteractionPayload, OptionContext where E : GenericInteractionCreateEvent, E : CommandInteractionPayload
 

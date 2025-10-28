@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.requests.RestAction
-import kotlin.reflect.KType
 
 typealias MenuCommandConfigurator = suspend MenuCommandConfig<*>.(localization: LocalizationFile?) -> Unit
 typealias LocalizedMenuCommandConfigurator<L> = suspend MenuCommandConfig<L>.(localization: L) -> Unit
@@ -19,16 +18,22 @@ interface MenuCommandConfig<L : LocalizationFile?> : MessageMenuConfig<SlashComm
 }
 
 context(config: MenuCommandConfig<*>)
-suspend fun <T> Option<T>.createUninitializedState(type: KType, handler: StateUpdateHandler<T?>? = null) = createState(type, null, handler)
+suspend fun <T> Option<T>.createUninitializedState(handler: StateUpdateHandler<T?>? = null) = createState(null, handler)
 
 context(config: MenuCommandConfig<*>)
 suspend fun <T> Option<T>.createState(
-    type: KType = if (this is RichOption) this.type else error("You need to provide a type"),
-    default: T = if (this is RichOption && this.default != null) this.default!! else error("You need to provide a default value or use createUninitializedState"),
+    default: T =
+        @Suppress("UNCHECKED_CAST")
+        if (this.default != null || this.type.isMarkedNullable) this.default as T
+        else error("You need to provide a default value or use createUninitializedState"),
     handler: StateUpdateHandler<T>? = null
 ): MutableState<T> {
     val (_, setValue, state) = config.state(type, default, handler)
-    config.initialize { setValue(this@createState.invoke(it)) }
+    config.initialize {
+        it.run {
+            setValue(this@createState())
+        }
+    }
 
     return state
 }
@@ -45,9 +50,11 @@ class MenuCommandConfigImpl<L : LocalizationFile?>(override val manager: Command
 
     override fun <T> option(data: OptionInfo): Option<OptionalOption<T>> {
         options += data
-        return object : RichOption<OptionalOption<T>> {
+        return object : Option<OptionalOption<T>> {
             override val data: OptionInfo = data
-            override suspend fun invoke(context: SlashCommandContext) = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
+
+            context(context: SlashCommandContext)
+            override suspend fun invoke() = OptionalOption<T>(context.parseOption(data.name), context.hasOption(data.name))
         }
     }
 

@@ -88,14 +88,17 @@ data class CommandOptions(val data: Map<String, Any?>) : OptionContext {
     override fun <T> parseOption(name: String) = data[name] as T
 }
 
-typealias Option<T> = suspend SlashCommandContext.() -> T
-
-interface RichOption<T> : Option<T> {
+interface Option<out T> {
     val data: OptionInfo
     val type: KType get() = data.type
 
     val default: T? get() = null
+
+    context(context: SlashCommandContext)
+    suspend operator fun invoke(): T
 }
+
+suspend operator fun <T> Option<T>.invoke(context: SlashCommandContext) = context.run { this@invoke() }
 
 class OptionalOptionSerializer<T>(val dataSerializer: KSerializer<T>) : KSerializer<OptionalOption<T>> {
     override val descriptor = buildClassSerialDescriptor("de.mineking.discord.OptionalOption") {
@@ -106,7 +109,7 @@ class OptionalOptionSerializer<T>(val dataSerializer: KSerializer<T>) : KSeriali
     @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: Encoder, value: OptionalOption<T>) = encoder.encodeStructure(descriptor) {
         encodeBooleanElement(descriptor, 0, value.isPresent())
-        encodeNullableSerializableElement(descriptor, 1, dataSerializer, value.get())
+        encodeNullableSerializableElement(descriptor, 1, dataSerializer, value.orNull())
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -120,7 +123,7 @@ class OptionalOptionSerializer<T>(val dataSerializer: KSerializer<T>) : KSeriali
 
 @Suppress("UNCHECKED_CAST")
 @Serializable(with = OptionalOptionSerializer::class)
-class OptionalOption<out T>(private val value: T?, private val present: Boolean) {
+class OptionalOption<out T>(private val value_: T?, private val present: Boolean) {
     companion object {
         val EMPTY = OptionalOption(null, false)
     }
@@ -128,59 +131,55 @@ class OptionalOption<out T>(private val value: T?, private val present: Boolean)
     fun isPresent() = present
     fun isEmpty() = !present
 
-    fun orNull(): T? = if (present) value else null
+    fun orNull(): T? = if (present) value_ else null
 
-    fun get(): T = if (present) value as T else error("")
+    val value: T
+        get() = if (present) value_ as T else error("No value present")
 
-    inline fun <U> map(mapper: (value: T) -> U): OptionalOption<U> = if (isPresent()) OptionalOption(mapper(get()), true) else EMPTY
-    inline fun filter(filter: (value: T) -> Boolean): OptionalOption<T> = if (isPresent() && filter(get())) OptionalOption(get(), true) else EMPTY
+    inline fun <U> map(mapper: (value: T) -> U): OptionalOption<U> = if (isPresent()) OptionalOption(mapper(value), true) else EMPTY
+    inline fun filter(filter: (value: T) -> Boolean): OptionalOption<T> = if (isPresent() && filter(value)) OptionalOption(value, true) else EMPTY
 }
 
-fun <T> OptionalOption<T>.orElse(other: T) = if (isPresent()) get() else other
+fun <T> OptionalOption<T>.orElse(other: T) = if (isPresent()) value else other
+inline fun <T> OptionalOption<T>.orElse(other: () -> T) = if (isPresent()) value else other()
 fun <T> OptionalOption<T>.or(other: OptionalOption<T>) = if (isPresent()) this else other
 
 inline fun <T, reified U> Option<T>.map(noinline mapper: suspend SlashCommandContext.(value: T) -> U): Option<U> = map(typeOf<U>(), mapper)
-fun <T, U> Option<T>.map(type: KType?, mapper: suspend SlashCommandContext.(value: T) -> U): Option<U> = if (this is RichOption<*>) object : RichOption<U> {
-    override val data: OptionInfo = this@map.data
-    override val type: KType = type!!
+fun <T, U> Option<T>.map(type: KType, mapper: suspend SlashCommandContext.(value: T) -> U): Option<U> = object : Option<U> {
+    override val data = this@map.data
+    override val type = type
 
     @Suppress("UNCHECKED_CAST")
-    override val default: U? = if (type == this@map.type) this@map.default as U? else null
+    override val default: U? =
+        if (type == this@map.type) this@map.default as U?
+        else null
 
     private var value: U? = null
     private var present = false
 
     @Suppress("UNCHECKED_CAST")
-    override suspend fun invoke(context: SlashCommandContext): U {
+    context(context: SlashCommandContext)
+    override suspend fun invoke(): U {
         if (present) return value as U
 
-        value = context.mapper(this@map(context))
+        value = context.mapper(this@map())
         present = true
 
         return value as U
     }
-} else { { mapper(this@map()) } }
+}
 
-fun <T, U> Option<OptionalOption<T>>.mapValue(mapper: suspend SlashCommandContext.(value: T) -> U): Option<OptionalOption<U>> = map { it.map { mapper(it) } }
-fun <T> Option<OptionalOption<T>>.filterValue(filter: suspend SlashCommandContext.(value: T) -> Boolean): Option<OptionalOption<T>> = map { it.filter { filter(it) } }
+fun <T, U> Option<OptionalOption<T>>.mapValue(mapper: suspend SlashCommandContext.(value: T) -> U): Option<OptionalOption<U>> = map { o -> o.map { mapper(it) } }
+fun <T> Option<OptionalOption<T>>.filterValue(filter: suspend SlashCommandContext.(value: T) -> Boolean): Option<OptionalOption<T>> = map { o -> o.filter { filter(it) } }
 
-fun <T> Option<OptionalOption<T>>.get(): Option<T> = map(if (this is RichOption) type else null) { it.get() }
-fun <T> Option<OptionalOption<T>>.orNull(): Option<T?> = map(if (this is RichOption) type.withNullability(true) else null) { it.orNull() }
+fun <T> Option<OptionalOption<T>>.get(): Option<T> = map(type) { it.value }
+fun <T> Option<OptionalOption<T>>.orNull(): Option<T?> = map(type.withNullability(true)) { it.orNull() }
 
 fun <T> Option<OptionalOption<T>>.or(other: Option<OptionalOption<T>>) = map { if (it.isPresent()) it else other() }
-inline fun <reified T> Option<OptionalOption<T>>.orValue(crossinline other: Option<T>) = map { if (it.isPresent()) it.get() else other() }
+inline fun <reified T> Option<OptionalOption<T>>.orValue(other: Option<T>) = map { it.orElse { other() } }
 
-inline fun <reified T> Option<OptionalOption<T>>.orElse(noinline value: suspend SlashCommandContext.() -> T): Option<T> = orElse(typeOf<T>(), value)
-fun <T> Option<OptionalOption<T>>.orElse(type: KType?, value: suspend SlashCommandContext.() -> T): Option<T> = map(type) { it.orElse(value()) }
-inline fun <reified T> Option<OptionalOption<T>>.orElse(value: T): Option<T> = orElse(typeOf<T>(), value)
-fun <T> Option<OptionalOption<T>>.orElse(type: KType?, value: T): Option<T> = if (this is RichOption<*>) object : RichOption<T> {
-    override val data: OptionInfo = this@orElse.data
-    override val type: KType = type!!
-
-    override val default: T = value
-
-    override suspend fun invoke(context: SlashCommandContext): T = this@orElse(context).orElse(value)
-} else { { this@orElse().orElse(value) } }
+fun <T> Option<OptionalOption<T>>.orElse(value: suspend SlashCommandContext.() -> T): Option<T> = map(type) { it.orElse(value()) }
+fun <T> Option<OptionalOption<T>>.orElse(value: T): Option<T> = map(type) { it.orElse(value) }
 
 @Suppress("UNCHECKED_CAST")
 interface OptionConfig {
