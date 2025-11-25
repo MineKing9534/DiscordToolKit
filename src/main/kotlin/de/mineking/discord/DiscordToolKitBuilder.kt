@@ -75,8 +75,8 @@ class DiscordToolKitBuilder<B>(val jda: JDA, val bot: B) {
     }
 }
 
-inline fun <reified T : LocalizationManager> DiscordToolKitBuilder<*>.withLocalization(noinline config: ManagerConfigurator<T>? = null) = withLocalization {
-    val instance = T::class.primaryConstructor!!.call(it)
+inline fun <B, reified L : LocalizationManager> DiscordToolKitBuilder<B>.withLocalization(noinline config: ManagerConfigurator<L>? = null) = withLocalization {
+    val instance = L::class.primaryConstructor!!.call(it)
     if (config != null) instance.config()
 
     instance
