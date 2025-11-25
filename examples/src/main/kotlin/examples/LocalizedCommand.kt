@@ -3,7 +3,11 @@ package examples
 import de.mineking.discord.commands.localizedSlashCommand
 import de.mineking.discord.commands.requiredOption
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.localization.*
+import de.mineking.discord.localization.DefaultLocalizationManager
+import de.mineking.discord.localization.Locale
+import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.localization.LocalizationParameter
+import de.mineking.discord.localization.Localize
 import de.mineking.discord.withLocalization
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import setup.createJDA

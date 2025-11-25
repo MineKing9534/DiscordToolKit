@@ -5,7 +5,6 @@ import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.builder.TextElementBuilder
 import de.mineking.discord.ui.builder.renderTextElement
 import de.mineking.discord.ui.createSharedLayoutComponent
-import de.mineking.discord.ui.localizationPrefix
 import de.mineking.discord.ui.readLocalizedString
 import net.dv8tion.jda.api.EmbedBuilder.ZERO_WIDTH_SPACE
 import net.dv8tion.jda.api.components.textdisplay.TextDisplay

@@ -1,6 +1,12 @@
 package examples
 
-import de.mineking.discord.commands.*
+import de.mineking.discord.commands.OptionConfig
+import de.mineking.discord.commands.choice
+import de.mineking.discord.commands.requiredDoubleOption
+import de.mineking.discord.commands.requiredEnumOption
+import de.mineking.discord.commands.requiredOption
+import de.mineking.discord.commands.requiredStringOption
+import de.mineking.discord.commands.slashCommand
 import de.mineking.discord.discordToolKit
 import setup.createJDA
 

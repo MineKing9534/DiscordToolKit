@@ -3,7 +3,12 @@ package de.mineking.discord.ui.builder.components.modal
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.localizationPrefix
-import de.mineking.discord.ui.modal.*
+import de.mineking.discord.ui.modal.ModalComponent
+import de.mineking.discord.ui.modal.ModalContext
+import de.mineking.discord.ui.modal.ModalElement
+import de.mineking.discord.ui.modal.ModalResultHandler
+import de.mineking.discord.ui.modal.createModalElement
+import de.mineking.discord.ui.modal.map
 import de.mineking.discord.ui.readLocalizedString
 import net.dv8tion.jda.api.components.Component
 import net.dv8tion.jda.api.components.textinput.TextInput

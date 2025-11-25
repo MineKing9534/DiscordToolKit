@@ -2,7 +2,13 @@ package examples
 
 import de.mineking.discord.commands.menuCommand
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.ui.builder.components.message.*
+import de.mineking.discord.ui.builder.components.message.ButtonColor
+import de.mineking.discord.ui.builder.components.message.actionRow
+import de.mineking.discord.ui.builder.components.message.button
+import de.mineking.discord.ui.builder.components.message.container
+import de.mineking.discord.ui.builder.components.message.modalButton
+import de.mineking.discord.ui.builder.components.message.section
+import de.mineking.discord.ui.builder.components.message.separator
 import de.mineking.discord.ui.builder.components.modal.textInput
 import de.mineking.discord.ui.builder.components.modal.withLabel
 import de.mineking.discord.ui.builder.components.textDisplay

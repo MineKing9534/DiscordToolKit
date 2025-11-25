@@ -1,6 +1,11 @@
 package examples
 
-import de.mineking.discord.commands.*
+import de.mineking.discord.commands.SlashCommandImpl
+import de.mineking.discord.commands.get
+import de.mineking.discord.commands.option
+import de.mineking.discord.commands.orElse
+import de.mineking.discord.commands.require
+import de.mineking.discord.commands.slashCommand
 import de.mineking.discord.discordToolKit
 import setup.createJDA
 

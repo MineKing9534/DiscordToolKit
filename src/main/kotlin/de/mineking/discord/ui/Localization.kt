@@ -1,6 +1,10 @@
 package de.mineking.discord.ui
 
-import de.mineking.discord.localization.*
+import de.mineking.discord.localization.Locale
+import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.localization.LocalizationParameter
+import de.mineking.discord.localization.isDefault
+import de.mineking.discord.localization.shouldLocalize
 import de.mineking.discord.ui.modal.ModalMenuConfig
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import net.dv8tion.jda.api.interactions.DiscordLocale

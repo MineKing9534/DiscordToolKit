@@ -2,13 +2,23 @@ package examples
 
 import de.mineking.discord.commands.localizedMenuCommand
 import de.mineking.discord.discordToolKit
-import de.mineking.discord.localization.*
-import de.mineking.discord.ui.*
+import de.mineking.discord.localization.DefaultLocalizationManager
+import de.mineking.discord.localization.Locale
+import de.mineking.discord.localization.LocalizationFile
+import de.mineking.discord.localization.LocalizationParameter
+import de.mineking.discord.localization.Localize
+import de.mineking.discord.localization.localize
 import de.mineking.discord.ui.builder.components.message.actionRow
 import de.mineking.discord.ui.builder.components.message.button
 import de.mineking.discord.ui.builder.components.message.localizedMenuButton
 import de.mineking.discord.ui.builder.components.message.menuButton
+import de.mineking.discord.ui.disabled
+import de.mineking.discord.ui.getValue
+import de.mineking.discord.ui.localizeForUser
 import de.mineking.discord.ui.message.message
+import de.mineking.discord.ui.read
+import de.mineking.discord.ui.setValue
+import de.mineking.discord.ui.state
 import de.mineking.discord.withLocalization
 import net.dv8tion.jda.api.interactions.DiscordLocale
 import setup.createJDA

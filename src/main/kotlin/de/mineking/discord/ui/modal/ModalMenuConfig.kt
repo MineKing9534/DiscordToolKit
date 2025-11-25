@@ -2,7 +2,11 @@ package de.mineking.discord.ui.modal
 
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
-import de.mineking.discord.ui.*
+import de.mineking.discord.ui.BuildMenuContext
+import de.mineking.discord.ui.MenuCallbackPhase
+import de.mineking.discord.ui.MenuConfig
+import de.mineking.discord.ui.MenuConfigState
+import de.mineking.discord.ui.MenuContext
 import net.dv8tion.jda.api.components.ModalTopLevelComponent
 import kotlin.reflect.KProperty
 

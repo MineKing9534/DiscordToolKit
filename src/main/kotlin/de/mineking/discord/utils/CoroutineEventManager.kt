@@ -1,7 +1,12 @@
 package de.mineking.discord.utils
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import mu.KLogger
 import mu.KotlinLogging
 import net.dv8tion.jda.api.JDA
