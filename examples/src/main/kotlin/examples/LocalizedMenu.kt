@@ -26,7 +26,7 @@ import setup.createJDA
 fun main() {
     val jda = createJDA()
     discordToolKit(jda)
-        .withLocalization<DefaultLocalizationManager>() //This is generated at compile time by the gradle plugin. See build.gradle.kts to see the setup for that
+        .withLocalization<_, DefaultLocalizationManager>() //This is generated at compile time by the gradle plugin. See build.gradle.kts to see the setup for that
         .withUIManager { localize() }
         .withCommandManager {
             localize()
