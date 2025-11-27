@@ -11,7 +11,7 @@ This is useful if you already have a reference to the DTK instance available but
 This is common in custom components or command implementations because they always provide a reference to their respective managers (Both CommandManager and UIManager have a reference to their DTK instance in the `manager` property).
 If you don't provide an instance of your main class, `Unit` is used implicitly.
 
-> [!NOTE]
+> [!TIP]
 > This library is NOT compatible with pure Java. If you want to use Java instead of Kotlin, you can take a look at [DiscordUtils](https://github.com/MineKing9534/DiscordUtils) which has a similar scope as this project but was created in and for Java.
 
 There are some examples available in `examples/src/main/kotlin/` if you want to see some features in action. If you want to run them you have to add the `-DTOKEN=<YOUR BOT TOKEN>` flag.
