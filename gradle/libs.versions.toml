@@ -1,18 +1,18 @@
 [versions]
-kotlin = "2.2.20"
-serialization = "1.8.0"
-coroutines = "1.8.1"
+kotlin = "2.3.10"
+kotlin-serialization = "1.9.0"
+kotlin-coroutines = "1.10.2"
 
-localization = "1.1.0"
-jda = "6.1.0"
-emoji = "2.0.1"
+dtk-localization = "1.1.0"
+jda = "6.3.1"
+emoji = "2.3.0"
 
 logging = "2.0.11"
-logback = "1.5.15"
+logback = "1.5.19"
 
 [libraries]
-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "serialization" }
+kotlin-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
+kotlin-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlin-serialization" }
 
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
 emoji = { module = "org.kodein.emoji:emoji-kt", version.ref = "emoji" }
@@ -21,7 +21,7 @@ logging = { module = "io.github.microutils:kotlin-logging-jvm", version.ref = "l
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
 [plugins]
-kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 
-localization = { id = "de.mineking.discord.localization", version.ref = "localization" }
+dtk-localization = { id = "de.mineking.discord.localization", version.ref = "dtk-localization" }
