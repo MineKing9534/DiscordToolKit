@@ -541,8 +541,8 @@ registerMenu("menu", useComponentsV2 = true) {
   +container(color = 0x00FF00) {
       +section(
           modalButton(
-              "text", label = "Modal", title = "Enter Text", component =
-                  textInput("text", placeholder = "Hello World!", value = text).withLabel("Enter Text")
+              "text", label = "Modal", title = "Enter Text", 
+              component = textInput("text", placeholder = "Hello World!", value = text).withLabel("Enter Text")
           ) {
               text = it
           }
@@ -772,10 +772,14 @@ registerModal<Unit>("modal") {
 > You always have to wrap components in a `label` to be able to add them to a modal menu. There is also the `withLabel` extension function that makes the component creation more readable.
 
 > [!NOTE]
-> Discord currently only allows `textInput`s, `stringSelect`s and `entitySelect`s inside modals. For select menus, their main handler (and option handlers) are NOT executed. Instead, the `modalHandler` is used.
+> Discord currently only allows `textInput`s, `stringSelect`s, `entitySelect`s and checkbox components inside modals. For select menus, their main handler (and option handlers) are NOT executed. Instead, the `modalHandler` is used.
 
 You can create text inputs with the `textInput` function. They can be added to your modal with the `+` operator. Adding a text input will return a function that can be used inside the executor block to read the inputs value.
 The `execute` block is what is executed when a user submits a modal.
+
+In addition to `textInput` there are also the `checkbox`, `checkboxGroup` and `radioGroup` components, that are exclusive to modals. They also have factory functions as usual.
+While discord itself does not support required checkboxes, discord tool kit provides a `requiredCheckbox` function, that creates a required checkbox group with a single option under the hood.
+This is useful for additional confirmation steps, since users cannot submit the modal unless they check the box.
 
 If you only want to use a modal to read a text input from the user in a message menu, you can use `modalButton` (or `modalSelectOption`):
 ```kt
