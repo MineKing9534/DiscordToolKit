@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.kotlin)
-    alias(libs.plugins.serialization)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
 
     id("maven-publish")
 }
@@ -26,8 +26,8 @@ dependencies {
     compileOnly(libs.emoji)
 
     compileOnly(kotlin("reflect"))
-    implementation(libs.serialization)
-    implementation(libs.coroutines)
+    implementation(libs.kotlin.serialization)
+    implementation(libs.kotlin.coroutines)
 
     implementation(libs.logging)
 }

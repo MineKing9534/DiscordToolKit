@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.localization)
+    alias(libs.plugins.dtk.localization)
 }
 
 group = "de.mineking"
