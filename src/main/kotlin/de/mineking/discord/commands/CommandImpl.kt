@@ -2,6 +2,7 @@ package de.mineking.discord.commands
 
 import de.mineking.discord.localization.LocalizationFile
 import net.dv8tion.jda.api.entities.IMentionable
+import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.Command.Type
@@ -100,9 +101,18 @@ abstract class ContextCommandImpl<C : ContextCommandContext<*, *>>(
 ) : CommandImpl<C, CommandData>(name, null, localization, setup, conditions, defaultMemberPermissions, contexts, types) {
     override fun build(manager: CommandManager): CommandData {
         val localization = manager.localization?.getCommandDescription(effectiveLocalization(), this)
-        val result = Commands.context(type, localization?.default ?: name)
+        val result = Commands.context(type, name)
 
-        if (localization != null) result.setNameLocalizations(localization.localization)
+        if (localization != null) {
+            // Context commands don't have a localized fallback, so we need to provide a localized value for every locale
+            val values = localization.localization.toMutableMap()
+            DiscordLocale.entries.forEach {
+                if (it == DiscordLocale.UNKNOWN) return@forEach
+                values.putIfAbsent(it, localization.default)
+            }
+
+            result.setNameLocalizations(values)
+        }
         finalize(result)
 
         return result

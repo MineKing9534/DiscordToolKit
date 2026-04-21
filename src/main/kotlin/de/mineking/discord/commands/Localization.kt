@@ -26,7 +26,7 @@ class DefaultCommandLocalizationHandler(val prefix: String, val args: Map<String
         val default = if (command is SlashCommandImpl) command.description else command.name
         if (file == null) return LocalizationInfo(default)
 
-        val key = default.takeIf { it != DEFAULT_COMMAND_DESCRIPTION } ?: "${command.path()}.description"
+        val key = default.takeIf { command is SlashCommandImpl && it != DEFAULT_COMMAND_DESCRIPTION } ?: "${command.path()}.description"
         return createLocalization(file, command, key)
     }
 

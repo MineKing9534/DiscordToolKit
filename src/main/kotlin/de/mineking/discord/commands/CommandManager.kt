@@ -2,6 +2,7 @@ package de.mineking.discord.commands
 
 import de.mineking.discord.DiscordToolKit
 import de.mineking.discord.Manager
+import mu.KotlinLogging
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent
@@ -13,6 +14,8 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import kotlin.reflect.KType
 import kotlin.reflect.jvm.kotlinProperty
 import kotlin.reflect.typeOf
+
+private val logger = KotlinLogging.logger {}
 
 @DslMarker
 annotation class CommandMarker
@@ -134,6 +137,9 @@ class CommandManager internal constructor(manager: DiscordToolKit<*>) : Manager(
              .map { it.build(this) }
         )//.apply { entryPoint?.build(this@CommandManager)?.let { setPrimaryEntryPointCommand(it) } }
         .onSuccess { result -> result.forEach {
-            getCommand(it.fullCommandName)!!.idLong = it.idLong
+            val command = getCommand(it.fullCommandName)
+                ?: return@onSuccess logger.warn("Command update response contained unknown command '${it.fullCommandName}'")
+
+            command.idLong = it.idLong
         } }
 }
