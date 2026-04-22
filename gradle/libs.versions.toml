@@ -4,7 +4,7 @@ kotlin-serialization = "1.9.0"
 kotlin-coroutines = "1.10.2"
 
 dtk-localization = "1.1.0"
-jda = "6.3.1"
+jda = "6.4.1"
 emoji = "2.3.0"
 
 logging = "2.0.11"
