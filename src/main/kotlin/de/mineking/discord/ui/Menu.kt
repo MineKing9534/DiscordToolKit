@@ -7,6 +7,9 @@ import kotlinx.coroutines.async
 import net.dv8tion.jda.api.components.buttons.Button
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.events.interaction.GenericInteractionCreateEvent
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.plusAssign
 
 @DslMarker
 annotation class MenuMarker
@@ -53,24 +56,26 @@ object EmptyIdGenerator : IdGenerator {
     override fun withParameter(parameter: String) = this
 }
 
-open class IdGeneratorImpl(private val state: String, private val postfix: String = "") : IdGenerator {
-    internal var pos = 0
+@OptIn(ExperimentalAtomicApi::class)
+class IdGeneratorImpl private constructor(
+    private val state: String,
+    private val pos: AtomicInt,
+    private val postfix: String,
+) : IdGenerator {
+    constructor(state: String) : this(state, AtomicInt(0), "")
 
     @Synchronized
     override fun nextId(base: String): String {
-        val length = (Button.ID_MAX_LENGTH - base.length - postfix.length - 2).coerceIn(0, state.length - pos)
-        val result = base + String.format("%02d", length) + state.substring(pos, pos + length) + postfix
+        val length = (Button.ID_MAX_LENGTH - base.length - postfix.length - 2).coerceIn(0, state.length - pos.load())
+        val result = base + String.format("%02d", length) + state.substring(pos.load(), pos.load() + length) + postfix
 
         pos += length
         return result
     }
 
-    override fun withParameter(parameter: String) = object : IdGeneratorImpl(state, parameter) {
-        override fun nextId(base: String) = super.nextId(base)
-            .also { this@IdGeneratorImpl.pos = this.pos }
-    }
+    override fun withParameter(parameter: String) = IdGeneratorImpl(state, pos, parameter)
 
-    fun charactersLeft() = state.length - pos
+    fun charactersLeft() = state.length - pos.load()
 }
 
 class MenuLazyImpl<out T>(val menu: Menu<*, *, *>, var active: Boolean = false, val default: T, provider: suspend () -> T) : Lazy<T> {
