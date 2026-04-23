@@ -10,7 +10,7 @@ val release = System.getenv("RELEASE") == "true"
 
 allprojects {
     group = "de.mineking"
-    version = "1.5.2"
+    version = "1.6.0"
 
     apply(plugin = "kotlin")
 
