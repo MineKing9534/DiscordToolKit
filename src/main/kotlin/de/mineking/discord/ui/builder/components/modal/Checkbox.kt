@@ -3,6 +3,7 @@ package de.mineking.discord.ui.builder.components.modal
 import de.mineking.discord.localization.DEFAULT_LABEL
 import de.mineking.discord.localization.LocalizationFile
 import de.mineking.discord.ui.MenuConfig
+import de.mineking.discord.ui.localizationPrefix
 import de.mineking.discord.ui.modal.ModalResultHandler
 import de.mineking.discord.ui.modal.createModalElement
 import de.mineking.discord.ui.modal.map
@@ -36,14 +37,14 @@ class CheckboxGroupOption(
     val visible: Boolean,
 ) {
     fun buildCheckboxOption(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
-        JDACheckboxGroupOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
-            .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", postfix = "options.$value"))
+        JDACheckboxGroupOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", prefix = config.localizationPrefix(), postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
+            .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", prefix = config.localizationPrefix(), postfix = "options.$value"))
             .withDefault(default)
             .withValue(value)
 
     fun buildRadioOption(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
-        JDARadioGroupOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
-            .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", postfix = "options.$value"))
+        JDARadioGroupOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", prefix = config.localizationPrefix(), postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
+            .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", prefix = config.localizationPrefix(), postfix = "options.$value"))
             .withDefault(default)
             .withValue(value)
 }
@@ -120,9 +121,11 @@ fun radioGroup(
 fun requiredCheckbox(
     name: String,
     default: Boolean = false,
+    label: CharSequence = DEFAULT_LABEL,
+    description: CharSequence? = DEFAULT_LABEL,
 ) = checkboxGroup(
     name,
-    checkboxGroupOption("value", default = default),
+    checkboxGroupOption("value", default = default, label = label, description = description),
     required = true,
     minValues = 1,
 ).map { "value" in it }
