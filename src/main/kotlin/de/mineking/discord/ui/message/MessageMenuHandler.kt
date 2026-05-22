@@ -71,7 +71,7 @@ object DefaultMessageMenuHandler : MessageMenuHandler {
         state.after.forEach { it() }
     }
 
-    fun buildComponents(renderer: MessageMenuRenderer<*, *>): List<MessageTopLevelComponent> {
+    suspend fun buildComponents(renderer: MessageMenuRenderer<*, *>): List<MessageTopLevelComponent> {
         val generator = IdGeneratorImpl(renderer.context.stateData.encode())
 
         @Suppress("UNCHECKED_CAST")

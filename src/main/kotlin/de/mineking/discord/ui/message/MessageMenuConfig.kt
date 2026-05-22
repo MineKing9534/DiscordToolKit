@@ -27,8 +27,8 @@ typealias LocalizedMessageMenuConfigurator<M, L> = suspend MessageMenuConfig<M, 
 interface MessageMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L> {
     override val menu: MessageMenu<M, L>
 
-    fun <C : MessageComponent<*>> register(component: C): C
-    operator fun MessageComponent<out MessageTopLevelComponent>.unaryPlus()
+    suspend fun <C : MessageComponent<*>> register(component: C): C
+    suspend operator fun MessageComponent<out MessageTopLevelComponent>.unaryPlus()
 
     fun message(data: MessageEditBuilder)
 
@@ -118,8 +118,8 @@ sealed class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                     override val phase = this@submenu.phase
                     override val menu = this@MessageMenuConfigImpl.menu
 
-                    override fun <C : MessageComponent<*>> register(component: C): C = component
-                    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
+                    override suspend fun <C : MessageComponent<*>> register(component: C): C = component
+                    override suspend fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
 
                     override fun message(data: MessageEditBuilder) {}
 
@@ -167,8 +167,8 @@ sealed class MessageMenuConfigImpl<M, L : LocalizationFile?>(
                     override val phase = this@submenu.phase
                     override val menu = this@MessageMenuConfigImpl.menu
 
-                    override fun <C : MessageComponent<*>> register(component: C): C = component
-                    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
+                    override suspend fun <C : MessageComponent<*>> register(component: C): C = component
+                    override suspend fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
 
                     override fun message(data: MessageEditBuilder) {}
 
@@ -205,8 +205,8 @@ sealed class MessageMenuConfigImpl<M, L : LocalizationFile?>(
 }
 
 class MessageMenuBuilder<M, L : LocalizationFile?>(menu: MessageMenu<M, L>) : MessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.BUILD, BuildMenuContext(menu)) {
-    override fun <C : MessageComponent<*>> register(component: C) = component
-    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
+    override suspend fun <C : MessageComponent<*>> register(component: C) = component
+    override suspend fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {}
     override fun message(data: MessageEditBuilder) {}
 }
 
@@ -219,8 +219,8 @@ class MessageMenuRenderer<M, L : LocalizationFile?>(
 
     internal val components = mutableListOf<MessageComponent<out MessageTopLevelComponent>>()
 
-    override fun <C : MessageComponent<*>> register(component: C) = component
-    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
+    override suspend fun <C : MessageComponent<*>> register(component: C) = component
+    override suspend fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() {
         components += this
     }
 
@@ -234,15 +234,15 @@ class MessageMenuComponentFinder<M, L : LocalizationFile?>(
     menu: MessageMenu<M, L>,
     context: MenuContext<M>
 ) : MessageMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
-    private fun findHandler(component: MessageComponent<*>) = component.elements().forEach {
+    private suspend fun findHandler(component: MessageComponent<*>) = component.elements().forEach {
         if (it.name == this.component) {
             @Suppress("UNCHECKED_CAST")
             throw ComponentFinderResult(it.handler as ComponentHandler<*, *>)
         }
     }
 
-    override fun <C : MessageComponent<*>> register(component: C) = component.also { findHandler(component) }
-    override fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() = findHandler(this)
+    override suspend fun <C : MessageComponent<*>> register(component: C) = component.also { findHandler(component) }
+    override suspend fun MessageComponent<out MessageTopLevelComponent>.unaryPlus() = findHandler(this)
 
     override fun message(data: MessageEditBuilder) {}
 }

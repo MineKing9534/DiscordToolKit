@@ -7,6 +7,7 @@ import de.mineking.discord.ui.MenuCallbackPhase
 import de.mineking.discord.ui.MenuConfig
 import de.mineking.discord.ui.MenuConfigState
 import de.mineking.discord.ui.MenuContext
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.components.ModalTopLevelComponent
 import kotlin.reflect.KProperty
 
@@ -14,10 +15,10 @@ typealias ModalConfigurator<M> = suspend ModalMenuConfig<M, *>.() -> Unit
 typealias LocalizedModalConfigurator<M, L> = suspend ModalMenuConfig<M, L>.(localization: L) -> Unit
 
 fun interface ModalResult<T> {
-    fun getValue(): T
+    suspend fun getValue(): T
 }
 
-operator fun <T> ModalResult<T>.getValue(thisRef: Any?, property: KProperty<*>): T = getValue()
+operator fun <T> ModalResult<T>.getValue(thisRef: Any?, property: KProperty<*>): T = runBlocking { getValue() }
 
 interface ModalMenuConfig<M, L : LocalizationFile?> : MenuConfig<M, L> {
     operator fun <T> ModalComponent<out ModalTopLevelComponent, T>.unaryPlus(): ModalResult<T>
@@ -66,9 +67,7 @@ class ModalMenuExecutor<M, L : LocalizationFile?>(
 ) : ModalMenuConfigImpl<M, L>(menu, MenuCallbackPhase.HANDLE, context) {
     val handlers = mutableListOf<ModalHandler<M>>()
 
-    override fun <T> ModalComponent<out ModalTopLevelComponent, T>.unaryPlus() = object : ModalResult<T> {
-        override fun getValue() = handle(context)
-    }
+    override fun <T> ModalComponent<out ModalTopLevelComponent, T>.unaryPlus() = ModalResult { handle(context) }
 
     override fun title(title: CharSequence) {}
 
@@ -80,7 +79,7 @@ class ModalMenuExecutor<M, L : LocalizationFile?>(
 @Suppress("UNCHECKED_CAST")
 internal fun <T> emptyModalResult(): ModalResult<T> = EmptyModalResult as ModalResult<T>
 internal object EmptyModalResult : ModalResult<Nothing> {
-    override fun getValue(): Nothing {
+    override suspend fun getValue(): Nothing {
         error("Component value cannot be used during render")
     }
 }

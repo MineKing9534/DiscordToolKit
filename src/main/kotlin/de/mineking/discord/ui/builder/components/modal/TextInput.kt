@@ -51,7 +51,7 @@ fun <T> typedTextInput(
     localization: LocalizationFile? = null,
     value: T? = null,
     formatter: (value: T) -> String? = { it?.toString() },
-    parser: ModalContext<*>.(value: String) -> T
+    parser: suspend ModalContext<*>.(value: String) -> T
 )= textInput(name, placeholder, style, required, minLength, maxLength, localization, value?.let(formatter))
     .map { parser(it) }
 
