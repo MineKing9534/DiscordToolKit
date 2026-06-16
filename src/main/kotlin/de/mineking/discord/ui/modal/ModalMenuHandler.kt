@@ -55,7 +55,7 @@ object DefaultModalHandler : ModalMenuHandler {
         state.after.forEach { it() }
     }
 
-    fun buildComponents(generator: IdGeneratorImpl, renderer: ModalMenuRenderer<*, *>): List<ModalTopLevelComponent> {
+    suspend fun buildComponents(generator: IdGeneratorImpl, renderer: ModalMenuRenderer<*, *>): List<ModalTopLevelComponent> {
         val components = renderer.components.render(generator, renderer)
 
         val left = generator.charactersLeft()

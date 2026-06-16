@@ -15,7 +15,7 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent
 import net.dv8tion.jda.api.interactions.callbacks.IModalCallback
 import net.dv8tion.jda.api.modals.Modal
 
-fun Collection<ModalComponent<out ModalTopLevelComponent, *>>.render(id: IdGenerator, config: ModalMenuConfig<*, *>, force: Boolean = false) = this
+suspend fun Collection<ModalComponent<out ModalTopLevelComponent, *>>.render(id: IdGenerator, config: ModalMenuConfig<*, *>, force: Boolean = false) = this
     .map { if (force) it.visible() else it }
     .flatMap {
         try {

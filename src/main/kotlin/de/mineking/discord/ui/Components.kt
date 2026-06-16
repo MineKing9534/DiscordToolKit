@@ -1,12 +1,14 @@
 package de.mineking.discord.ui
 
 import de.mineking.discord.localization.LocalizationFile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.dv8tion.jda.api.components.Component
 import net.dv8tion.jda.api.components.attribute.IDisableable
 
 interface IComponent<C : Component> {
-    fun render(config: MenuConfig<*, *>, generator: IdGenerator): List<C>
-    fun transform(mapper: (IdGenerator, (IdGenerator) -> List<C>) -> List<C>): IComponent<C>
+    suspend fun render(config: MenuConfig<*, *>, generator: IdGenerator): List<C>
+    fun transform(mapper: suspend (IdGenerator, suspend (IdGenerator) -> List<C>) -> List<C>): IComponent<C>
 }
 
 interface IElement<C : Component> : IComponent<C> {
@@ -39,3 +41,12 @@ internal fun MenuConfig<*, *>.readLocalizedString(
     prefix: String? = null,
     postfix: String? = null
 ) = menu.manager.localization.readLocalizedString(this, localization, element, base, name, prefix, postfix)
+
+internal class SuspendLazy<T : Any, P>(private val resolver: suspend (P) -> T) {
+    private var value: T? = null
+    private val lock = Mutex()
+
+    suspend fun resolve(param: P) = lock.withLock { value ?: resolver(param).also { value = it } }
+}
+
+internal suspend inline fun <T : Any> SuspendLazy<T, Unit>.resolve() = resolve(Unit)
