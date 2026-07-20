@@ -41,9 +41,17 @@ class DefaultCommandLocalizationHandler(val prefix: String, val args: Map<String
     }
 
     override fun getChoiceLabel(file: LocalizationFile?, command: CommandImpl<*, *>, option: OptionInfo, choice: Choice): LocalizationInfo {
-        if (file == null || !choice.label.shouldLocalize()) return LocalizationInfo(choice.label.toString())
+        val localize = file != null && (choice.label.shouldLocalize() || choice.label.isDefault())
 
-        val key = if (choice.label.isDefault()) "${optionPath(command, option)}.choices.${choice.value}" else choice.label.toString()
-        return createLocalization(file, command, key)
+        return when {
+            localize -> {
+                val key =
+                    if (choice.label.isDefault()) "${optionPath(command, option)}.choices.${choice.value}"
+                    else choice.label.toString()
+
+                createLocalization(file, command, key)
+            }
+            else -> LocalizationInfo(choice.label.toString())
+        }
     }
 }

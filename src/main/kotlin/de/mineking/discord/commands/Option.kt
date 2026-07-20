@@ -22,10 +22,10 @@ typealias JDAChoice = net.dv8tion.jda.api.interactions.commands.Command.Choice
 
 data class Choice(
     val label: CharSequence,
-    val value: Any
+    val value: Any,
 ) {
     fun build(manager: CommandManager, command: SlashCommandImpl, option: OptionInfo, type: OptionType): JDAChoice {
-        val localization = manager.localization?.getChoiceLabel(if (label.shouldLocalize()) option.effectiveLocalization(command) else null, command, option, this)
+        val localization = manager.localization?.getChoiceLabel(option.effectiveLocalization(command), command, option, this)
 
         val label = localization?.default ?: label.toString()
         val result = when (type) {
@@ -255,14 +255,14 @@ inline fun <reified E : Enum<E>> OptionConfig.enumOption(
     required: Boolean = false,
     localization: LocalizationFile? = null,
     noinline configurator: OptionConfigurator = {},
-    label: (value: E) -> String? = { it.name },
+    label: (value: E) -> CharSequence? = { DEFAULT_LABEL },
     noinline autocomplete: AutocompleteHandler<E>? = null
 ): Option<OptionalOption<E>> = option<String>(
     name, description, required, localization,
     choices = E::class.java.enumConstants
         .map { it.name to label(it) }
         .filter { it.second != null }
-        .map { Choice(it.first, it.second!!) },
+        .map { choice(it.first, it.second!!) },
     configurator, autocomplete?.map { value -> E::class.java.enumConstants.first { it.name == value } }
 ).mapValue { value -> E::class.java.enumConstants.first { it.name == value } }
 
@@ -271,7 +271,7 @@ inline fun <reified E : Enum<E>> OptionConfig.nullableEnumOption(
     description: String = DEFAULT_OPTION_DESCRIPTION,
     localization: LocalizationFile? = null,
     noinline configurator: OptionConfigurator = {},
-    label: (value: E) -> String? = { it.name },
+    label: (value: E) -> CharSequence? = { DEFAULT_LABEL },
     noinline autocomplete: AutocompleteHandler<E>? = null
 ) = enumOption<E>(name, description, false, localization, configurator, label, autocomplete).orNull()
 
@@ -280,6 +280,6 @@ inline fun <reified E : Enum<E>> OptionConfig.requiredEnumOption(
     description: String = DEFAULT_OPTION_DESCRIPTION,
     localization: LocalizationFile? = null,
     noinline configurator: OptionConfigurator = {},
-    label: (value: E) -> String? = { it.name },
+    label: (value: E) -> CharSequence? = { DEFAULT_LABEL },
     noinline autocomplete: AutocompleteHandler<E>? = null
 ) = enumOption<E>(name, description, true, localization, configurator, label, autocomplete).get()
