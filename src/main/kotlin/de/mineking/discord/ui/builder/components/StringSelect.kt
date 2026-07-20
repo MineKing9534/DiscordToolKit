@@ -33,7 +33,7 @@ class SelectOption(
     fun withDefault(default: Boolean) = SelectOption(value, label, description, default, emoji, localization, visible, handler)
 
     fun build(name: String, localization: LocalizationFile?, config: MenuConfig<*, *>) =
-        JDASelectOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
+        JDASelectOption.of(config.readLocalizedString(this.localization ?: localization, name, label, "label", prefix = config.localizationPrefix(), postfix = "options.$value") ?: ZERO_WIDTH_SPACE, value)
             .withDescription(config.readLocalizedString(this.localization ?: localization, name, description, "description", postfix = "options.$value"))
             .withEmoji(emoji)
             .withDefault(default)
